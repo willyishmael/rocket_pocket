@@ -67,3 +67,4 @@ windows/.dart_tool/
 *.bak
 *.orig
 *.rej
+/macos/Flutter
