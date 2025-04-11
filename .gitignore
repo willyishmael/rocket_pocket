@@ -5,6 +5,8 @@
 .pub/
 build/
 flutter_*.png
+.flutter-plugins
+.flutter-plugins-dependencies
 
 # Android related
 android/.gradle/
@@ -12,12 +14,13 @@ android/captures/
 android/.idea/
 android/local.properties
 *.iml
+android/app/src/main/assets/flutter_assets/
 
 # iOS/Xcode related
+ios/Flutter/
 ios/Flutter/.last_build_id
 ios/Pods/
 ios/.symlinks/
-ios/Runner.xcworkspace/
 ios/.dart_tool/
 ios/DerivedData/
 ios/.idea/
@@ -27,6 +30,7 @@ ios/.idea/
 *.xcodeproj/xcuserdata
 
 # macOS related
+macos/Flutter/
 macos/Flutter/.last_build_id
 macos/Pods/
 macos/.symlinks/
@@ -37,12 +41,15 @@ macos/DerivedData/
 
 # Web related
 web/.dart_tool/
+web/flutter/
 
 # Linux related
+linux/flutter/
 linux/flutter/ephemeral/
 linux/.dart_tool/
 
 # Windows related
+windows/flutter/
 windows/flutter/ephemeral/
 windows/.dart_tool/
 
