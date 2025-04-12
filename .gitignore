@@ -68,3 +68,4 @@ windows/.dart_tool/
 *.orig
 *.rej
 /macos/Flutter
+lib/data/local/database.g.dart

@@ -15,6 +15,8 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.0
   path_provider: ^2.0.12
   path: ^1.8.2
+  talker: ^4.7.1
+  talker_flutter: ^4.7.1
 
 dev_dependencies:
   flutter_test:
