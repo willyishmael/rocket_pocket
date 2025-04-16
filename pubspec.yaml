@@ -17,6 +17,7 @@ dependencies:
   path: ^1.8.2
   talker: ^4.7.1
   talker_flutter: ^4.7.1
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
