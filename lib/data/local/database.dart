@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:rocket_pocket/utils/enum_converter/loan_status.dart';
@@ -8,6 +9,10 @@ import 'package:rocket_pocket/utils/enum_converter/loan_type.dart';
 import 'package:rocket_pocket/utils/enum_converter/transaction_type.dart';
 
 part 'database.g.dart';
+
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  return AppDatabase();
+});
 
 // Define the Account table
 class Accounts extends Table {

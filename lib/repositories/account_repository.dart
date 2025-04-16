@@ -1,5 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
+
+final accountRepositoryProvider = Provider<AccountRepository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return AccountRepository(db);
+});
 
 class AccountRepository {
   final AppDatabase db;
