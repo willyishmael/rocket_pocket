@@ -3,7 +3,7 @@ import 'package:rocket_pocket/utils/global.dart';
 
 abstract class AppError implements Exception {
   final String message;
-  final StackTrace? stackTrace;
+  final StackTrace stackTrace;
 
   const AppError(this.message, this.stackTrace);
 
@@ -49,6 +49,6 @@ class NotFoundError extends AppError {
 class UnknownError extends AppError {
   const UnknownError([
     super.message = "An unknown error occurred",
-    super.stackTrace,
+    super.stackTrace = StackTrace.empty,
   ]);
 }
