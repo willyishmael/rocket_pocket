@@ -4,6 +4,7 @@ import 'util.dart';
 import 'theme.dart';
 
 void main() {
+  NavigationHelper.instance;
   runApp(const RocketPocket());
 }
 
