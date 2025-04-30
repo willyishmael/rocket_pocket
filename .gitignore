@@ -69,3 +69,4 @@ windows/.dart_tool/
 *.rej
 /macos/Flutter
 lib/data/local/database.g.dart
+ios/Runner.xcodeproj/project.pbxproj
