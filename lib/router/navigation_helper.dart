@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/router/get_page.dart';
 import 'package:rocket_pocket/router/paths.dart';
-import 'package:rocket_pocket/screens/budget_screen.dart';
-import 'package:rocket_pocket/screens/dashboard_screen.dart';
-import 'package:rocket_pocket/screens/root_screen.dart';
-import 'package:rocket_pocket/screens/settings_screen.dart';
-import 'package:rocket_pocket/screens/transaction_screen.dart';
+import 'package:rocket_pocket/screens/budget/budget_screen.dart';
+import 'package:rocket_pocket/screens/dashboard/dashboard_screen.dart';
+import 'package:rocket_pocket/screens/root/root_screen.dart';
+import 'package:rocket_pocket/screens/settings/settings_screen.dart';
+import 'package:rocket_pocket/screens/transaction/transaction_screen.dart';
 
 /// NavigationHelper is a singleton class that manages the navigation for the app.
 /// This class is responsible for managing the navigation in the app.
