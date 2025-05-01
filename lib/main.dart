@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/router/navigation_helper.dart';
-import 'util.dart';
-import 'theme.dart';
+import 'utils/theme/util.dart';
+import 'utils/theme/theme.dart';
 
 void main() {
   NavigationHelper.instance;
