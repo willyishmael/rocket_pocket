@@ -49,7 +49,7 @@ class _RootScreenState extends State<RootScreen> {
           config: {
             Breakpoints.smallAndUp: SlotLayout.from(
               key: const Key('primary_body'),
-              builder: (_) => SafeArea(child: widget.child),
+              builder: (_) => widget.child,
             ),
           },
         ),
