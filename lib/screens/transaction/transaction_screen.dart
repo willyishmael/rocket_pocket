@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/local/database.dart';
+import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
 import 'package:rocket_pocket/utils/enum_converter/transaction_type.dart';
 
@@ -25,7 +27,7 @@ class TransactionScreen extends StatelessWidget {
 @override
 Widget build(BuildContext context) {
   return Scaffold(
-    floatingActionButton: addTransactionActionButton(),
+    floatingActionButton: addTransactionActionButton(context),
     floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
     floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
 
@@ -63,11 +65,10 @@ Widget build(BuildContext context) {
   );
 }
 
-  FloatingActionButton addTransactionActionButton() {
+  FloatingActionButton addTransactionActionButton(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        // Handle adding a new transaction
-        print('Add new transaction');
+        context.go(Paths.addTransaction);
       },
       child: const Icon(Icons.add),
     );
