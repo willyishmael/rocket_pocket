@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rocket_pocket/data/local/database.dart';
+import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
-import 'package:rocket_pocket/utils/enum_converter/transaction_type.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
 
 class TransactionScreen extends StatelessWidget {
   TransactionScreen({super.key});
@@ -12,13 +12,49 @@ class TransactionScreen extends StatelessWidget {
     Transaction(
       id: 1,
       senderAccountId: 1,
-      receiverAccountId: 2,
-      type: TransactionType.expense.toString(),
+      receiverAccountId: null,
+      type: TransactionType.expense,
       categoryId: 1,
       loanId: null,
       originalTransactionId: null,
       amount: 50.00,
-      description: 'Groceries',
+      description: 'cilok',
+      createdAt: DateTime.now(),
+    ),
+    Transaction(
+      id: 2,
+      senderAccountId: null,
+      receiverAccountId: 2,
+      type: TransactionType.income,
+      categoryId: 1,
+      loanId: null,
+      originalTransactionId: null,
+      amount: 50.00,
+      description: 'steal money from stranger',
+      createdAt: DateTime.now(),
+    ),
+    Transaction(
+      id: 3,
+      senderAccountId: 1,
+      receiverAccountId: 2,
+      type: TransactionType.transfer,
+      categoryId: 1,
+      loanId: null,
+      originalTransactionId: null,
+      amount: 50.00,
+      description: 'transfer money to friend',
+      createdAt: DateTime.now(),
+    ),
+    Transaction(
+      id: 4,
+      senderAccountId: null,
+      receiverAccountId: 2,
+      type: TransactionType.refund,
+      categoryId: 1,
+      loanId: null,
+      originalTransactionId: 2,
+      amount: 50.00,
+      description: 'refund money from friend',
       createdAt: DateTime.now(),
     ),
     // Add more transactions here
@@ -55,9 +91,9 @@ Widget build(BuildContext context) {
         SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
-              return TransactionListTile(transaction: transactions[0]);
+              return TransactionListTile(transaction: transactions[index]);
             },
-            childCount: 30,
+            childCount: transactions.length,
           ),
         ),
       ],
