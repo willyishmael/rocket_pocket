@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
-import 'package:rocket_pocket/utils/enum_converter/loan_status.dart';
-import 'package:rocket_pocket/utils/enum_converter/loan_type.dart';
+import 'package:rocket_pocket/data/model/loan_status.dart';
+import 'package:rocket_pocket/data/model/loan_type.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 
 final loanRepositoryProvider = Provider<LoanRepository>((ref) {
