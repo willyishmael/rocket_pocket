@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:rocket_pocket/screens/dashboard/account_card.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -25,8 +26,11 @@ class DashboardScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Accounts'),
-                  IconButton(
+                  Text(
+                    'Accounts',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  IconButton.filledTonal(
                     onPressed: () {
                       print('Add Account');
                     },
@@ -38,13 +42,12 @@ class DashboardScreen extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: SizedBox(
-              height: 200.0,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 10, // Example count
-                itemBuilder: (context, index) {
-                  return AccountCard(index: index,);
-                },
+              height: 250.0,
+              child: Swiper(
+                itemCount: 3,
+                viewportFraction: 0.8,
+                scale: 0.9,
+                itemBuilder: (context, index) => AccountCard(index: index),
               ),
             ),
           ),
