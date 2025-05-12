@@ -48,6 +48,12 @@ class NavigationHelper {
                   return getPage(child: DashboardScreen(), state: state);
                 },
               ),
+              GoRoute(
+                path: Paths.createAccount,
+                pageBuilder: (context, state) {
+                  return getPage(child: CreateAccountScreen(), state: state);
+                },
+              ),
             ],
           ),
 

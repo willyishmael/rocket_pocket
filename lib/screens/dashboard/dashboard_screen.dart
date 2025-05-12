@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
+import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/dashboard/account_card.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -32,6 +34,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   IconButton.filledTonal(
                     onPressed: () {
+                      context.go(Paths.createAccount);
                       print('Add Account');
                     },
                     icon: Icon(Icons.add),
