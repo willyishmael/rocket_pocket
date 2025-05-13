@@ -34,7 +34,8 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   IconButton.filledTonal(
                     onPressed: () {
-                      context.go(Paths.createAccount);
+                      
+                      context.push(Paths.createAccount);
                       print('Add Account');
                     },
                     icon: Icon(Icons.add),
