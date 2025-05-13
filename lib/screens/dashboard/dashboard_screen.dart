@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/model/account.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/dashboard/account_card.dart';
 
@@ -34,7 +35,6 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   IconButton.filledTonal(
                     onPressed: () {
-                      
                       context.push(Paths.createAccount);
                       print('Add Account');
                     },
@@ -50,8 +50,20 @@ class DashboardScreen extends StatelessWidget {
               child: Swiper(
                 itemCount: 3,
                 viewportFraction: 0.8,
-                scale: 0.9,
-                itemBuilder: (context, index) => AccountCard(index: index),
+                scale: 1.1,
+                fade: 0.6,
+                curve: Curves.bounceInOut,
+
+                itemBuilder:
+                    (context, index) => AccountCard(
+                      account: Account(
+                        id: index,
+                        name: 'Account $index',
+                        balance: 1000.0 + (index * 100),
+                        currency: 'USD',
+                        accentColor: Colors.blue.value,
+                      ),
+                    ),
               ),
             ),
           ),
