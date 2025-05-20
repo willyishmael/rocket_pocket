@@ -53,15 +53,13 @@ class DashboardScreen extends StatelessWidget {
                 scale: 1.1,
                 fade: 0.6,
                 curve: Curves.bounceInOut,
-
                 itemBuilder:
                     (context, index) => AccountCard(
                       account: Account(
-                        id: index,
                         name: 'Account $index',
                         balance: 1000.0 + (index * 100),
                         currency: 'USD',
-                        accentColor: Colors.blue.value,
+                        accentColor: Colors.blue.toARGB32(),
                       ),
                     ),
               ),

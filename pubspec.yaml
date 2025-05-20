@@ -23,6 +23,9 @@ dependencies:
   flutter_adaptive_scaffold: ^0.3.2
   flutter_swiper_view: ^1.1.8
 
+  country_currency_pickers: ^3.0.0
+  currency_text_input_formatter: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
