@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:rocket_pocket/data/model/two_color_gradient.dart';
+import 'package:rocket_pocket/data/model/color_gradient.dart';
 
 class GradientCircle extends StatelessWidget {
-  final TwoColorGradient gradient;
+  final ColorGradient gradient;
   final bool isSelected;
 
   const GradientCircle({
@@ -49,10 +49,7 @@ class GradientCircle extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [
-                      gradient.topLeftColor,
-                      gradient.bottomRightColor,
-                    ],
+                    colors: gradient.colors,
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

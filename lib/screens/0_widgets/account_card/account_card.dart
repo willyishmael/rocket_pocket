@@ -10,8 +10,8 @@ class AccountCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.blue, Colors.purple],
+        gradient: LinearGradient(
+          colors: account.colorGradient.colors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

@@ -5,9 +5,9 @@ import 'package:currency_text_input_formatter/currency_text_input_formatter.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/account.dart';
-import 'package:rocket_pocket/data/model/two_color_gradient.dart';
-import 'package:rocket_pocket/screens/dashboard/account_card.dart';
-import 'package:rocket_pocket/screens/dashboard/gradient_circle.dart';
+import 'package:rocket_pocket/data/model/color_gradient.dart';
+import 'package:rocket_pocket/screens/0_widgets/account_card/account_card.dart';
+import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -21,77 +21,40 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     name: '',
     currency: '',
     balance: 0.0,
-    accentColor: Colors.blue.toARGB32(),
+    colorGradient: ColorGradient(
+      name: 'Platinum',
+      colors: [Colors.grey.shade900, Colors.grey.shade800],
+    ),
   );
 
-  List<TwoColorGradient> gradients = [
-    // --- Soft, pastel combos above ---
-    TwoColorGradient(
+  List<ColorGradient> gradients = [
+    ColorGradient(
+      name: 'Platinum',
+      colors: [Colors.grey.shade900, const Color.fromARGB(255, 91, 94, 106)],
+    ),
+    ColorGradient(
       name: 'Blueberry',
-      topLeftColor: Colors.blue,
-      bottomRightColor: Colors.pinkAccent,
+      colors: [Colors.blueAccent, Colors.purpleAccent],
     ),
-    TwoColorGradient(
-      name: 'Minty',
-      topLeftColor: Colors.greenAccent,
-      bottomRightColor: Colors.teal,
-    ),
-    TwoColorGradient(
-      name: 'Lavender',
-      topLeftColor: Colors.purple,
-      bottomRightColor: Colors.pinkAccent,
-    ),
-    TwoColorGradient(
-      name: 'Peachy',
-      topLeftColor: Colors.orangeAccent,
-      bottomRightColor: Colors.pinkAccent,
-    ),
-
-    // --- Brave, vibrant combos below ---
-    TwoColorGradient(
-      name: 'Sunset',
-      topLeftColor: Colors.deepOrange,
-      bottomRightColor: Colors.purpleAccent,
-    ),
-    TwoColorGradient(
-      name: 'Aqua Lemon',
-      topLeftColor: Colors.cyan,
-      bottomRightColor: Colors.yellowAccent,
-    ),
-    TwoColorGradient(
+    ColorGradient(
       name: 'Fire',
-      topLeftColor: Colors.red,
-      bottomRightColor: Colors.amber,
+      colors: [Colors.redAccent, Colors.orangeAccent],
     ),
-    TwoColorGradient(
-      name: 'Electric',
-      topLeftColor: Colors.lightGreenAccent,
-      bottomRightColor: Colors.indigo,
+    ColorGradient(
+      name: 'Mint',
+      colors: [Colors.greenAccent, Colors.tealAccent],
     ),
-    TwoColorGradient(
-      name: 'Bubblegum',
-      topLeftColor: Colors.pinkAccent,
-      bottomRightColor: Colors.lightBlueAccent,
+    ColorGradient(
+      name: 'Peach',
+      colors: [Colors.pinkAccent, Colors.orangeAccent],
     ),
-    TwoColorGradient(
-      name: 'Lime Magenta',
-      topLeftColor: Colors.lime,
-      bottomRightColor: Colors.purple,
+    ColorGradient(
+      name: 'Lavender',
+      colors: [Colors.purpleAccent, Colors.blueAccent],
     ),
-    TwoColorGradient(
-      name: 'Ocean',
-      topLeftColor: Colors.teal,
-      bottomRightColor: Colors.blueAccent,
-    ),
-    TwoColorGradient(
-      name: 'Gold Mint',
-      topLeftColor: Colors.amber,
-      bottomRightColor: Colors.tealAccent,
-    ),
-    TwoColorGradient(
-      name: 'Nightlife',
-      topLeftColor: Colors.deepPurple,
-      bottomRightColor: Colors.pinkAccent,
+    ColorGradient(
+      name: 'Lemonade',
+      colors: [Colors.yellowAccent, Colors.pinkAccent],
     ),
   ];
 
@@ -142,10 +105,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   /// Extract this gradient picker widget
                   GradientPicker(
                     gradients: gradients,
-                    selectedColor: account.accentColor,
+                    selectedColor: account.colorGradient,
                     onSelected: (color) {
                       setState(() {
-                        account.accentColor = color;
+                        account.colorGradient = color;
                       });
                     },
                   ),
@@ -213,45 +176,4 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       Text("${country.currencyCode}"),
     ],
   );
-}
-
-class GradientPicker extends StatelessWidget {
-  final List<TwoColorGradient> gradients;
-  final int selectedColor;
-  final ValueChanged<int> onSelected;
-  const GradientPicker({
-    super.key,
-    required this.gradients,
-    required this.selectedColor,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 100.0,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: gradients.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 16.0),
-        itemBuilder: (context, index) {
-          final isSelected =
-              selectedColor == gradients[index].topLeftColor.toARGB32();
-          return InkWell(
-            onTap: () => onSelected(gradients[index].topLeftColor.toARGB32()),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border:
-                    isSelected
-                        ? Border.all(color: Colors.black, width: 3)
-                        : null,
-              ),
-              child: GradientCircle(gradient: gradients[index]),
-            ),
-          );
-        },
-      ),
-    );
-  }
 }

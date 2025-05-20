@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/account.dart';
+import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/router/paths.dart';
-import 'package:rocket_pocket/screens/dashboard/account_card.dart';
+import 'package:rocket_pocket/screens/0_widgets/account_card/account_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -59,7 +60,13 @@ class DashboardScreen extends StatelessWidget {
                         name: 'Account $index',
                         balance: 1000.0 + (index * 100),
                         currency: 'USD',
-                        accentColor: Colors.blue.toARGB32(),
+                        colorGradient: ColorGradient(
+                          name: 'Gradient $index',
+                          colors: [
+                            Colors.primaries[index % Colors.primaries.length],
+                            Colors.accents[index % Colors.accents.length],
+                          ],
+                        ),
                       ),
                     ),
               ),
