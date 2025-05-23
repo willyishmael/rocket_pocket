@@ -18,7 +18,7 @@ class AccountCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 8.0,
             offset: const Offset(0, 4),
           ),
@@ -42,7 +42,7 @@ class AccountCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Savings Account',
+                    account.purpose,
                     style: const TextStyle(fontSize: 18.0, color: Colors.white),
                   ),
                   const SizedBox(height: 16.0),
@@ -58,9 +58,9 @@ class AccountCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '💳', // Example emoticon
+                        '💳',
                         style: const TextStyle(
-                          fontSize: 28.0, // Adjust the size as needed
+                          fontSize: 28.0,
                           color: Colors.white,
                         ),
                       ),
@@ -79,11 +79,8 @@ class AccountCard extends StatelessWidget {
             ),
             const SizedBox(width: 16.0),
             Text(
-              '➡️', // Example emoticon
-              style: const TextStyle(
-                fontSize: 80.0, // Adjust the size as needed
-                color: Colors.white,
-              ),
+              account.emoticon,
+              style: const TextStyle(fontSize: 80.0, color: Colors.white),
             ),
           ],
         ),
@@ -91,4 +88,3 @@ class AccountCard extends StatelessWidget {
     );
   }
 }
-

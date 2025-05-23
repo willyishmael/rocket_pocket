@@ -58,6 +58,7 @@ class DashboardScreen extends StatelessWidget {
                     (context, index) => AccountCard(
                       account: Account(
                         name: 'Account $index',
+                        purpose: 'Saving Account',
                         balance: 1000.0 + (index * 100),
                         currency: 'USD',
                         colorGradient: ColorGradient(
@@ -67,6 +68,7 @@ class DashboardScreen extends StatelessWidget {
                             Colors.accents[index % Colors.accents.length],
                           ],
                         ),
+                        emoticon: '💰',
                       ),
                     ),
               ),

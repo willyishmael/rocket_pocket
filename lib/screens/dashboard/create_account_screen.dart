@@ -19,12 +19,14 @@ class CreateAccountScreen extends StatefulWidget {
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
   Account account = Account(
     name: '',
+    purpose: '',
     currency: '',
     balance: 0.0,
     colorGradient: ColorGradient(
       name: 'Platinum',
       colors: [Colors.grey.shade900, Colors.grey.shade800],
     ),
+    emoticon: '💰',
   );
 
   List<ColorGradient> gradients = [
