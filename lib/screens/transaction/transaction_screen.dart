@@ -11,8 +11,8 @@ class TransactionScreen extends StatelessWidget {
   final List<Transaction> transactions = [
     Transaction(
       id: 1,
-      senderAccountId: 1,
-      receiverAccountId: null,
+      senderPocketId: 1,
+      receiverPocketId: null,
       type: TransactionType.expense,
       categoryId: 1,
       loanId: null,
@@ -23,8 +23,8 @@ class TransactionScreen extends StatelessWidget {
     ),
     Transaction(
       id: 2,
-      senderAccountId: null,
-      receiverAccountId: 2,
+      senderPocketId: null,
+      receiverPocketId: 2,
       type: TransactionType.income,
       categoryId: 1,
       loanId: null,
@@ -35,8 +35,8 @@ class TransactionScreen extends StatelessWidget {
     ),
     Transaction(
       id: 3,
-      senderAccountId: 1,
-      receiverAccountId: 2,
+      senderPocketId: 1,
+      receiverPocketId: 2,
       type: TransactionType.transfer,
       categoryId: 1,
       loanId: null,
@@ -47,8 +47,8 @@ class TransactionScreen extends StatelessWidget {
     ),
     Transaction(
       id: 4,
-      senderAccountId: null,
-      receiverAccountId: 2,
+      senderPocketId: null,
+      receiverPocketId: 2,
       type: TransactionType.refund,
       categoryId: 1,
       loanId: null,
@@ -60,46 +60,43 @@ class TransactionScreen extends StatelessWidget {
     // Add more transactions here
   ];
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    floatingActionButton: addTransactionActionButton(context),
-    floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
-    floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      floatingActionButton: addTransactionActionButton(context),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
 
-    body: CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          floating: true,
-          expandedHeight: 150.0,
-          flexibleSpace: const FlexibleSpaceBar(
-            title: Text('Transactions'),
-            centerTitle: false,
-            titlePadding: EdgeInsets.only(left: 16, bottom: 16),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: () {
-                // Handle filter action
-                print('Filter transactions');
-              },
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            floating: true,
+            expandedHeight: 150.0,
+            flexibleSpace: const FlexibleSpaceBar(
+              title: Text('Transactions'),
+              centerTitle: false,
+              titlePadding: EdgeInsets.only(left: 16, bottom: 16),
             ),
-          ],
-        ),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              return TransactionListTile(transaction: transactions[index]);
-            },
-            childCount: transactions.length,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                onPressed: () {
+                  // Handle filter action
+                  print('Filter transactions');
+                },
+              ),
+            ],
           ),
-        ),
-      ],
-    ),
-  );
-}
+          SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              return TransactionListTile(transaction: transactions[index]);
+            }, childCount: transactions.length),
+          ),
+        ],
+      ),
+    );
+  }
 
   FloatingActionButton addTransactionActionButton(BuildContext context) {
     return FloatingActionButton(

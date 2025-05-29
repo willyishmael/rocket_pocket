@@ -24,7 +24,7 @@ class TransactionListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(transaction.description),
-      subtitle: Text('Account name'),
+      subtitle: Text('Pocket name'),
       leading: _getTransactionIcon(transaction.type),
       trailing: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -35,11 +35,12 @@ class TransactionListTile extends StatelessWidget {
                 ? '+\$${transaction.amount.toStringAsFixed(2)}'
                 : '-\$${transaction.amount.toStringAsFixed(2)}',
             style: TextStyle(
-              color: transaction.type == TransactionType.income
-                  ? Colors.green
-                  : Colors.red,
+              color:
+                  transaction.type == TransactionType.income
+                      ? Colors.green
+                      : Colors.red,
               fontWeight: FontWeight.bold,
-              fontSize: 16
+              fontSize: 16,
             ),
           ),
           Text(transaction.createdAt.toLocal().toString().split(' ')[0]),

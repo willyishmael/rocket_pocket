@@ -77,30 +77,30 @@ class TransactionRepository {
     }
   }
 
-  Future<List<Transaction>> getTransactionsBySenderAccountId(
-    int senderAccountId,
+  Future<List<Transaction>> getTransactionsBySenderPocketId(
+    int senderPocketId,
   ) async {
     try {
       return await (db.select(db.transactions)
-        ..where((tbl) => tbl.senderAccountId.equals(senderAccountId))).get();
+        ..where((tbl) => tbl.senderPocketId.equals(senderPocketId))).get();
     } catch (e, stack) {
       DatabaseError(
-        'Failed to fetch transactions by sender account ID',
+        'Failed to fetch transactions by sender Pocket ID',
         stack,
       ).throwError();
     }
   }
 
-  Future<List<Transaction>> getTransactionsByReceiverAccountId(
-    int receiverAccountId,
+  Future<List<Transaction>> getTransactionsByReceiverPocketId(
+    int receiverPocketId,
   ) async {
     try {
       return await (db.select(
         db.transactions,
-      )..where((tbl) => tbl.receiverAccountId.equals(receiverAccountId))).get();
+      )..where((tbl) => tbl.receiverPocketId.equals(receiverPocketId))).get();
     } catch (e, stack) {
       DatabaseError(
-        'Failed to fetch transactions by receiver account ID',
+        'Failed to fetch transactions by receiver Pocket ID',
         stack,
       ).throwError();
     }

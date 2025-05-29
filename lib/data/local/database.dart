@@ -14,8 +14,8 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
   return AppDatabase();
 });
 
-// Define the Account table
-class Accounts extends Table {
+// Define the Pocket table
+class Pockets extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   TextColumn get currency => text()();
@@ -46,10 +46,10 @@ class Loans extends Table {
 // Define the Transaction table
 class Transactions extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get senderAccountId =>
-      integer().nullable().customConstraint('NULL REFERENCES accounts(id)')();
-  IntColumn get receiverAccountId =>
-      integer().nullable().customConstraint('NULL REFERENCES accounts(id)')();
+  IntColumn get senderPocketId =>
+      integer().nullable().customConstraint('NULL REFERENCES pockets(id)')();
+  IntColumn get receiverPocketId =>
+      integer().nullable().customConstraint('NULL REFERENCES pockets(id)')();
   TextColumn get type => text().map(const TransactionTypeConverter())();
   IntColumn get categoryId =>
       integer().nullable().customConstraint(
@@ -67,7 +67,7 @@ class Transactions extends Table {
 }
 
 // Create the database
-@DriftDatabase(tables: [Accounts, TransactionCategories, Loans, Transactions])
+@DriftDatabase(tables: [Pockets, TransactionCategories, Loans, Transactions])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 

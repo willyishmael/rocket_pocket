@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:rocket_pocket/data/model/account.dart';
+import 'package:rocket_pocket/data/model/pocket.dart';
 
-class AccountCard extends StatelessWidget {
-  final Account account;
-  const AccountCard({super.key, required this.account});
+class PocketCard extends StatelessWidget {
+  final Pocket pocket;
+  const PocketCard({super.key, required this.pocket});
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +11,7 @@ class AccountCard extends StatelessWidget {
       margin: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: account.colorGradient.colors,
+          colors: pocket.colorGradient.colors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -34,7 +34,7 @@ class AccountCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    account.name,
+                    pocket.name,
                     style: const TextStyle(
                       fontSize: 24.0,
                       fontWeight: FontWeight.bold,
@@ -42,12 +42,12 @@ class AccountCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    account.purpose,
+                    pocket.purpose,
                     style: const TextStyle(fontSize: 18.0, color: Colors.white),
                   ),
                   const SizedBox(height: 16.0),
                   Text(
-                    account.balance.toString(),
+                    pocket.balance.toString(),
                     style: TextStyle(
                       fontSize: 32.0,
                       fontWeight: FontWeight.bold,
@@ -66,7 +66,7 @@ class AccountCard extends StatelessWidget {
                       ),
                       SizedBox(width: 8.0),
                       Text(
-                        account.currency,
+                        pocket.currency,
                         style: const TextStyle(
                           fontSize: 18.0,
                           color: Colors.white,
@@ -79,7 +79,7 @@ class AccountCard extends StatelessWidget {
             ),
             const SizedBox(width: 16.0),
             Text(
-              account.emoticon,
+              pocket.emoticon,
               style: const TextStyle(fontSize: 80.0, color: Colors.white),
             ),
           ],

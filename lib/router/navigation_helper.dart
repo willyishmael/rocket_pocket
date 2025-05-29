@@ -49,9 +49,9 @@ class NavigationHelper {
                 },
               ),
               GoRoute(
-                path: Paths.createAccount,
+                path: Paths.createPocket,
                 pageBuilder: (context, state) {
-                  return getPage(child: CreateAccountScreen(), state: state);
+                  return getPage(child: CreatePocketScreen(), state: state);
                 },
               ),
             ],

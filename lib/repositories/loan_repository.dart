@@ -105,7 +105,7 @@ class LoanRepository {
     try {
       return await (db.update(db.loans)..where(
         (tbl) => tbl.id.equals(id),
-      )).write(LoansCompanion(status: Value(status.name)));
+      )).write(LoansCompanion(status: Value(status.name as LoanStatus)));
     } catch (e, stack) {
       DatabaseError('Failed to update loan status', stack).throwError();
     }

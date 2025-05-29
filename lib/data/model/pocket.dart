@@ -1,6 +1,6 @@
 import 'package:rocket_pocket/data/model/color_gradient.dart';
 
-class Account {
+class Pocket {
   static int _nextId = 1;
   int id;
   String name;
@@ -10,7 +10,7 @@ class Account {
   ColorGradient colorGradient;
   String emoticon = '💰';
 
-  Account({
+  Pocket({
     required this.name,
     required this.purpose,
     required this.currency,

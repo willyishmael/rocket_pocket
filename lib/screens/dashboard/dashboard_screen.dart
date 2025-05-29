@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rocket_pocket/data/model/account.dart';
+import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/router/paths.dart';
-import 'package:rocket_pocket/screens/0_widgets/account_card/account_card.dart';
+import 'package:rocket_pocket/screens/0_widgets/pocket_card/pocket_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -31,13 +31,12 @@ class DashboardScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Accounts',
+                    'Pockets',
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   IconButton.filledTonal(
                     onPressed: () {
-                      context.push(Paths.createAccount);
-                      print('Add Account');
+                      context.push(Paths.createPocket);
                     },
                     icon: Icon(Icons.add),
                   ),
@@ -55,10 +54,10 @@ class DashboardScreen extends StatelessWidget {
                 fade: 0.6,
                 curve: Curves.bounceInOut,
                 itemBuilder:
-                    (context, index) => AccountCard(
-                      account: Account(
-                        name: 'Account $index',
-                        purpose: 'Saving Account',
+                    (context, index) => PocketCard(
+                      pocket: Pocket(
+                        name: 'Pocket $index',
+                        purpose: 'Saving Pocket',
                         balance: 1000.0 + (index * 100),
                         currency: 'USD',
                         colorGradient: ColorGradient(

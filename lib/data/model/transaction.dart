@@ -2,8 +2,8 @@ import 'package:rocket_pocket/data/model/transaction_type.dart';
 
 class Transaction {
   final int id;
-  final int? senderAccountId;
-  final int? receiverAccountId;
+  final int? senderPocketId;
+  final int? receiverPocketId;
   final TransactionType type;
   final int? categoryId;
   final int? loanId;
@@ -14,8 +14,8 @@ class Transaction {
 
   Transaction({
     required this.id,
-    this.senderAccountId,
-    this.receiverAccountId,
+    this.senderPocketId,
+    this.receiverPocketId,
     required this.type,
     this.categoryId,
     this.loanId,

@@ -3,20 +3,20 @@ import 'package:country_currency_pickers/currency_picker_dropdown.dart';
 import 'package:country_currency_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rocket_pocket/data/model/account.dart';
+import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
-import 'package:rocket_pocket/screens/0_widgets/account_card/account_card.dart';
+import 'package:rocket_pocket/screens/0_widgets/pocket_card/pocket_card.dart';
 import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
 
-class CreateAccountScreen extends StatefulWidget {
-  const CreateAccountScreen({super.key});
+class CreatePocketScreen extends StatefulWidget {
+  const CreatePocketScreen({super.key});
 
   @override
-  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
+  State<CreatePocketScreen> createState() => _CreatePocketScreenState();
 }
 
-class _CreateAccountScreenState extends State<CreateAccountScreen> {
-  Account account = Account(
+class _CreatePocketScreenState extends State<CreatePocketScreen> {
+  Pocket pocket = Pocket(
     name: '',
     purpose: '',
     currency: 'IDR',
@@ -74,11 +74,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
               },
             ),
             expandedHeight: 150.0,
-            flexibleSpace: const FlexibleSpaceBar(
-              title: Text('Create Account'),
-            ),
+            flexibleSpace: const FlexibleSpaceBar(title: Text('Create Pocket')),
           ),
-          SliverToBoxAdapter(child: AccountCard(account: account)),
+          SliverToBoxAdapter(child: PocketCard(pocket: pocket)),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -87,18 +85,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 spacing: 16.0,
                 children: [
                   Text(
-                    'Customize your account',
+                    'Customize your pocket',
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   TextField(
                     decoration: InputDecoration(
-                      labelText: 'Account Name',
+                      labelText: 'Pocket Name',
                       border: OutlineInputBorder(),
                       icon: const Icon(Icons.add_card),
                     ),
                     onChanged: (value) {
                       setState(() {
-                        account.name = value;
+                        pocket.name = value;
                       });
                     },
                   ),
@@ -110,7 +108,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     ),
                     onChanged: (value) {
                       setState(() {
-                        account.purpose = value;
+                        pocket.purpose = value;
                       });
                     },
                   ),
@@ -125,16 +123,16 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     ),
                     onChanged: (value) {
                       setState(() {
-                        account.emoticon = value;
+                        pocket.emoticon = value;
                       });
                     },
                   ),
                   GradientPicker(
                     gradients: gradients,
-                    selectedColor: account.colorGradient,
+                    selectedColor: pocket.colorGradient,
                     onSelected: (color) {
                       setState(() {
-                        account.colorGradient = color;
+                        pocket.colorGradient = color;
                       });
                     },
                   ),
@@ -153,7 +151,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           onValuePicked: (Country? country) {
                             if (country != null) {
                               setState(() {
-                                account.currency = country.currencyCode ?? '';
+                                pocket.currency = country.currencyCode ?? '';
                               });
                             }
                           },
@@ -163,13 +161,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                         flex: 2,
                         child: TextField(
                           decoration: const InputDecoration(
-                            labelText: 'Account Balance',
+                            labelText: 'Pocket Balance',
                             border: OutlineInputBorder(),
                           ),
                           keyboardType: TextInputType.number,
                           onChanged: (value) {
                             setState(() {
-                              account.balance = double.tryParse(value) ?? 0.0;
+                              pocket.balance = double.tryParse(value) ?? 0.0;
                             });
                           },
                         ),
@@ -179,10 +177,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   const SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: () {
-                      // Handle account creation
-                      print('Account Created');
+                      // Handle pocket creation
+                      print('Pocket Created');
                     },
-                    child: const Text('Create Account'),
+                    child: const Text('Create Pocket'),
                   ),
                 ],
               ),
