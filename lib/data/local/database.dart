@@ -1,9 +1,16 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:rocket_pocket/data/local/tables/color_gradients.dart';
+import 'package:rocket_pocket/data/local/tables/loans.dart';
+import 'package:rocket_pocket/data/local/tables/pockets.dart';
+import 'package:rocket_pocket/data/local/tables/transaction_categories.dart';
+import 'package:rocket_pocket/data/local/tables/transactions.dart';
+import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/data/model/loan_status.dart';
 import 'package:rocket_pocket/data/model/loan_type.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
@@ -14,60 +21,10 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
   return AppDatabase();
 });
 
-// Define the Pocket table
-class Pockets extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
-  TextColumn get currency => text()();
-  IntColumn get balance => integer()();
-  RealColumn get accentColor => real()();
-}
-
-// Define the TransactionCategory table
-class TransactionCategories extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
-}
-
-// Define the Loan table
-class Loans extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get type => text().map(const LoanTypeConverter())();
-  TextColumn get counterpartyName => text()();
-  RealColumn get amount => real()();
-  TextColumn get description => text()();
-  DateTimeColumn get startDate => dateTime()();
-  DateTimeColumn get dueDate => dateTime()();
-  TextColumn get status => text().map(const LoanStatusConverter())();
-  RealColumn get repaidAmount => real()();
-  DateTimeColumn get createdAt => dateTime()();
-}
-
-// Define the Transaction table
-class Transactions extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get senderPocketId =>
-      integer().nullable().customConstraint('NULL REFERENCES pockets(id)')();
-  IntColumn get receiverPocketId =>
-      integer().nullable().customConstraint('NULL REFERENCES pockets(id)')();
-  TextColumn get type => text().map(const TransactionTypeConverter())();
-  IntColumn get categoryId =>
-      integer().nullable().customConstraint(
-        'NULL REFERENCES transaction_categories(id)',
-      )();
-  IntColumn get loanId =>
-      integer().nullable().customConstraint('NULL REFERENCES loans(id)')();
-  IntColumn get originalTransactionId =>
-      integer().nullable().customConstraint(
-        'NULL REFERENCES transactions(id)',
-      )();
-  TextColumn get description => text()();
-  RealColumn get amount => real()();
-  DateTimeColumn get createdAt => dateTime()();
-}
-
 // Create the database
-@DriftDatabase(tables: [Pockets, TransactionCategories, Loans, Transactions])
+@DriftDatabase(
+  tables: [Pockets, TransactionCategories, Loans, Transactions, ColorGradients],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
