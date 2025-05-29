@@ -1,7 +1,6 @@
 import 'package:country_currency_pickers/country.dart';
 import 'package:country_currency_pickers/currency_picker_dropdown.dart';
 import 'package:country_currency_pickers/utils/utils.dart';
-import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/account.dart';
@@ -20,7 +19,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   Account account = Account(
     name: '',
     purpose: '',
-    currency: '',
+    currency: 'IDR',
     balance: 0.0,
     colorGradient: ColorGradient(
       name: 'Platinum',
@@ -103,8 +102,33 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       });
                     },
                   ),
-
-                  /// Extract this gradient picker widget
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Purpose',
+                      border: OutlineInputBorder(),
+                      icon: const Icon(Icons.account_balance_wallet),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        account.purpose = value;
+                      });
+                    },
+                  ),
+                  TextField(
+                    maxLength: 1,
+                    maxLines: 1,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      labelText: 'Emoticon',
+                      border: OutlineInputBorder(),
+                      icon: const Icon(Icons.emoji_emotions),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        account.emoticon = value;
+                      });
+                    },
+                  ),
                   GradientPicker(
                     gradients: gradients,
                     selectedColor: account.colorGradient,
@@ -122,23 +146,22 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   Row(
                     children: [
                       Flexible(
-                        flex: 3,
+                        flex: 1,
                         child: CurrencyPickerDropdown(
-                          initialValue: 'INR',
+                          initialValue: 'IDR',
                           itemBuilder: _buildCurrencyDropdownItem,
                           onValuePicked: (Country? country) {
                             if (country != null) {
-                              print("${country.name}");
+                              setState(() {
+                                account.currency = country.currencyCode ?? '';
+                              });
                             }
                           },
                         ),
                       ),
                       Flexible(
-                        flex: 5,
+                        flex: 2,
                         child: TextField(
-                          inputFormatters: [
-                            CurrencyTextInputFormatter.simpleCurrency(),
-                          ],
                           decoration: const InputDecoration(
                             labelText: 'Account Balance',
                             border: OutlineInputBorder(),
