@@ -4,6 +4,7 @@ import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 import '../data/local/database.dart' as db_provider;
 import '../data/model/color_gradient.dart';
 
+/// Provider for the ColorGradientRepository
 final colorGradientRepositoryProvider = Provider<ColorGradientRepository>((
   ref,
 ) {
@@ -11,10 +12,14 @@ final colorGradientRepositoryProvider = Provider<ColorGradientRepository>((
   return ColorGradientRepository(db);
 });
 
+/// Repository for managing color gradients in the database
 class ColorGradientRepository {
   final db_provider.AppDatabase db;
   ColorGradientRepository(this.db);
 
+  /// Fetches all color gradients from the database
+  /// Returns a list of [ColorGradient] objects
+  /// Throws [DatabaseError] if the operation fails
   Future<List<ColorGradient>> getAllGradients() async {
     try {
       final rows = await db.select(db.colorGradients).get();
@@ -24,6 +29,9 @@ class ColorGradientRepository {
     }
   }
 
+  /// Inserts a new color gradient into the database
+  /// Returns the ID of the inserted gradient
+  /// Throws [DatabaseError] if the operation fails
   Future<int> insertGradient(ColorGradient gradient) async {
     try {
       return await db.into(db.colorGradients).insert(gradient.toDb());
@@ -32,16 +40,27 @@ class ColorGradientRepository {
     }
   }
 
-  Future<ColorGradient?> getGradientById(int id) async {
+  /// Fetches a color gradient by its ID
+  /// Returns a [ColorGradient] object if found
+  /// Throws [DatabaseError] if the operation fails or if the gradient is not found
+  Future<ColorGradient> getGradientById(int id) async {
     try {
-      final row = await (db.select(db.colorGradients)
-        ..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
-      return row != null ? ColorGradient.fromDb(row) : null;
+      final row =
+          await (db.select(db.colorGradients)
+            ..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+      return row != null
+          ? ColorGradient.fromDb(row)
+          : throw DatabaseError(
+            'Color gradient with ID $id not found',
+            StackTrace.current,
+          );
     } catch (e, stack) {
       DatabaseError('Failed to fetch gradient by ID', stack).throwError();
     }
   }
 
+  /// Updates an existing color gradient in the database
+  /// Throws [DatabaseError] if the operation fails
   Future updateGradient(ColorGradient gradient) async {
     try {
       return await db.update(db.colorGradients).replace(gradient.toDb());
@@ -50,6 +69,8 @@ class ColorGradientRepository {
     }
   }
 
+  /// Deletes a color gradient by its ID
+  /// Throws [DatabaseError] if the operation fails
   Future deleteGradient(int id) async {
     try {
       return await (db.delete(db.colorGradients)
