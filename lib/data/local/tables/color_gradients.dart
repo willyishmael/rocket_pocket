@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:rocket_pocket/data/model/color_gradient.dart';
+import 'package:rocket_pocket/data/model/type_converter/color_list_converter.dart';
 
 class ColorGradients extends Table {
   IntColumn get id => integer().autoIncrement()();

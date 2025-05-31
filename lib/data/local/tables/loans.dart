@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:rocket_pocket/data/model/loan_status.dart';
-import 'package:rocket_pocket/data/model/loan_type.dart';
+import '../../model/type_converter/loan_type_converter.dart';
+import '../../model/type_converter/loan_status_converter.dart';
 
 class Loans extends Table {
   IntColumn get id => integer().autoIncrement()();

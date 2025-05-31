@@ -1,5 +1,4 @@
-import 'package:rocket_pocket/data/model/loan_status.dart';
-import 'package:rocket_pocket/data/model/loan_type.dart';
+import 'package:rocket_pocket/data/model/enums.dart';
 
 class Loan {
   final int id;

@@ -10,10 +10,11 @@ import 'package:rocket_pocket/data/local/tables/loans.dart';
 import 'package:rocket_pocket/data/local/tables/pockets.dart';
 import 'package:rocket_pocket/data/local/tables/transaction_categories.dart';
 import 'package:rocket_pocket/data/local/tables/transactions.dart';
-import 'package:rocket_pocket/data/model/color_gradient.dart';
-import 'package:rocket_pocket/data/model/loan_status.dart';
-import 'package:rocket_pocket/data/model/loan_type.dart';
+import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
+import 'package:rocket_pocket/data/model/type_converter/color_list_converter.dart';
+import 'package:rocket_pocket/data/model/type_converter/loan_status_converter.dart';
+import 'package:rocket_pocket/data/model/type_converter/loan_type_converter.dart';
 
 part 'database.g.dart';
 
