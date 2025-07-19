@@ -55,7 +55,7 @@ class Pocket {
       currency: currency,
       balance: balance,
       emoticon: emoticon,
-      colorGradientId: colorGradient.id,
+      colorGradientId: colorGradient.id ?? 0,
       createdAt: createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );

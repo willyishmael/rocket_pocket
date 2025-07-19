@@ -1,21 +1,20 @@
 import 'dart:ui';
 import '../local/database.dart' as db_provider;
 
-// Custom gradient representation for UI
 class ColorGradient {
-  final int id;
+  final int? id;
   final String name;
   final List<Color> colors;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   ColorGradient({
-    required this.id,
+    this.id,
     required this.name,
     required this.colors,
-    required this.createdAt,
+    this.createdAt,
   });
 
-  // Factory constructor to create a ColorGradient from a database row
+  // Factory constructor from database model
   static ColorGradient fromDb(db_provider.ColorGradient dbGradient) {
     return ColorGradient(
       id: dbGradient.id,
@@ -25,13 +24,19 @@ class ColorGradient {
     );
   }
 
-  // Converts the ColorGradient to a database-friendly format
+  // Conversion to database model, handling fallback for nullable fields
   db_provider.ColorGradient toDb() {
     return db_provider.ColorGradient(
-      id: id,
+      id: id ?? 0, // Or let the table auto-generate it
       name: name,
       colors: colors,
-      createdAt: createdAt,
+      createdAt: createdAt ?? DateTime.now(),
     );
   }
+
+  // Factory for an empty ColorGradient (for default state)
+  factory ColorGradient.empty() => ColorGradient(
+        name: '',
+        colors: [],
+      );
 }
