@@ -1,10 +1,10 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:rocket_pocket/data/local/default_values/default_gradients.dart';
 import 'package:rocket_pocket/data/local/tables/color_gradients.dart';
 import 'package:rocket_pocket/data/local/tables/loans.dart';
 import 'package:rocket_pocket/data/local/tables/pockets.dart';
@@ -15,6 +15,7 @@ import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/data/model/type_converter/color_list_converter.dart';
 import 'package:rocket_pocket/data/model/type_converter/loan_status_converter.dart';
 import 'package:rocket_pocket/data/model/type_converter/loan_type_converter.dart';
+import 'package:flutter/material.dart' as material;
 
 part 'database.g.dart';
 
@@ -31,6 +32,32 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) async {
+      await m.createAll();
+      await batch((b) {
+        b.insertAll(colorGradients, defaultGradients);
+      });
+
+      await into(pockets).insert(
+        PocketsCompanion.insert(
+          name: 'Default Pocket',
+          purpose: 'General Savings',
+          colorGradientId: 1,
+          emoticon: '💰',
+          currency: 'IDR',
+          balance: 0,
+          updatedAt: DateTime.now(),
+        ),
+      );
+    },
+    
+    onUpgrade: (Migrator m, int from, int to) async {
+      // Handle schema upgrades if needed
+    },
+  );
 }
 
 LazyDatabase _openConnection() {
