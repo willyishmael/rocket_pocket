@@ -175,18 +175,20 @@ class _CreatePocketScreenState extends State<CreatePocketScreen> {
                     ],
                   ),
                   const SizedBox(height: 16.0),
-                  ElevatedButton(
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    icon: const Icon(Icons.add),
                     onPressed: () {
-                      // Handle pocket creation
                       print('Pocket Created');
                     },
-                    child: const Text('Create Pocket'),
+                    label: const Text('Create'),
                   ),
                 ],
               ),
             ),
           ),
-          // Add your form or other widgets here
         ],
       ),
     );

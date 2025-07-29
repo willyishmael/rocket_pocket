@@ -66,6 +66,8 @@ class DashboardScreen extends StatelessWidget {
                             Colors.primaries[index % Colors.primaries.length],
                             Colors.accents[index % Colors.accents.length],
                           ],
+                          id: 23,
+                          createdAt: DateTime.now(),
                         ),
                         emoticon: '💰',
                       ),
