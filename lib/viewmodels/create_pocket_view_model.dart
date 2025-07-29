@@ -9,6 +9,16 @@ class CreatePocketState {
   final Pocket pocket;
   final List<ColorGradient> gradients;
   CreatePocketState({required this.pocket, required this.gradients});
+
+  CreatePocketState copyWith({
+    Pocket? pocket,
+    List<ColorGradient>? gradients,
+  }) {
+    return CreatePocketState(
+      pocket: pocket ?? this.pocket,
+      gradients: gradients ?? this.gradients,
+    );
+  }
 }
 
 final createPocketViewModelProvider =
@@ -72,5 +82,55 @@ class CreatePocketViewModel extends AsyncNotifier<CreatePocketState> {
       state = AsyncError(e, StackTrace.current);
       rethrow;
     }
+  }
+
+  void setName(String name) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(pocket: current.pocket.copyWith(name: name)),
+    );
+  }
+
+  void setPurpose(String purpose) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(pocket: current.pocket.copyWith(purpose: purpose)),
+    );
+  }
+
+  void setEmoticon(String emoticon) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(pocket: current.pocket.copyWith(emoticon: emoticon)),
+    );
+  }
+
+  void setColorGradient(ColorGradient gradient) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(
+        pocket: current.pocket.copyWith(colorGradient: gradient),
+      ),
+    );
+  }
+
+  void setCurrency(String currency) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(pocket: current.pocket.copyWith(currency: currency)),
+    );
+  }
+
+  void setBalance(double balance) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(pocket: current.pocket.copyWith(balance: balance)),
+    );
   }
 }

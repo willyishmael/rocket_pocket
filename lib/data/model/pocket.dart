@@ -25,6 +25,33 @@ class Pocket {
     this.updatedAt,
   });
 
+  /// Create a copy of this Pocket with updated values
+  /// If a value is not provided, the original value is retained
+  /// This is useful for immutability and state management
+  Pocket copyWith({
+    int? id,
+    String? name,
+    String? purpose,
+    String? currency,
+    double? balance,
+    String? emoticon,
+    ColorGradient? colorGradient,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Pocket(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      purpose: purpose ?? this.purpose,
+      currency: currency ?? this.currency,
+      balance: balance ?? this.balance,
+      emoticon: emoticon ?? this.emoticon,
+      colorGradient: colorGradient ?? this.colorGradient,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   /// Create a Pocket instance from a database row
   /// [fetchColorGradientById] is a function that retrieves the ColorGradient by its ID
   static Future<Pocket> fromDb(
