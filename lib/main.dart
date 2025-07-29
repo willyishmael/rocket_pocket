@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/router/navigation_helper.dart';
 import 'utils/theme/util.dart';
 import 'utils/theme/theme.dart';
 
 void main() {
   NavigationHelper.instance;
-  runApp(const RocketPocket());
+  runApp(const ProviderScope(child: RocketPocket()));
 }
 
 /// RocketPocket is the main widget of the app.
