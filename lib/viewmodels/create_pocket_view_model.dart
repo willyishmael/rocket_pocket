@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
@@ -10,10 +11,7 @@ class CreatePocketState {
   final List<ColorGradient> gradients;
   CreatePocketState({required this.pocket, required this.gradients});
 
-  CreatePocketState copyWith({
-    Pocket? pocket,
-    List<ColorGradient>? gradients,
-  }) {
+  CreatePocketState copyWith({Pocket? pocket, List<ColorGradient>? gradients}) {
     return CreatePocketState(
       pocket: pocket ?? this.pocket,
       gradients: gradients ?? this.gradients,
@@ -23,16 +21,7 @@ class CreatePocketState {
 
 final createPocketViewModelProvider =
     AsyncNotifierProvider<CreatePocketViewModel, CreatePocketState>(
-      (ref) {
-            final pocketRepository = ref.watch(pocketRepositoryProvider);
-            final colorGradientRepository = ref.watch(
-              colorGradientRepositoryProvider,
-            );
-            return CreatePocketViewModel()
-              .._pocketRepository = pocketRepository
-              .._colorGradientRepository = colorGradientRepository;
-          }
-          as CreatePocketViewModel Function(),
+      CreatePocketViewModel.new,
     );
 
 class CreatePocketViewModel extends AsyncNotifier<CreatePocketState> {
@@ -48,12 +37,15 @@ class CreatePocketViewModel extends AsyncNotifier<CreatePocketState> {
     final defaultGradient =
         gradients.isNotEmpty
             ? gradients.first
-            : ColorGradient(name: 'Default', colors: []);
+            : ColorGradient(
+              name: 'Platinum',
+              colors: [Colors.grey.shade900, Colors.grey.shade800],
+            );
 
     final pocket = Pocket(
       name: '',
       purpose: '',
-      emoticon: '',
+      emoticon: '💰',
       colorGradient: defaultGradient,
       currency: 'IDR',
       balance: 0,
