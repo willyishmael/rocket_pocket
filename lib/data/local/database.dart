@@ -4,9 +4,18 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:rocket_pocket/utils/enum_converter/loan_status.dart';
-import 'package:rocket_pocket/utils/enum_converter/loan_type.dart';
-import 'package:rocket_pocket/utils/enum_converter/transaction_type.dart';
+import 'package:rocket_pocket/data/local/default_values/default_gradients.dart';
+import 'package:rocket_pocket/data/local/tables/color_gradients.dart';
+import 'package:rocket_pocket/data/local/tables/loans.dart';
+import 'package:rocket_pocket/data/local/tables/pockets.dart';
+import 'package:rocket_pocket/data/local/tables/transaction_categories.dart';
+import 'package:rocket_pocket/data/local/tables/transactions.dart';
+import 'package:rocket_pocket/data/model/enums.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
+import 'package:rocket_pocket/data/model/type_converter/color_list_converter.dart';
+import 'package:rocket_pocket/data/model/type_converter/loan_status_converter.dart';
+import 'package:rocket_pocket/data/model/type_converter/loan_type_converter.dart';
+import 'package:flutter/material.dart' as material;
 
 part 'database.g.dart';
 
@@ -14,65 +23,41 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
   return AppDatabase();
 });
 
-// Define the Account table
-class Accounts extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
-  TextColumn get currency => text()();
-  IntColumn get balance => integer()();
-  RealColumn get accentColor => real()();
-}
-
-// Define the TransactionCategory table
-class TransactionCategories extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
-}
-
-// Define the Loan table
-class Loans extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get type => text().map(const LoanTypeConverter())();
-  TextColumn get counterpartyName => text()();
-  RealColumn get amount => real()();
-  TextColumn get description => text()();
-  DateTimeColumn get startDate => dateTime()();
-  DateTimeColumn get dueDate => dateTime()();
-  TextColumn get status => text().map(const LoanStatusConverter())();
-  RealColumn get repaidAmount => real()();
-  DateTimeColumn get createdAt => dateTime()();
-}
-
-// Define the Transaction table
-class Transactions extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get senderAccountId =>
-      integer().nullable().customConstraint('NULL REFERENCES accounts(id)')();
-  IntColumn get receiverAccountId =>
-      integer().nullable().customConstraint('NULL REFERENCES accounts(id)')();
-  TextColumn get type => text().map(const TransactionTypeConverter())();
-  IntColumn get categoryId =>
-      integer().nullable().customConstraint(
-        'NULL REFERENCES transaction_categories(id)',
-      )();
-  IntColumn get loanId =>
-      integer().nullable().customConstraint('NULL REFERENCES loans(id)')();
-  IntColumn get originalTransactionId =>
-      integer().nullable().customConstraint(
-        'NULL REFERENCES transactions(id)',
-      )();
-  TextColumn get description => text()();
-  RealColumn get amount => real()();
-  DateTimeColumn get createdAt => dateTime()();
-}
-
 // Create the database
-@DriftDatabase(tables: [Accounts, TransactionCategories, Loans, Transactions])
+@DriftDatabase(
+  tables: [Pockets, TransactionCategories, Loans, Transactions, ColorGradients],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
   int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) async {
+      await m.createAll();
+      await batch((b) {
+        b.insertAll(colorGradients, defaultGradients);
+      });
+
+      await into(pockets).insert(
+        PocketsCompanion.insert(
+          name: 'Default Pocket',
+          purpose: 'General Savings',
+          colorGradientId: 1,
+          emoticon: '💰',
+          currency: 'IDR',
+          balance: 0,
+          updatedAt: DateTime.now(),
+        ),
+      );
+    },
+    
+    onUpgrade: (Migrator m, int from, int to) async {
+      // Handle schema upgrades if needed
+    },
+  );
 }
 
 LazyDatabase _openConnection() {

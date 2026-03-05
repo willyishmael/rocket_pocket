@@ -1,9 +1,6 @@
-import 'package:drift/drift.dart' show TypeConverter;
+import 'package:drift/drift.dart';
+import 'package:rocket_pocket/data/model/enums.dart';
 
-enum LoanType { given, taken }
-
-// This converter is used to convert the LoanType enum to a string for storage in the database
-// and back to the enum when reading from the database.
 class LoanTypeConverter extends TypeConverter<LoanType, String> {
   const LoanTypeConverter();
 

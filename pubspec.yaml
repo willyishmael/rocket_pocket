@@ -21,6 +21,10 @@ dependencies:
   flutter_riverpod: ^2.6.1
   go_router: ^15.0.0
   flutter_adaptive_scaffold: ^0.3.2
+  flutter_swiper_view: ^1.1.8
+
+  country_currency_pickers: ^3.0.0
+  currency_text_input_formatter: ^2.3.0
 
 dev_dependencies:
   flutter_test:
