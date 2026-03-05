@@ -72,17 +72,35 @@ class Pocket {
     );
   }
 
-  /// Convert this Pocket instance to a database row
-  db_provider.Pocket toDb() {
-    final generatedId = id ?? DateTime.now().millisecondsSinceEpoch;
-    return db_provider.Pocket(
-      id: generatedId,
+  /// Convert this Pocket to a Companion for inserting a new row.
+  /// Uses Value.absent() for id so the database auto-increments it.
+  db_provider.PocketsCompanion toInsertCompanion() {
+    return db_provider.PocketsCompanion.insert(
       name: name,
       purpose: purpose,
       currency: currency,
       balance: balance,
       emoticon: emoticon,
-      colorGradientId: colorGradient.id ?? 0,
+      colorGradientId: colorGradient.id!,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Convert this Pocket to a database row for updates.
+  /// Requires a non-null id (the row must already exist).
+  db_provider.Pocket toDb() {
+    assert(
+      id != null,
+      'toDb() requires a non-null id. Use toInsertCompanion() for new pockets.',
+    );
+    return db_provider.Pocket(
+      id: id!,
+      name: name,
+      purpose: purpose,
+      currency: currency,
+      balance: balance,
+      emoticon: emoticon,
+      colorGradientId: colorGradient.id!,
       createdAt: createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
