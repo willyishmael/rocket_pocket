@@ -4,20 +4,14 @@ import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
 
 final pocketViewModelProvider =
-    AsyncNotifierProvider<PocketViewModel, List<Pocket>>(
-      (ref) {
-            final pocketRepository = ref.watch(pocketRepositoryProvider);
-            return PocketViewModel(pocketRepository);
-          }
-          as PocketViewModel Function(),
-    );
+    AsyncNotifierProvider<PocketViewModel, List<Pocket>>(PocketViewModel.new);
 
 class PocketViewModel extends AsyncNotifier<List<Pocket>> {
-  late final PocketRepository _pocketRepository;
-  PocketViewModel(this._pocketRepository);
+  late PocketRepository _pocketRepository;
 
   @override
   FutureOr<List<Pocket>> build() async {
+    _pocketRepository = ref.watch(pocketRepositoryProvider);
     return await _fetchPockets();
   }
 
@@ -45,7 +39,6 @@ class PocketViewModel extends AsyncNotifier<List<Pocket>> {
     }
   }
 
-  
   Future<Pocket?> getPocketById(int id) async {
     try {
       return await _pocketRepository.getPocketById(id);

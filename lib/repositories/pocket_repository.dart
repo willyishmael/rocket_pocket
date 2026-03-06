@@ -42,7 +42,7 @@ class PocketRepository {
   /// Throws [DatabaseError] if the operation fails
   Future<int> insertPocket(Pocket pocket) async {
     try {
-      return await db.into(db.pockets).insert(pocket.toDb());
+      return await db.into(db.pockets).insert(pocket.toInsertCompanion());
     } catch (e, stack) {
       DatabaseError('Failed to insert pocket', stack).throwError();
     }
@@ -53,8 +53,9 @@ class PocketRepository {
   /// Throws [DatabaseError] if the operation fails or if the pocket is not found
   Future<Pocket?> getPocketById(int id) async {
     try {
-      final row = await (db.select(db.pockets)
-          ..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+      final row =
+          await (db.select(db.pockets)
+            ..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
       if (row == null) return null;
       return await Pocket.fromDb(
         row,

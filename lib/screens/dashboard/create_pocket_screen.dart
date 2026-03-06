@@ -135,8 +135,9 @@ class CreatePocketScreen extends ConsumerWidget {
                           minimumSize: const Size.fromHeight(50),
                         ),
                         icon: const Icon(Icons.add),
-                        onPressed: () {
-                          ref.read(createPocketViewModelProvider.notifier).createPocket(pocket);
+                        onPressed: () async {
+                          await ref.read(createPocketViewModelProvider.notifier).createPocket(pocket);
+                          if (context.mounted) context.pop();
                         },
                         label: const Text('Create'),
                       ),

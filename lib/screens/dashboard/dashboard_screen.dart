@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rocket_pocket/data/model/pocket.dart';
-import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/0_widgets/pocket_card/pocket_card.dart';
+import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pocketsAsync = ref.watch(pocketViewModelProvider);
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -35,10 +37,12 @@ class DashboardScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   IconButton.filledTonal(
-                    onPressed: () {
-                      context.push(Paths.createPocket);
+                    onPressed: () async {
+                      await context.push(Paths.createPocket);
+                      if (!context.mounted) return;
+                      await ref.read(pocketViewModelProvider.notifier).refreshPockets();
                     },
-                    icon: Icon(Icons.add),
+                    icon: const Icon(Icons.add),
                   ),
                 ],
               ),
@@ -47,31 +51,25 @@ class DashboardScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: SizedBox(
               height: 250.0,
-              child: Swiper(
-                itemCount: 3,
-                viewportFraction: 0.8,
-                scale: 1.1,
-                fade: 0.6,
-                curve: Curves.bounceInOut,
-                itemBuilder:
-                    (context, index) => PocketCard(
-                      pocket: Pocket(
-                        name: 'Pocket $index',
-                        purpose: 'Saving Pocket',
-                        balance: 1000.0 + (index * 100),
-                        currency: 'USD',
-                        colorGradient: ColorGradient(
-                          name: 'Gradient $index',
-                          colors: [
-                            Colors.primaries[index % Colors.primaries.length],
-                            Colors.accents[index % Colors.accents.length],
-                          ],
-                          id: 23,
-                          createdAt: DateTime.now(),
-                        ),
-                        emoticon: '💰',
-                      ),
-                    ),
+              child: pocketsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Error: $e')),
+                data: (pockets) {
+                  if (pockets.isEmpty) {
+                    return const Center(
+                      child: Text('No pockets yet. Tap + to create one.'),
+                    );
+                  }
+                  return Swiper(
+                    itemCount: pockets.length,
+                    viewportFraction: 0.8,
+                    scale: 1.1,
+                    fade: 0.6,
+                    curve: Curves.bounceInOut,
+                    itemBuilder:
+                        (context, index) => PocketCard(pocket: pockets[index]),
+                  );
+                },
               ),
             ),
           ),
