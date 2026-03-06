@@ -37,8 +37,9 @@ class DashboardScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   IconButton.filledTonal(
-                    onPressed: () {
-                      context.push(Paths.createPocket);
+                    onPressed: () async {
+                      await context.push(Paths.createPocket);
+                      ref.read(pocketViewModelProvider.notifier).refreshPockets();
                     },
                     icon: const Icon(Icons.add),
                   ),
