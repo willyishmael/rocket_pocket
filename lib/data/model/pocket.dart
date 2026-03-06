@@ -1,5 +1,6 @@
 import 'color_gradient.dart';
 import '../local/database.dart' as db_provider;
+import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 
 /// Represents a financial pocket with various attributes
 class Pocket {
@@ -74,25 +75,44 @@ class Pocket {
 
   /// Convert this Pocket to a Companion for inserting a new row.
   /// Uses Value.absent() for id so the database auto-increments it.
+  /// Throws [ValidationError] if [colorGradient] has no id (i.e. has not been
+  /// persisted to the database yet).
   db_provider.PocketsCompanion toInsertCompanion() {
+    final gradientId = colorGradient.id;
+    if (gradientId == null) {
+      throw ValidationError(
+        'Cannot insert pocket: the selected color gradient has not been saved to the database. '
+        'Ensure a valid gradient is chosen before creating a pocket.',
+        StackTrace.current,
+      );
+    }
     return db_provider.PocketsCompanion.insert(
       name: name,
       purpose: purpose,
       currency: currency,
       balance: balance,
       emoticon: emoticon,
-      colorGradientId: colorGradient.id!,
+      colorGradientId: gradientId,
       updatedAt: DateTime.now(),
     );
   }
 
   /// Convert this Pocket to a database row for updates.
   /// Requires a non-null id (the row must already exist).
+  /// Throws [ValidationError] if [colorGradient] has no id.
   db_provider.Pocket toDb() {
     assert(
       id != null,
       'toDb() requires a non-null id. Use toInsertCompanion() for new pockets.',
     );
+    final gradientId = colorGradient.id;
+    if (gradientId == null) {
+      throw ValidationError(
+        'Cannot update pocket: the selected color gradient has not been saved to the database. '
+        'Ensure a valid gradient is chosen before updating a pocket.',
+        StackTrace.current,
+      );
+    }
     return db_provider.Pocket(
       id: id!,
       name: name,
@@ -100,7 +120,7 @@ class Pocket {
       currency: currency,
       balance: balance,
       emoticon: emoticon,
-      colorGradientId: colorGradient.id!,
+      colorGradientId: gradientId,
       createdAt: createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
