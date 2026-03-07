@@ -22,8 +22,8 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
     try {
       final rows = await _transactionRepository.getAllTransactions();
       return rows.map(Transaction.fromDb).toList();
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
+    } catch (e, st) {
+      state = AsyncError(e, st);
       rethrow;
     }
   }
@@ -39,8 +39,8 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
         transaction.toInsertCompanion(),
       );
       await refreshTransactions();
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
+    } catch (e, st) {
+      state = AsyncError(e, st);
       rethrow;
     }
   }
@@ -50,8 +50,8 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
       final row = await _transactionRepository.getTransactionById(id);
       if (row == null) return null;
       return Transaction.fromDb(row);
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
+    } catch (e, st) {
+      state = AsyncError(e, st);
       rethrow;
     }
   }
@@ -62,8 +62,8 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
         transaction.toUpdateCompanion(),
       );
       await refreshTransactions();
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
+    } catch (e, st) {
+      state = AsyncError(e, st);
       rethrow;
     }
   }
@@ -72,8 +72,8 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
     try {
       await _transactionRepository.deleteTransaction(id);
       await refreshTransactions();
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
+    } catch (e, st) {
+      state = AsyncError(e, st);
       rethrow;
     }
   }
@@ -90,8 +90,8 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
       final combined = {...sent, ...received}.toList();
       combined.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return combined.map(Transaction.fromDb).toList();
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
+    } catch (e, st) {
+      state = AsyncError(e, st);
       rethrow;
     }
   }
