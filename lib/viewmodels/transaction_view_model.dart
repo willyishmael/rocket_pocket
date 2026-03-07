@@ -82,14 +82,9 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
   /// either as sender or receiver. Useful for a pocket detail screen.
   Future<List<Transaction>> getTransactionsByPocketId(int pocketId) async {
     try {
-      final sent = await _transactionRepository.getTransactionsBySenderPocketId(
-        pocketId,
-      );
-      final received = await _transactionRepository
-          .getTransactionsByReceiverPocketId(pocketId);
-      final combined = {...sent, ...received}.toList();
-      combined.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return combined.map(Transaction.fromDb).toList();
+      final rows =
+          await _transactionRepository.getTransactionsByPocketId(pocketId);
+      return rows.map(Transaction.fromDb).toList();
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;
