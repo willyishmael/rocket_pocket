@@ -43,7 +43,9 @@ class TransactionListTile extends StatelessWidget {
               fontSize: 16,
             ),
           ),
-          Text(transaction.createdAt.toLocal().toString().split(' ')[0]),
+          Text(
+            transaction.createdAt?.toLocal().toString().split(' ')[0] ?? '-',
+          ),
         ],
       ),
       onTap: () {
