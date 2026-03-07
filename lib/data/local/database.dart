@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:rocket_pocket/data/local/default_values/default_categories.dart';
 import 'package:rocket_pocket/data/local/default_values/default_gradients.dart';
 import 'package:rocket_pocket/data/local/tables/color_gradients.dart';
 import 'package:rocket_pocket/data/local/tables/loans.dart';
@@ -39,6 +40,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await batch((b) {
         b.insertAll(colorGradients, defaultGradients);
+        b.insertAll(transactionCategories, defaultCategories);
       });
 
       await into(pockets).insert(
