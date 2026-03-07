@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
@@ -101,6 +102,25 @@ class TransactionRepository {
     } catch (e, stack) {
       DatabaseError(
         'Failed to fetch transactions by receiver Pocket ID',
+        stack,
+      ).throwError();
+    }
+  }
+
+  /// Fetches all transactions where the pocket is either sender or receiver,
+  /// sorted by createdAt descending (newest first).
+  Future<List<Transaction>> getTransactionsByPocketId(int pocketId) async {
+    try {
+      return await (db.select(db.transactions)
+        ..where(
+          (tbl) =>
+              tbl.senderPocketId.equals(pocketId) |
+              tbl.receiverPocketId.equals(pocketId),
+        )
+        ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])).get();
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to fetch transactions by pocket ID',
         stack,
       ).throwError();
     }
