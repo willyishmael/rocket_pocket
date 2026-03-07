@@ -104,6 +104,27 @@ class Transaction {
     );
   }
 
+  /// Convert this Transaction to a Companion for updating an existing row.
+  /// Requires a non-null id (the row must already exist).
+  db_provider.TransactionsCompanion toUpdateCompanion() {
+    assert(
+      id != null,
+      'toUpdateCompanion() requires a non-null id. Use toInsertCompanion() for new transactions.',
+    );
+    return db_provider.TransactionsCompanion(
+      id: Value(id!),
+      senderPocketId: Value(senderPocketId),
+      receiverPocketId: Value(receiverPocketId),
+      type: Value(type),
+      categoryId: Value(categoryId),
+      loanId: Value(loanId),
+      originalTransactionId: Value(originalTransactionId),
+      description: Value(description),
+      amount: Value(amount),
+      updatedAt: Value(DateTime.now()),
+    );
+  }
+
   /// Convert this Transaction to a database row for updates.
   /// Requires a non-null id (the row must already exist).
   db_provider.Transaction toDb() {
