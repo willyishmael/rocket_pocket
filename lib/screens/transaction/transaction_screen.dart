@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
+import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
-class TransactionScreen extends StatelessWidget {
+class TransactionScreen extends ConsumerWidget {
   TransactionScreen({super.key});
 
   final List<Transaction> transactions = [
@@ -61,9 +63,9 @@ class TransactionScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      floatingActionButton: addTransactionActionButton(context),
+      floatingActionButton: addTransactionActionButton(context, ref),
       floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
       floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
 
@@ -98,10 +100,12 @@ class TransactionScreen extends StatelessWidget {
     );
   }
 
-  FloatingActionButton addTransactionActionButton(BuildContext context) {
+  FloatingActionButton addTransactionActionButton(BuildContext context, WidgetRef ref) {
     return FloatingActionButton(
-      onPressed: () {
-        context.go(Paths.addTransaction);
+      onPressed: () async {
+        await context.push(Paths.addTransaction);
+        if (!context.mounted) return;
+        await ref.read(transactionViewModelProvider.notifier).refreshTransactions();
       },
       child: const Icon(Icons.add),
     );
