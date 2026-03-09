@@ -20,6 +20,17 @@ class TransactionRepository {
     }
   }
 
+  Future<List<TransactionCategory>> getAllCategories() async {
+    try {
+      return await db.select(db.transactionCategories).get();
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to fetch transaction categories',
+        stack,
+      ).throwError();
+    }
+  }
+
   Future<int> insertTransaction(TransactionsCompanion transaction) async {
     try {
       return await db.into(db.transactions).insert(transaction);
@@ -96,9 +107,8 @@ class TransactionRepository {
     int receiverPocketId,
   ) async {
     try {
-      return await (db.select(
-        db.transactions,
-      )..where((tbl) => tbl.receiverPocketId.equals(receiverPocketId))).get();
+      return await (db.select(db.transactions)
+        ..where((tbl) => tbl.receiverPocketId.equals(receiverPocketId))).get();
     } catch (e, stack) {
       DatabaseError(
         'Failed to fetch transactions by receiver Pocket ID',
@@ -112,12 +122,13 @@ class TransactionRepository {
   Future<List<Transaction>> getTransactionsByPocketId(int pocketId) async {
     try {
       return await (db.select(db.transactions)
-        ..where(
-          (tbl) =>
-              tbl.senderPocketId.equals(pocketId) |
-              tbl.receiverPocketId.equals(pocketId),
-        )
-        ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)])).get();
+            ..where(
+              (tbl) =>
+                  tbl.senderPocketId.equals(pocketId) |
+                  tbl.receiverPocketId.equals(pocketId),
+            )
+            ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)]))
+          .get();
     } catch (e, stack) {
       DatabaseError(
         'Failed to fetch transactions by pocket ID',
