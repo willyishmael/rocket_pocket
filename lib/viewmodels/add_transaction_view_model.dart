@@ -258,6 +258,8 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
         }
       });
 
+      // Ensure pocket balances in the UI are refreshed after DB updates
+      ref.invalidate(pocketViewModelProvider);
       // Reset form after successful submit
       state = AsyncData(current.copyWith(description: '', amount: 0));
     } catch (e, stack) {
