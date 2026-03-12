@@ -36,8 +36,9 @@ class TransactionRepository {
     TransactionType type,
   ) async {
     try {
-      final all = await db.select(db.transactionCategories).get();
-      return all.where((c) => c.type == type).toList();
+      final query = db.select(db.transactionCategories)
+        ..where((tbl) => tbl.type.equals(type));
+      return await query.get();
     } catch (e, stack) {
       DatabaseError(
         'Failed to fetch transaction categories by type',
