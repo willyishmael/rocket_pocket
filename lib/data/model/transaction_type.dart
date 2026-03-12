@@ -15,6 +15,10 @@ extension TransactionTypeExtension on TransactionType {
         return 'Refund';
     }
   }
+
+  /// Whether this type represents money coming in (positive).
+  bool get isPositive =>
+      this == TransactionType.income || this == TransactionType.refund;
 }
 
 // This converter is used to convert the TransactionType enum to a string for storage in the database
