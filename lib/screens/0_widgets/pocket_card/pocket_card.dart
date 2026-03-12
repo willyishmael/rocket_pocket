@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/utils/currency_utils.dart';
 
 class PocketCard extends StatelessWidget {
   final Pocket pocket;
@@ -54,7 +55,7 @@ class PocketCard extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      pocket.balance.toString(),
+                      CurrencyUtils.format(pocket.balance, pocket.currency),
                       style: const TextStyle(
                         fontSize: 32.0,
                         fontWeight: FontWeight.bold,
@@ -65,14 +66,14 @@ class PocketCard extends StatelessWidget {
                   const SizedBox(height: 16.0),
                   Row(
                     children: [
-                      Text(
+                      const Text(
                         '💳',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28.0,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(width: 8.0),
+                      const SizedBox(width: 8.0),
                       Text(
                         pocket.currency,
                         style: const TextStyle(
