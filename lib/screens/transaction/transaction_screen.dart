@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
+import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
 class TransactionScreen extends ConsumerWidget {
@@ -11,6 +12,11 @@ class TransactionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(transactionViewModelProvider);
+    final pockets = ref.watch(pocketViewModelProvider).valueOrNull ?? [];
+    final pocketCurrency = {
+      for (final p in pockets)
+        if (p.id != null) p.id!: p.currency,
+    };
 
     return Scaffold(
       floatingActionButton: _addTransactionButton(context, ref),
@@ -48,8 +54,17 @@ class TransactionScreen extends ConsumerWidget {
               }
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) =>
-                      TransactionListTile(transaction: transactions[index]),
+                  (context, index) {
+                    final t = transactions[index];
+                    final currency =
+                        pocketCurrency[t.senderPocketId] ??
+                        pocketCurrency[t.receiverPocketId] ??
+                        'IDR';
+                    return TransactionListTile(
+                      transaction: t,
+                      currency: currency,
+                    );
+                  },
                   childCount: transactions.length,
                 ),
               );
