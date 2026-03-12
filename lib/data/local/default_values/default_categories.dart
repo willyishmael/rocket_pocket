@@ -1,29 +1,37 @@
 import 'package:rocket_pocket/data/local/database.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
 
 List<TransactionCategoriesCompanion> get defaultCategories {
   final now = DateTime.now();
+
+  TransactionCategoriesCompanion cat(String name, TransactionType type) =>
+      TransactionCategoriesCompanion.insert(
+        name: name,
+        type: type,
+        updatedAt: now,
+      );
+
   return [
-    // Expense categories
-    TransactionCategoriesCompanion.insert(name: 'Food & Drinks', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Groceries', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Transportation', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Housing & Rent', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Utilities', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Health & Medical', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Education', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Entertainment', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Shopping', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Travel', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Personal Care', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Subscriptions', updatedAt: now),
+    // Expense & Refund categories
+    cat('Food & Drinks', TransactionType.expense),
+    cat('Groceries', TransactionType.expense),
+    cat('Transportation', TransactionType.expense),
+    cat('Housing & Rent', TransactionType.expense),
+    cat('Utilities', TransactionType.expense),
+    cat('Health & Medical', TransactionType.expense),
+    cat('Education', TransactionType.expense),
+    cat('Entertainment', TransactionType.expense),
+    cat('Shopping', TransactionType.expense),
+    cat('Travel', TransactionType.expense),
+    cat('Personal Care', TransactionType.expense),
+    cat('Subscriptions', TransactionType.expense),
+    cat('Other', TransactionType.expense),
     // Income categories
-    TransactionCategoriesCompanion.insert(name: 'Salary', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Freelance', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Business', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Investment', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Gift', updatedAt: now),
-    // General
-    TransactionCategoriesCompanion.insert(name: 'Transfer', updatedAt: now),
-    TransactionCategoriesCompanion.insert(name: 'Other', updatedAt: now),
+    cat('Salary', TransactionType.income),
+    cat('Freelance', TransactionType.income),
+    cat('Business', TransactionType.income),
+    cat('Investment', TransactionType.income),
+    cat('Gift', TransactionType.income),
+    cat('Other', TransactionType.income),
   ];
 }
