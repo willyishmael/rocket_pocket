@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
@@ -26,6 +27,20 @@ class TransactionRepository {
     } catch (e, stack) {
       DatabaseError(
         'Failed to fetch transaction categories',
+        stack,
+      ).throwError();
+    }
+  }
+
+  Future<List<TransactionCategory>> getAllCategoriesByType(
+    TransactionType type,
+  ) async {
+    try {
+      final all = await db.select(db.transactionCategories).get();
+      return all.where((c) => c.type == type).toList();
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to fetch transaction categories by type',
         stack,
       ).throwError();
     }
