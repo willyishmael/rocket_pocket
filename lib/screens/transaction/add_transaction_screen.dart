@@ -43,6 +43,7 @@ class AddTransactionScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       SegmentedButton<TransactionType>(
+                        showSelectedIcon: false,
                         segments:
                             TransactionType.values
                                 .map(
@@ -128,33 +129,67 @@ class AddTransactionScreen extends ConsumerWidget {
 
                       const SizedBox(height: 16),
 
-                      // ── Category ──────────────────────────────────────
-                      DropdownButtonFormField(
-                        value: state.selectedCategory,
-                        decoration: const InputDecoration(
-                          labelText: 'Category',
-                          border: OutlineInputBorder(),
-                          icon: Icon(Icons.category),
+                      // ── Category (hidden for Transfer) ────────────────
+                      if (state.selectedType != TransactionType.transfer) ...[
+                        DropdownButtonFormField(
+                          value: state.selectedCategory,
+                          decoration: const InputDecoration(
+                            labelText: 'Category',
+                            border: OutlineInputBorder(),
+                            icon: Icon(Icons.category),
+                          ),
+                          items:
+                              state.filteredCategories
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(c.name),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (c) {
+                            if (c != null) {
+                              ref
+                                  .read(
+                                    addTransactionViewModelProvider.notifier,
+                                  )
+                                  .setCategory(c);
+                            }
+                          },
                         ),
-                        items:
-                            state.categories
-                                .map(
-                                  (c) => DropdownMenuItem(
-                                    value: c,
-                                    child: Text(c.name),
-                                  ),
-                                )
-                                .toList(),
-                        onChanged: (c) {
-                          if (c != null) {
-                            ref
-                                .read(addTransactionViewModelProvider.notifier)
-                                .setCategory(c);
-                          }
-                        },
-                      ),
+                        const SizedBox(height: 16),
+                      ],
 
-                      const SizedBox(height: 24),
+                      // ── Original Transaction (Refund only) ────────────
+                      if (state.selectedType == TransactionType.refund) ...[
+                        DropdownButtonFormField<int>(
+                          value: state.originalTransactionId,
+                          decoration: const InputDecoration(
+                            labelText: 'Original Transaction',
+                            border: OutlineInputBorder(),
+                            icon: Icon(Icons.receipt_long),
+                          ),
+                          items:
+                              state.refundableTransactions
+                                  .map(
+                                    (t) => DropdownMenuItem(
+                                      value: t.id,
+                                      child: Text(
+                                        '${t.description} — ${t.formattedAmount}',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged:
+                              (id) => ref
+                                  .read(
+                                    addTransactionViewModelProvider.notifier,
+                                  )
+                                  .setOriginalTransactionId(id),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
 
                       // ── Description ───────────────────────────────────
                       TextField(
