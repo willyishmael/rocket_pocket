@@ -219,6 +219,40 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
       await _transactionRepository.insertTransaction(
         transaction.toInsertCompanion(),
       );
+
+      // Update pocket balance(s) based on transaction type
+      final amount = current.amount;
+      final sender = current.senderPocket;
+      final receiver = current.receiverPocket;
+
+      if (current.selectedType == TransactionType.transfer) {
+        // Deduct from sender, credit receiver
+        if (sender != null) {
+          await _pocketRepository.updatePocket(
+            sender.copyWith(balance: sender.balance - amount),
+          );
+        }
+        if (receiver != null) {
+          await _pocketRepository.updatePocket(
+            receiver.copyWith(balance: receiver.balance + amount),
+          );
+        }
+      } else if (current.selectedType.isPositive) {
+        // income / refund — credit the pocket
+        if (sender != null) {
+          await _pocketRepository.updatePocket(
+            sender.copyWith(balance: sender.balance + amount),
+          );
+        }
+      } else {
+        // expense — deduct from pocket
+        if (sender != null) {
+          await _pocketRepository.updatePocket(
+            sender.copyWith(balance: sender.balance - amount),
+          );
+        }
+      }
+
       // Reset form after successful submit
       state = AsyncData(current.copyWith(description: '', amount: 0));
     } catch (e, stack) {
