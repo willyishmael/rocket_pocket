@@ -37,7 +37,7 @@ class TransactionRepository {
   ) async {
     try {
       final query = db.select(db.transactionCategories)
-        ..where((tbl) => tbl.type.equals(type));
+        ..where((tbl) => tbl.type.equalsValue(type));
       return await query.get();
     } catch (e, stack) {
       DatabaseError(
