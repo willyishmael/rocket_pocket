@@ -1,72 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
-import 'package:rocket_pocket/data/model/transaction_type.dart';
+import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
+import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
-class TransactionScreen extends StatelessWidget {
-  TransactionScreen({super.key});
-
-  final List<Transaction> transactions = [
-    Transaction(
-      id: 1,
-      senderPocketId: 1,
-      receiverPocketId: null,
-      type: TransactionType.expense,
-      categoryId: 1,
-      loanId: null,
-      originalTransactionId: null,
-      amount: 50.00,
-      description: 'cilok',
-      createdAt: DateTime.now(),
-    ),
-    Transaction(
-      id: 2,
-      senderPocketId: null,
-      receiverPocketId: 2,
-      type: TransactionType.income,
-      categoryId: 1,
-      loanId: null,
-      originalTransactionId: null,
-      amount: 50.00,
-      description: 'steal money from stranger',
-      createdAt: DateTime.now(),
-    ),
-    Transaction(
-      id: 3,
-      senderPocketId: 1,
-      receiverPocketId: 2,
-      type: TransactionType.transfer,
-      categoryId: 1,
-      loanId: null,
-      originalTransactionId: null,
-      amount: 50.00,
-      description: 'transfer money to friend',
-      createdAt: DateTime.now(),
-    ),
-    Transaction(
-      id: 4,
-      senderPocketId: null,
-      receiverPocketId: 2,
-      type: TransactionType.refund,
-      categoryId: 1,
-      loanId: null,
-      originalTransactionId: 2,
-      amount: 50.00,
-      description: 'refund money from friend',
-      createdAt: DateTime.now(),
-    ),
-    // Add more transactions here
-  ];
+class TransactionScreen extends ConsumerWidget {
+  const TransactionScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final transactionsAsync = ref.watch(transactionViewModelProvider);
+    final pockets = ref.watch(pocketViewModelProvider).valueOrNull ?? [];
+    final pocketCurrency = {
+      for (final p in pockets)
+        if (p.id != null) p.id!: p.currency,
+    };
+
     return Scaffold(
-      floatingActionButton: addTransactionActionButton(context),
+      floatingActionButton: _addTransactionButton(context, ref),
       floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
       floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -79,29 +34,58 @@ class TransactionScreen extends StatelessWidget {
               titlePadding: EdgeInsets.only(left: 16, bottom: 16),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.filter_list),
-                onPressed: () {
-                  // Handle filter action
-                  print('Filter transactions');
-                },
-              ),
+              IconButton(icon: const Icon(Icons.filter_list), onPressed: () {}),
             ],
           ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              return TransactionListTile(transaction: transactions[index]);
-            }, childCount: transactions.length),
+          transactionsAsync.when(
+            loading:
+                () => const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+            error:
+                (e, _) => SliverFillRemaining(
+                  child: Center(child: Text('Error: $e')),
+                ),
+            data: (transactions) {
+              if (transactions.isEmpty) {
+                return const SliverFillRemaining(
+                  child: Center(child: Text('No transactions yet.')),
+                );
+              }
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final t = transactions[index];
+                    final currency =
+                        pocketCurrency[t.senderPocketId] ??
+                        pocketCurrency[t.receiverPocketId] ??
+                        'IDR';
+                    return TransactionListTile(
+                      transaction: t,
+                      currency: currency,
+                    );
+                  },
+                  childCount: transactions.length,
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  FloatingActionButton addTransactionActionButton(BuildContext context) {
+  FloatingActionButton _addTransactionButton(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     return FloatingActionButton(
-      onPressed: () {
-        context.go(Paths.addTransaction);
+      onPressed: () async {
+        await context.push(Paths.addTransaction);
+        if (!context.mounted) return;
+        await ref
+            .read(transactionViewModelProvider.notifier)
+            .refreshTransactions();
       },
       child: const Icon(Icons.add),
     );
