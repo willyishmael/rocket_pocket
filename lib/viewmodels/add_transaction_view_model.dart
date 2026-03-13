@@ -6,6 +6,7 @@ import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
 class AddTransactionState {
   final List<Pocket> pockets;
@@ -218,7 +219,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
       );
 
       // Ensure the insert and all balance updates happen atomically.
-      final database = ref.read(db.databaseProvider);
+      final database = ref.read(db.appDatabaseProvider);
       await database.transaction(() async {
         await _transactionRepository.insertTransaction(
           transaction.toInsertCompanion(),
