@@ -67,8 +67,8 @@ class TransactionListTile extends StatelessWidget {
       title: Text(transaction.description),
       subtitle: Text(
         pocketName != null
-            ? '$pocketName  •  ${_formatDateTime(transaction.createdAt)}'
-            : _formatDateTime(transaction.createdAt),
+            ? '$pocketName  •  ${_formatDateTime(transaction.date ?? transaction.createdAt)}'
+            : _formatDateTime(transaction.date ?? transaction.createdAt),
       ),
       leading: Icon(iconData, size: 24, color: iconColor),
       trailing: Column(
