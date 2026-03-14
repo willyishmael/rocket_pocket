@@ -6,11 +6,13 @@ import 'package:rocket_pocket/utils/currency_utils.dart';
 class TransactionListTile extends StatelessWidget {
   final Transaction transaction;
   final String currency;
+  final String? pocketName;
 
   const TransactionListTile({
     super.key,
     required this.transaction,
     this.currency = 'IDR',
+    this.pocketName,
   });
 
   static const _months = [
@@ -63,7 +65,11 @@ class TransactionListTile extends StatelessWidget {
 
     return ListTile(
       title: Text(transaction.description),
-      subtitle: Text(_formatDateTime(transaction.createdAt)),
+      subtitle: Text(
+        pocketName != null
+            ? '$pocketName  •  ${_formatDateTime(transaction.createdAt)}'
+            : _formatDateTime(transaction.createdAt),
+      ),
       leading: Icon(iconData, size: 24, color: iconColor),
       trailing: Column(
         mainAxisSize: MainAxisSize.min,

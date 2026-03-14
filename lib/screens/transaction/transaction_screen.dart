@@ -17,6 +17,10 @@ class TransactionScreen extends ConsumerWidget {
       for (final p in pockets)
         if (p.id != null) p.id!: p.currency,
     };
+    final pocketName = {
+      for (final p in pockets)
+        if (p.id != null) p.id!: p.name,
+    };
 
     return Scaffold(
       floatingActionButton: _addTransactionButton(context, ref),
@@ -53,20 +57,23 @@ class TransactionScreen extends ConsumerWidget {
                 );
               }
               return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final t = transactions[index];
-                    final currency =
-                        pocketCurrency[t.senderPocketId] ??
-                        pocketCurrency[t.receiverPocketId] ??
-                        'IDR';
-                    return TransactionListTile(
-                      transaction: t,
-                      currency: currency,
-                    );
-                  },
-                  childCount: transactions.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final t = transactions[index];
+                  final currency =
+                      pocketCurrency[t.senderPocketId] ??
+                      pocketCurrency[t.receiverPocketId] ??
+                      'IDR';
+                  final String? resolvedPocketName =
+                      t.isTransfer
+                          ? '${pocketName[t.senderPocketId] ?? '?'} → ${pocketName[t.receiverPocketId] ?? '?'}'
+                          : pocketName[t.senderPocketId] ??
+                              pocketName[t.receiverPocketId];
+                  return TransactionListTile(
+                    transaction: t,
+                    currency: currency,
+                    pocketName: resolvedPocketName,
+                  );
+                }, childCount: transactions.length),
               );
             },
           ),
