@@ -12,6 +12,7 @@ class Transaction {
   final int? originalTransactionId;
   final String description;
   final double amount;
+  final DateTime? date;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -25,6 +26,7 @@ class Transaction {
     this.originalTransactionId,
     required this.description,
     required this.amount,
+    this.date,
     this.createdAt,
     this.updatedAt,
   });
@@ -52,6 +54,7 @@ class Transaction {
     int? originalTransactionId,
     String? description,
     double? amount,
+    DateTime? date,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -66,6 +69,7 @@ class Transaction {
           originalTransactionId ?? this.originalTransactionId,
       description: description ?? this.description,
       amount: amount ?? this.amount,
+      date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -83,6 +87,7 @@ class Transaction {
       originalTransactionId: dbRow.originalTransactionId,
       description: dbRow.description,
       amount: dbRow.amount,
+      date: dbRow.date,
       createdAt: dbRow.createdAt,
       updatedAt: dbRow.updatedAt,
     );
@@ -100,6 +105,7 @@ class Transaction {
       originalTransactionId: Value(originalTransactionId),
       description: description,
       amount: amount,
+      date: Value(date),
       updatedAt: DateTime.now(),
     );
   }
@@ -121,6 +127,7 @@ class Transaction {
       originalTransactionId: Value(originalTransactionId),
       description: Value(description),
       amount: Value(amount),
+      date: Value(date),
       updatedAt: Value(DateTime.now()),
     );
   }
@@ -142,6 +149,7 @@ class Transaction {
       originalTransactionId: originalTransactionId,
       description: description,
       amount: amount,
+      date: date,
       createdAt: createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
