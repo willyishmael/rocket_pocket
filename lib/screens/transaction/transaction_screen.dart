@@ -18,6 +18,9 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
   /// null means "show all types"
   final Set<TransactionType> _activeTypeFilters = {};
 
+  /// null means "auto-select the most recent month with transactions"
+  DateTime? _selectedMonth;
+
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
@@ -108,6 +111,32 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
 
     final hasActiveFilters = _activeTypeFilters.isNotEmpty;
 
+    // Derive unique months (newest first) from all loaded transactions,
+    // independent of any filter so the selector is always stable.
+    final allSorted = [...(transactionsAsync.valueOrNull ?? [])]..sort((a, b) {
+      final aTime = a.date ?? a.createdAt ?? DateTime(0);
+      final bTime = b.date ?? b.createdAt ?? DateTime(0);
+      return bTime.compareTo(aTime);
+    });
+
+    final availableMonths = <DateTime>[];
+    for (final t in allSorted) {
+      final d = t.date ?? t.createdAt;
+      if (d == null) continue;
+      final m = DateTime(d.year, d.month);
+      if (!availableMonths.contains(m)) availableMonths.add(m);
+    }
+
+    // Keep the current selection if it is still valid; otherwise fall back
+    // to the most recent month that has transactions.
+    final effectiveMonth =
+        availableMonths.isEmpty
+            ? null
+            : (_selectedMonth != null &&
+                availableMonths.contains(_selectedMonth!))
+            ? _selectedMonth!
+            : availableMonths.first;
+
     return Scaffold(
       floatingActionButton: _addTransactionButton(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
@@ -135,6 +164,16 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
               ),
             ],
           ),
+          // ── Month selector ───────────────────────────────────────────
+          if (availableMonths.isNotEmpty)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _MonthSelectorDelegate(
+                months: availableMonths,
+                selectedMonth: effectiveMonth!,
+                onMonthSelected: (m) => setState(() => _selectedMonth = m),
+              ),
+            ),
           transactionsAsync.when(
             loading:
                 () => const SliverFillRemaining(
@@ -146,19 +185,30 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
                 ),
             data: (transactions) {
               // Sort by transaction date (newest first), fall back to createdAt
-              final sortedTransactions = [...transactions]..sort((a, b) {
+              final sorted = [...transactions]..sort((a, b) {
                 final aTime = a.date ?? a.createdAt ?? DateTime(0);
                 final bTime = b.date ?? b.createdAt ?? DateTime(0);
                 return bTime.compareTo(aTime);
               });
 
+              // Apply month filter
+              final monthFiltered =
+                  effectiveMonth == null
+                      ? sorted
+                      : sorted.where((t) {
+                        final d = t.date ?? t.createdAt;
+                        return d != null &&
+                            d.year == effectiveMonth.year &&
+                            d.month == effectiveMonth.month;
+                      }).toList();
+
               // Apply type filter
               final filtered =
                   hasActiveFilters
-                      ? sortedTransactions
+                      ? monthFiltered
                           .where((t) => _activeTypeFilters.contains(t.type))
                           .toList()
-                      : sortedTransactions;
+                      : monthFiltered;
 
               if (filtered.isEmpty) {
                 return SliverFillRemaining(
@@ -209,4 +259,68 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
       child: const Icon(Icons.add),
     );
   }
+}
+
+class _MonthSelectorDelegate extends SliverPersistentHeaderDelegate {
+  final List<DateTime> months;
+  final DateTime selectedMonth;
+  final ValueChanged<DateTime> onMonthSelected;
+
+  static const _monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const _MonthSelectorDelegate({
+    required this.months,
+    required this.selectedMonth,
+    required this.onMonthSelected,
+  });
+
+  @override
+  double get minExtent => 56;
+
+  @override
+  double get maxExtent => 56;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: months.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final month = months[index];
+          final isSelected = month == selectedMonth;
+          final label = '${_monthNames[month.month - 1]} ${month.year}';
+          return ChoiceChip(
+            label: Text(label),
+            selected: isSelected,
+            onSelected: (_) => onMonthSelected(month),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_MonthSelectorDelegate old) =>
+      months != old.months || selectedMonth != old.selectedMonth;
 }
