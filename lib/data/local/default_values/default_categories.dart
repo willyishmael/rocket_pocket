@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:rocket_pocket/data/local/database.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 
@@ -7,7 +8,7 @@ List<TransactionCategoriesCompanion> get defaultCategories {
   TransactionCategoriesCompanion cat(String name, TransactionType type) =>
       TransactionCategoriesCompanion.insert(
         name: name,
-        type: type,
+        type: Value(type),
         updatedAt: now,
       );
 
