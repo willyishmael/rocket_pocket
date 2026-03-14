@@ -61,6 +61,100 @@ class AddTransactionScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 24),
 
+                      // ── Transaction date & time ───────────────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: state.date,
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  // Preserve existing time
+                                  final current = state.date;
+                                  ref
+                                      .read(
+                                        addTransactionViewModelProvider
+                                            .notifier,
+                                      )
+                                      .setDate(
+                                        DateTime(
+                                          picked.year,
+                                          picked.month,
+                                          picked.day,
+                                          current.hour,
+                                          current.minute,
+                                        ),
+                                      );
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(4),
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Date',
+                                  border: OutlineInputBorder(),
+                                  icon: Icon(Icons.calendar_today),
+                                ),
+                                child: Text(
+                                  '${state.date.year}-'
+                                  '${state.date.month.toString().padLeft(2, '0')}-'
+                                  '${state.date.day.toString().padLeft(2, '0')}',
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.fromDateTime(
+                                    state.date,
+                                  ),
+                                );
+                                if (picked != null) {
+                                  // Preserve existing date
+                                  final current = state.date;
+                                  ref
+                                      .read(
+                                        addTransactionViewModelProvider
+                                            .notifier,
+                                      )
+                                      .setDate(
+                                        DateTime(
+                                          current.year,
+                                          current.month,
+                                          current.day,
+                                          picked.hour,
+                                          picked.minute,
+                                        ),
+                                      );
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(4),
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Time',
+                                  border: OutlineInputBorder(),
+                                  icon: Icon(Icons.access_time),
+                                ),
+                                child: Text(
+                                  '${state.date.hour.toString().padLeft(2, '0')}:'
+                                  '${state.date.minute.toString().padLeft(2, '0')}',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
                       // ── Pocket selector(s) ────────────────────────────
                       DropdownButtonFormField(
                         value: state.senderPocket,

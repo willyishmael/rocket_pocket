@@ -18,6 +18,7 @@ class AddTransactionState {
   final db.TransactionCategory? selectedCategory;
   final String description;
   final double amount;
+  final DateTime date;
   final int? originalTransactionId;
 
   AddTransactionState({
@@ -30,8 +31,9 @@ class AddTransactionState {
     this.selectedCategory,
     this.description = '',
     this.amount = 0,
+    DateTime? date,
     this.originalTransactionId,
-  });
+  }) : date = date ?? DateTime.now();
 
   /// Categories filtered to match the selected type.
   /// Refund shares expense categories; Transfer has no categories.
@@ -58,6 +60,7 @@ class AddTransactionState {
     db.TransactionCategory? selectedCategory,
     String? description,
     double? amount,
+    DateTime? date,
     int? originalTransactionId,
     bool clearSenderPocket = false,
     bool clearReceiverPocket = false,
@@ -77,6 +80,7 @@ class AddTransactionState {
           clearCategory ? null : selectedCategory ?? this.selectedCategory,
       description: description ?? this.description,
       amount: amount ?? this.amount,
+      date: date ?? this.date,
       originalTransactionId:
           clearOriginalTransactionId
               ? null
@@ -202,6 +206,12 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
     state = AsyncData(current.copyWith(amount: amount));
   }
 
+  void setDate(DateTime date) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(date: date));
+  }
+
   Future<void> submit() async {
     final current = state.valueOrNull;
     if (current == null || !current.isValid) return;
@@ -215,6 +225,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
         categoryId: current.selectedCategory?.id,
         description: current.description.trim(),
         amount: current.amount,
+        date: current.date,
         originalTransactionId: current.originalTransactionId,
       );
 
