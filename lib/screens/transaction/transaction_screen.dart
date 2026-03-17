@@ -120,11 +120,14 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
     });
 
     final availableMonths = <DateTime>[];
+    final seenMonths = <DateTime>{};
     for (final t in allSorted) {
       final d = t.date ?? t.createdAt;
       if (d == null) continue;
       final m = DateTime(d.year, d.month);
-      if (!availableMonths.contains(m)) availableMonths.add(m);
+      if (seenMonths.add(m)) {
+        availableMonths.add(m);
+      }
     }
 
     // Keep the current selection if it is still valid; otherwise fall back
@@ -133,7 +136,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
         availableMonths.isEmpty
             ? null
             : (_selectedMonth != null &&
-                availableMonths.contains(_selectedMonth!))
+                seenMonths.contains(_selectedMonth!))
             ? _selectedMonth!
             : availableMonths.first;
 
