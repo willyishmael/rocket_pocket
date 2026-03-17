@@ -22,6 +22,29 @@ class PocketDetailScreen extends ConsumerStatefulWidget {
 class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
   DateTime? _selectedMonth;
   final Set<TransactionType> _activeTypeFilters = {};
+  late final ScrollController _scrollController;
+  bool _isCollapsed = false;
+
+  // expandedHeight - kToolbarHeight = the threshold where the bar is fully collapsed
+  static const double _expandedHeight = 250.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(() {
+      final collapsed =
+          _scrollController.hasClients &&
+          _scrollController.offset > _expandedHeight - kToolbarHeight - 8;
+      if (collapsed != _isCollapsed) setState(() => _isCollapsed = collapsed);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _showFilterSheet() {
     showTransactionFilterSheet(
@@ -89,31 +112,32 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
         child: const Icon(Icons.add),
       ),
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           // ── Gradient app bar with embedded pocket info ────────────────
           SliverAppBar(
             pinned: true,
-            expandedHeight: 200.0,
+            expandedHeight: _expandedHeight,
             backgroundColor: pocket?.colorGradient.colors.first ?? Colors.blue,
             foregroundColor: Colors.white,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => context.pop(),
             ),
+            title:
+                _isCollapsed
+                    ? Text(
+                      pocket?.name ?? '',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                    : null,
             flexibleSpace:
                 pocket != null
-                    ? FlexibleSpaceBar(
-                      titlePadding: const EdgeInsets.only(bottom: 16, top: 16),
-                      title: Text(
-                        pocket.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      background: PocketHeader(pocket: pocket),
-                    )
+                    ? FlexibleSpaceBar(background: PocketHeader(pocket: pocket))
                     : null,
           ),
 
