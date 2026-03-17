@@ -15,7 +15,7 @@ class TransactionScreen extends ConsumerStatefulWidget {
 }
 
 class _TransactionScreenState extends ConsumerState<TransactionScreen> {
-  /// null means "show all types"
+  /// Empty set means "show all types"; non-empty set filters to those types.
   final Set<TransactionType> _activeTypeFilters = {};
 
   /// null means "auto-select the most recent month with transactions"
