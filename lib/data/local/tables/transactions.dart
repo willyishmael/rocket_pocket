@@ -20,6 +20,7 @@ class Transactions extends Table {
       )();
   TextColumn get description => text()();
   RealColumn get amount => real()();
+  DateTimeColumn get date => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime()();
 }
