@@ -6,6 +6,7 @@ import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
+import 'package:flutter/foundation.dart';
 
 class TransactionScreen extends ConsumerStatefulWidget {
   const TransactionScreen({super.key});
@@ -325,5 +326,5 @@ class _MonthSelectorDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_MonthSelectorDelegate old) =>
-      months != old.months || selectedMonth != old.selectedMonth;
+      !listEquals(months, old.months) || selectedMonth != old.selectedMonth;
 }
