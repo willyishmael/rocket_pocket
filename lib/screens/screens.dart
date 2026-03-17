@@ -4,6 +4,7 @@
 export 'budget/budget_screen.dart';
 export 'dashboard/dashboard_screen.dart';
 export 'dashboard/create_pocket_screen.dart';
+export 'dashboard/pocket_detail_screen.dart';
 export 'root/root_screen.dart';
 export 'settings/settings_screen.dart';
 export 'transaction/add_transaction_screen.dart';

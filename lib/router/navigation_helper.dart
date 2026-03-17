@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/router/get_page.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/screens.dart';
+import 'package:rocket_pocket/screens/dashboard/pocket_detail_screen.dart';
 
 /// NavigationHelper is a singleton class that manages the navigation for the app.
 /// This class is responsible for managing the navigation in the app.
@@ -52,6 +53,18 @@ class NavigationHelper {
                 path: Paths.createPocket,
                 pageBuilder: (context, state) {
                   return getPage(child: CreatePocketScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.pocketDetails,
+                pageBuilder: (context, state) {
+                  final pocketId = int.parse(
+                    state.pathParameters['pocketId']!,
+                  );
+                  return getPage(
+                    child: PocketDetailScreen(pocketId: pocketId),
+                    state: state,
+                  );
                 },
               ),
             ],
