@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/router/paths.dart';
+import 'package:rocket_pocket/screens/0_widgets/adjust_balance_sheet.dart';
 import 'package:rocket_pocket/screens/0_widgets/month_selector_delegate.dart';
 import 'package:rocket_pocket/screens/0_widgets/pocket_header.dart';
 import 'package:rocket_pocket/screens/0_widgets/transaction_filter_sheet.dart';
@@ -135,6 +136,32 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
                       ),
                     )
                     : null,
+            actions: [
+              if (pocket != null) ...[
+                IconButton(
+                  icon: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: Colors.white,
+                  ),
+                  tooltip: 'Adjust Balance',
+                  onPressed:
+                      () => showAdjustBalanceSheet(
+                        context: context,
+                        ref: ref,
+                        pocket: pocket,
+                      ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, color: Colors.white),
+                  tooltip: 'Edit Pocket',
+                  onPressed:
+                      () => context.push(
+                        Paths.editPocketRoute(pocket.id!),
+                        extra: pocket,
+                      ),
+                ),
+              ],
+            ],
             flexibleSpace:
                 pocket != null
                     ? FlexibleSpaceBar(background: PocketHeader(pocket: pocket))
