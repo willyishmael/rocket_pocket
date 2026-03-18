@@ -24,7 +24,6 @@ ios/.symlinks/
 ios/.dart_tool/
 ios/DerivedData/
 ios/.idea/
-*.xcworkspace
 *.xcuserstate
 *.xcodeproj/project.xcworkspace/xcuserdata
 *.xcodeproj/xcuserdata
@@ -36,7 +35,6 @@ macos/Pods/
 macos/.symlinks/
 macos/.dart_tool/
 macos/DerivedData/
-*.xcworkspace
 *.xcodeproj/xcuserdata
 
 # Web related
@@ -69,4 +67,3 @@ windows/.dart_tool/
 *.rej
 /macos/Flutter
 lib/data/local/database.g.dart
-ios/Runner.xcodeproj/project.pbxproj
