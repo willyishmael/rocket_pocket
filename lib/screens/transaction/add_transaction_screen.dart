@@ -157,7 +157,7 @@ class AddTransactionScreen extends ConsumerWidget {
 
                       // ── Pocket selector(s) ────────────────────────────
                       DropdownButtonFormField(
-                        value: state.senderPocket,
+                        initialValue: state.senderPocket,
                         decoration: InputDecoration(
                           labelText:
                               state.selectedType == TransactionType.transfer
@@ -190,7 +190,7 @@ class AddTransactionScreen extends ConsumerWidget {
                       if (state.selectedType == TransactionType.transfer) ...[
                         const SizedBox(height: 16),
                         DropdownButtonFormField(
-                          value: state.receiverPocket,
+                          initialValue: state.receiverPocket,
                           decoration: const InputDecoration(
                             labelText: 'To Pocket',
                             border: OutlineInputBorder(),
@@ -226,7 +226,7 @@ class AddTransactionScreen extends ConsumerWidget {
                       // ── Category (hidden for Transfer) ────────────────
                       if (state.selectedType != TransactionType.transfer) ...[
                         DropdownButtonFormField(
-                          value: state.selectedCategory,
+                          initialValue: state.selectedCategory,
                           decoration: const InputDecoration(
                             labelText: 'Category',
                             border: OutlineInputBorder(),
@@ -257,7 +257,7 @@ class AddTransactionScreen extends ConsumerWidget {
                       // ── Original Transaction (Refund only) ────────────
                       if (state.selectedType == TransactionType.refund) ...[
                         DropdownButtonFormField<int>(
-                          value: state.originalTransactionId,
+                          initialValue: state.originalTransactionId,
                           decoration: const InputDecoration(
                             labelText: 'Original Transaction',
                             border: OutlineInputBorder(),
