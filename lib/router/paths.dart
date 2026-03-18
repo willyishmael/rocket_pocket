@@ -4,10 +4,14 @@ class Paths {
   static const String createPocket = '$dashboard/create-Pocket';
   static const String pocketDetails = '$dashboard/pocket/:pocketId';
   static const String pocketTransactions = '$pocketDetails/Pocket-transactions';
+  static const String editPocket = '$pocketDetails/edit';
 
   /// Returns the concrete path for a given pocket id.
   static String pocketDetailsRoute(int pocketId) =>
       '$dashboard/pocket/$pocketId';
+
+  static String editPocketRoute(int pocketId) =>
+      '$dashboard/pocket/$pocketId/edit';
 
   static const String transaction = '/transaction';
   static const String addTransaction = '$transaction/add';

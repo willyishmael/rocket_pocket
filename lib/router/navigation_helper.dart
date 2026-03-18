@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/router/get_page.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/screens.dart';
@@ -62,6 +63,17 @@ class NavigationHelper {
                   );
                   return getPage(
                     child: PocketDetailScreen(pocketId: pocketId),
+                    state: state,
+                  );
+                },
+              ),
+              GoRoute(
+                path: Paths.editPocket,
+                pageBuilder: (context, state) {
+                  final pocket =
+                      state.extra as Pocket;
+                  return getPage(
+                    child: EditPocketScreen(pocket: pocket),
                     state: state,
                   );
                 },
