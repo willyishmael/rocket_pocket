@@ -1,14 +1,11 @@
-import 'package:country_currency_pickers/country.dart';
-import 'package:country_currency_pickers/currency_picker_dropdown.dart';
-import 'package:country_currency_pickers/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/repositories/color_gradient_repository.dart';
-import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
 import 'package:rocket_pocket/screens/0_widgets/pocket_card/pocket_card.dart';
+import 'package:rocket_pocket/screens/0_widgets/pocket_form_fields.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
 class EditPocketScreen extends ConsumerStatefulWidget {
@@ -112,63 +109,24 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Customize your pocket',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Pocket Name',
-                      border: OutlineInputBorder(),
-                      icon: Icon(Icons.add_card),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _purposeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Purpose',
-                      border: OutlineInputBorder(),
-                      icon: Icon(Icons.account_balance_wallet),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _emoticonController,
-                    maxLength: 1,
-                    maxLines: 1,
-                    keyboardType: TextInputType.text,
-                    decoration: const InputDecoration(
-                      labelText: 'Emoticon',
-                      border: OutlineInputBorder(),
-                      icon: Icon(Icons.emoji_emotions),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_gradients.isNotEmpty)
-                    GradientPicker(
-                      gradients: _gradients,
-                      selectedColor: _selectedGradient,
-                      onSelected: (gradient) {
-                        setState(() {
-                          _selectedGradient = gradient;
-                          _updatePreview();
-                        });
-                      },
-                    ),
-                  const SizedBox(height: 16),
-                  CurrencyPickerDropdown(
-                    initialValue: _currency,
-                    itemBuilder: _buildCurrencyDropdownItem,
-                    onValuePicked: (Country? country) {
-                      if (country != null) {
-                        setState(() {
-                          _currency = country.currencyCode ?? _currency;
-                          _updatePreview();
-                        });
-                      }
+                  PocketFormFields(
+                    nameController: _nameController,
+                    purposeController: _purposeController,
+                    emoticonController: _emoticonController,
+                    gradients: _gradients,
+                    selectedGradient: _selectedGradient,
+                    onGradientSelected: (gradient) {
+                      setState(() {
+                        _selectedGradient = gradient;
+                        _updatePreview();
+                      });
+                    },
+                    currency: _currency,
+                    onCurrencyChanged: (c) {
+                      setState(() {
+                        _currency = c;
+                        _updatePreview();
+                      });
                     },
                   ),
                   const SizedBox(height: 24),
@@ -198,12 +156,4 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
       ),
     );
   }
-
-  Widget _buildCurrencyDropdownItem(Country country) => Row(
-    children: [
-      CountryPickerUtils.getDefaultFlagImage(country),
-      const SizedBox(width: 16.0),
-      Text('${country.currencyCode}'),
-    ],
-  );
 }
