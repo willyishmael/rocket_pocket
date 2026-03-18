@@ -1,6 +1,8 @@
 import 'package:country_currency_pickers/country.dart';
 import 'package:country_currency_pickers/currency_picker_dropdown.dart';
 import 'package:country_currency_pickers/utils/utils.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
@@ -28,6 +30,54 @@ class PocketFormFields extends StatelessWidget {
     required this.currency,
     required this.onCurrencyChanged,
   });
+
+  void _openEmojiPicker(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return EmojiPicker(
+          onEmojiSelected: (_, emoji) {
+            emoticonController.text = emoji.emoji;
+            Navigator.of(ctx).pop();
+          },
+          config: Config(
+            height: 300,
+            checkPlatformCompatibility: true,
+            emojiViewConfig: EmojiViewConfig(
+              backgroundColor: cs.surface,
+              emojiSizeMax:
+                  28 *
+                  (foundation.defaultTargetPlatform == TargetPlatform.iOS
+                      ? 1.2
+                      : 1.0),
+            ),
+            skinToneConfig: SkinToneConfig(
+              dialogBackgroundColor: cs.surfaceContainer,
+            ),
+            categoryViewConfig: CategoryViewConfig(
+              recentTabBehavior: RecentTabBehavior.NONE,
+              backgroundColor: cs.surface,
+              iconColor: cs.onSurfaceVariant,
+              iconColorSelected: cs.primary,
+              indicatorColor: cs.primary,
+            ),
+            bottomActionBarConfig: BottomActionBarConfig(
+              backgroundColor: cs.surface,
+              buttonColor: cs.primaryContainer,
+              buttonIconColor: cs.onPrimaryContainer,
+            ),
+            searchViewConfig: SearchViewConfig(
+              backgroundColor: cs.surface,
+              buttonIconColor: cs.primary,
+              inputTextStyle: TextStyle(color: cs.onSurface),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,13 +109,13 @@ class PocketFormFields extends StatelessWidget {
         const SizedBox(height: 16),
         TextField(
           controller: emoticonController,
-          maxLength: 1,
-          maxLines: 1,
-          keyboardType: TextInputType.text,
+          readOnly: true,
+          onTap: () => _openEmojiPicker(context),
           decoration: const InputDecoration(
             labelText: 'Emoticon',
             border: OutlineInputBorder(),
             icon: Icon(Icons.emoji_emotions),
+            hintText: 'Tap to pick an emoji',
           ),
         ),
         const SizedBox(height: 8),
