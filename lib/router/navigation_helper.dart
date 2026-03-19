@@ -70,10 +70,27 @@ class NavigationHelper {
               GoRoute(
                 path: Paths.editPocket,
                 pageBuilder: (context, state) {
-                  final pocket =
-                      state.extra as Pocket;
+                  final extra = state.extra;
+                  if (extra is Pocket) {
+                    return getPage(
+                      child: EditPocketScreen(pocket: extra),
+                      state: state,
+                    );
+                  }
+
+                  // Fallback: try to get pocketId from the path and show details instead.
+                  final pocketIdParam = state.pathParameters['pocketId'];
+                  final pocketId = pocketIdParam != null ? int.tryParse(pocketIdParam) : null;
+                  if (pocketId != null) {
+                    return getPage(
+                      child: PocketDetailScreen(pocketId: pocketId),
+                      state: state,
+                    );
+                  }
+
+                  // Final fallback: navigate to dashboard if we cannot determine the pocket.
                   return getPage(
-                    child: EditPocketScreen(pocket: pocket),
+                    child: DashboardScreen(),
                     state: state,
                   );
                 },
