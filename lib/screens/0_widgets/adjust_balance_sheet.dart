@@ -71,5 +71,5 @@ Future<void> showAdjustBalanceSheet({
         ),
       );
     },
-  );
+  ).whenComplete(controller.dispose);
 }
