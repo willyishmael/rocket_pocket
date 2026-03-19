@@ -80,10 +80,25 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
       currency: _currency,
       updatedAt: DateTime.now(),
     );
-    await ref.read(pocketViewModelProvider.notifier).updatePocket(updated);
-    if (mounted) {
-      setState(() => _saving = false);
-      context.pop();
+    try {
+      await ref
+          .read(pocketViewModelProvider.notifier)
+          .updatePocket(updated);
+      if (mounted) {
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to save pocket. Please try again.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 
