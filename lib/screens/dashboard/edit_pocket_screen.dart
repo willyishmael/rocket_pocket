@@ -37,23 +37,21 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
     _currency = widget.pocket.currency;
     _previewPocket = widget.pocket;
 
-    _nameController.addListener(_updatePreview);
-    _purposeController.addListener(_updatePreview);
-    _emoticonController.addListener(_updatePreview);
+    _nameController.addListener(() => setState(_updatePreview));
+    _purposeController.addListener(() => setState(_updatePreview));
+    _emoticonController.addListener(() => setState(_updatePreview));
 
     _loadGradients();
   }
 
   void _updatePreview() {
-    setState(() {
-      _previewPocket = widget.pocket.copyWith(
-        name: _nameController.text,
-        purpose: _purposeController.text,
-        emoticon: _emoticonController.text,
-        colorGradient: _selectedGradient,
-        currency: _currency,
-      );
-    });
+    _previewPocket = widget.pocket.copyWith(
+      name: _nameController.text,
+      purpose: _purposeController.text,
+      emoticon: _emoticonController.text,
+      colorGradient: _selectedGradient,
+      currency: _currency,
+    );
   }
 
   Future<void> _loadGradients() async {
