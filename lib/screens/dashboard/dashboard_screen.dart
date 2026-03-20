@@ -67,7 +67,15 @@ class DashboardScreen extends ConsumerWidget {
                     fade: 0.6,
                     curve: Curves.bounceInOut,
                     itemBuilder:
-                        (context, index) => PocketCard(pocket: pockets[index]),
+                        (context, index) {
+                          final pocket = pockets[index];
+                          return GestureDetector(
+                            onTap: () => context.push(
+                              Paths.pocketDetailsRoute(pocket.id!),
+                            ),
+                            child: PocketCard(pocket: pocket),
+                          );
+                        },
                   );
                 },
               ),

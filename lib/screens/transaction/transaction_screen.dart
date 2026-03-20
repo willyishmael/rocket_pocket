@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/router/paths.dart';
+import 'package:rocket_pocket/screens/0_widgets/month_selector_delegate.dart';
+import 'package:rocket_pocket/screens/0_widgets/transaction_filter_sheet.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
-import 'package:flutter/foundation.dart';
 
 class TransactionScreen extends ConsumerStatefulWidget {
   const TransactionScreen({super.key});
@@ -23,77 +24,15 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
   DateTime? _selectedMonth;
 
   void _showFilterSheet() {
-    showModalBottomSheet(
+    showTransactionFilterSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Filter Transactions',
-                        style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          setState(() => _activeTypeFilters.clear());
-                          setSheetState(() {});
-                        },
-                        child: const Text('Clear all'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Transaction type',
-                    style: Theme.of(ctx).textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children:
-                        TransactionType.values.map((type) {
-                          final selected = _activeTypeFilters.contains(type);
-                          return FilterChip(
-                            label: Text(type.toReadableString()),
-                            selected: selected,
-                            onSelected: (on) {
-                              setState(() {
-                                on
-                                    ? _activeTypeFilters.add(type)
-                                    : _activeTypeFilters.remove(type);
-                              });
-                              setSheetState(() {});
-                            },
-                          );
-                        }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text('Apply'),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+      activeFilters: _activeTypeFilters,
+      onChanged:
+          (updated) => setState(() {
+            _activeTypeFilters
+              ..clear()
+              ..addAll(updated);
+          }),
     );
   }
 
@@ -136,8 +75,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
     final effectiveMonth =
         availableMonths.isEmpty
             ? null
-            : (_selectedMonth != null &&
-                seenMonths.contains(_selectedMonth!))
+            : (_selectedMonth != null && seenMonths.contains(_selectedMonth!))
             ? _selectedMonth!
             : availableMonths.first;
 
@@ -172,7 +110,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
           if (availableMonths.isNotEmpty)
             SliverPersistentHeader(
               pinned: true,
-              delegate: _MonthSelectorDelegate(
+              delegate: MonthSelectorDelegate(
                 months: availableMonths,
                 selectedMonth: effectiveMonth!,
                 onMonthSelected: (m) => setState(() => _selectedMonth = m),
@@ -263,68 +201,4 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
       child: const Icon(Icons.add),
     );
   }
-}
-
-class _MonthSelectorDelegate extends SliverPersistentHeaderDelegate {
-  final List<DateTime> months;
-  final DateTime selectedMonth;
-  final ValueChanged<DateTime> onMonthSelected;
-
-  static const _monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  const _MonthSelectorDelegate({
-    required this.months,
-    required this.selectedMonth,
-    required this.onMonthSelected,
-  });
-
-  @override
-  double get minExtent => 56;
-
-  @override
-  double get maxExtent => 56;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: months.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final month = months[index];
-          final isSelected = month == selectedMonth;
-          final label = '${_monthNames[month.month - 1]} ${month.year}';
-          return ChoiceChip(
-            label: Text(label),
-            selected: isSelected,
-            onSelected: (_) => onMonthSelected(month),
-          );
-        },
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_MonthSelectorDelegate old) =>
-      !listEquals(months, old.months) || selectedMonth != old.selectedMonth;
 }

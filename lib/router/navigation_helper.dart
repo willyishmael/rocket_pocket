@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/router/get_page.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/screens.dart';
@@ -52,6 +53,46 @@ class NavigationHelper {
                 path: Paths.createPocket,
                 pageBuilder: (context, state) {
                   return getPage(child: CreatePocketScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.pocketDetails,
+                pageBuilder: (context, state) {
+                  final pocketId = int.parse(
+                    state.pathParameters['pocketId']!,
+                  );
+                  return getPage(
+                    child: PocketDetailScreen(pocketId: pocketId),
+                    state: state,
+                  );
+                },
+              ),
+              GoRoute(
+                path: Paths.editPocket,
+                pageBuilder: (context, state) {
+                  final extra = state.extra;
+                  if (extra is Pocket) {
+                    return getPage(
+                      child: EditPocketScreen(pocket: extra),
+                      state: state,
+                    );
+                  }
+
+                  // Fallback: try to get pocketId from the path and show details instead.
+                  final pocketIdParam = state.pathParameters['pocketId'];
+                  final pocketId = pocketIdParam != null ? int.tryParse(pocketIdParam) : null;
+                  if (pocketId != null) {
+                    return getPage(
+                      child: PocketDetailScreen(pocketId: pocketId),
+                      state: state,
+                    );
+                  }
+
+                  // Final fallback: navigate to dashboard if we cannot determine the pocket.
+                  return getPage(
+                    child: DashboardScreen(),
+                    state: state,
+                  );
                 },
               ),
             ],
