@@ -10,10 +10,16 @@ class PocketHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top + kToolbarHeight + 8;
+    final gradientColors = pocket.colorGradient.colors.isNotEmpty
+        ? pocket.colorGradient.colors
+        : <Color>[
+            Theme.of(context).primaryColor,
+            Theme.of(context).colorScheme.secondary,
+          ];
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: pocket.colorGradient.colors,
+          colors: gradientColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
