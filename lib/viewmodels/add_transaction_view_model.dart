@@ -8,6 +8,10 @@ import 'package:rocket_pocket/repositories/pocket_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
+/// Sentinel used in [AddTransactionState.copyWith] to distinguish
+/// "keep existing value" from "explicitly set to null".
+const Object _absent = Object();
+
 class AddTransactionState {
   final List<Pocket> pockets;
   final List<db.TransactionCategory> allCategories;
@@ -36,14 +40,17 @@ class AddTransactionState {
   }) : date = date ?? DateTime.now();
 
   /// Categories filtered to match the selected type.
-  /// Refund shares expense categories; Transfer has no categories.
+  /// Only expense and income have categories; refund borrows expense categories.
+  /// All other types (transfer, loan*, adjustment) return empty.
   List<db.TransactionCategory> get filteredCategories {
-    final typeToFilter =
+    final lookup =
         selectedType == TransactionType.refund
             ? TransactionType.expense
             : selectedType;
-    if (typeToFilter == TransactionType.transfer) return [];
-    return allCategories.where((c) => c.type == typeToFilter).toList();
+    if (lookup != TransactionType.expense && lookup != TransactionType.income) {
+      return [];
+    }
+    return allCategories.where((c) => c.type == lookup).toList();
   }
 
   /// Expense transactions available to link as originals for a refund.
@@ -55,17 +62,15 @@ class AddTransactionState {
     List<db.TransactionCategory>? allCategories,
     List<Transaction>? allTransactions,
     TransactionType? selectedType,
-    Pocket? senderPocket,
-    Pocket? receiverPocket,
-    db.TransactionCategory? selectedCategory,
+    // Nullable fields — pass null to clear, omit to keep existing value.
+    Object? senderPocket = _absent,
+    Object? receiverPocket = _absent,
+    Object? selectedCategory = _absent,
+    Object? originalTransactionId = _absent,
+    // Non-nullable fields.
     String? description,
     double? amount,
     DateTime? date,
-    int? originalTransactionId,
-    bool clearSenderPocket = false,
-    bool clearReceiverPocket = false,
-    bool clearCategory = false,
-    bool clearOriginalTransactionId = false,
   }) {
     return AddTransactionState(
       pockets: pockets ?? this.pockets,
@@ -73,18 +78,22 @@ class AddTransactionState {
       allTransactions: allTransactions ?? this.allTransactions,
       selectedType: selectedType ?? this.selectedType,
       senderPocket:
-          clearSenderPocket ? null : senderPocket ?? this.senderPocket,
+          senderPocket == _absent ? this.senderPocket : senderPocket as Pocket?,
       receiverPocket:
-          clearReceiverPocket ? null : receiverPocket ?? this.receiverPocket,
+          receiverPocket == _absent
+              ? this.receiverPocket
+              : receiverPocket as Pocket?,
       selectedCategory:
-          clearCategory ? null : selectedCategory ?? this.selectedCategory,
+          selectedCategory == _absent
+              ? this.selectedCategory
+              : selectedCategory as db.TransactionCategory?,
+      originalTransactionId:
+          originalTransactionId == _absent
+              ? this.originalTransactionId
+              : originalTransactionId as int?,
       description: description ?? this.description,
       amount: amount ?? this.amount,
       date: date ?? this.date,
-      originalTransactionId:
-          clearOriginalTransactionId
-              ? null
-              : originalTransactionId ?? this.originalTransactionId,
     );
   }
 
@@ -140,28 +149,24 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   void setType(TransactionType type) {
     final current = state.valueOrNull;
     if (current == null) return;
-    // When switching type, clear category so user picks from the new filtered list
-    final newFiltered =
+
+    final categoryLookup =
+        type == TransactionType.refund ? TransactionType.expense : type;
+    final newCategory =
         current.allCategories
-            .where(
-              (c) =>
-                  c.type ==
-                  (type == TransactionType.refund
-                      ? TransactionType.expense
-                      : type),
-            )
-            .toList();
+            .where((c) => c.type == categoryLookup)
+            .firstOrNull;
+
     state = AsyncData(
-      current
-          .copyWith(
-            selectedType: type,
-            clearReceiverPocket: type != TransactionType.transfer,
-            clearCategory: true,
-            clearOriginalTransactionId: type != TransactionType.refund,
-          )
-          .copyWith(
-            selectedCategory: newFiltered.isNotEmpty ? newFiltered.first : null,
-          ),
+      current.copyWith(
+        selectedType: type,
+        // Keep receiverPocket only when switching to transfer
+        receiverPocket: type == TransactionType.transfer ? _absent : null,
+        // Auto-select first matching category (null for types with no categories)
+        selectedCategory: newCategory,
+        // Keep originalTransactionId only when switching to refund
+        originalTransactionId: type == TransactionType.refund ? _absent : null,
+      ),
     );
   }
 
@@ -186,12 +191,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   void setOriginalTransactionId(int? id) {
     final current = state.valueOrNull;
     if (current == null) return;
-    state = AsyncData(
-      current.copyWith(
-        originalTransactionId: id,
-        clearOriginalTransactionId: id == null,
-      ),
-    );
+    state = AsyncData(current.copyWith(originalTransactionId: id));
   }
 
   void setDescription(String description) {
