@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -157,7 +159,7 @@ class AddTransactionScreen extends ConsumerWidget {
 
                       // ── Pocket selector(s) ────────────────────────────
                       DropdownButtonFormField(
-                        initialValue: state.senderPocket,
+                        value: state.senderPocket,
                         decoration: InputDecoration(
                           labelText:
                               state.selectedType == TransactionType.transfer
@@ -190,7 +192,7 @@ class AddTransactionScreen extends ConsumerWidget {
                       if (state.selectedType == TransactionType.transfer) ...[
                         const SizedBox(height: 16),
                         DropdownButtonFormField(
-                          initialValue: state.receiverPocket,
+                          value: state.receiverPocket,
                           decoration: const InputDecoration(
                             labelText: 'To Pocket',
                             border: OutlineInputBorder(),
@@ -226,7 +228,7 @@ class AddTransactionScreen extends ConsumerWidget {
                       // ── Category (hidden for Transfer) ────────────────
                       if (state.selectedType != TransactionType.transfer) ...[
                         DropdownButtonFormField(
-                          initialValue: state.selectedCategory,
+                          value: state.selectedCategory,
                           decoration: const InputDecoration(
                             labelText: 'Category',
                             border: OutlineInputBorder(),
@@ -257,7 +259,7 @@ class AddTransactionScreen extends ConsumerWidget {
                       // ── Original Transaction (Refund only) ────────────
                       if (state.selectedType == TransactionType.refund) ...[
                         DropdownButtonFormField<int>(
-                          initialValue: state.originalTransactionId,
+                          value: state.originalTransactionId,
                           decoration: const InputDecoration(
                             labelText: 'Original Transaction',
                             border: OutlineInputBorder(),
