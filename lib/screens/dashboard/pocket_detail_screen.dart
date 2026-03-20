@@ -78,12 +78,7 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
             (t) =>
                 t.senderPocketId == widget.pocketId ||
                 t.receiverPocketId == widget.pocketId,
-          )
-          ..sort((a, b) {
-            final aTime = a.date ?? a.createdAt ?? DateTime(0);
-            final bTime = b.date ?? b.createdAt ?? DateTime(0);
-            return bTime.compareTo(aTime);
-          });
+          );
 
     final availableMonths = <DateTime>[];
     final seenMonths = <DateTime>{};
@@ -93,6 +88,8 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
       final m = DateTime(d.year, d.month);
       if (seenMonths.add(m)) availableMonths.add(m);
     }
+    // Sort distinct months in descending order (newest month first)
+    availableMonths.sort((a, b) => b.compareTo(a));
 
     final effectiveMonth =
         availableMonths.isEmpty
