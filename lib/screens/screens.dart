@@ -10,3 +10,4 @@ export 'root/root_screen.dart';
 export 'settings/settings_screen.dart';
 export 'transaction/add_transaction_screen.dart';
 export 'transaction/transaction_screen.dart';
+export 'loan/loan_screen.dart';

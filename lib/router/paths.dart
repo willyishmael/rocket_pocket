@@ -18,4 +18,5 @@ class Paths {
 
   static const String budget = '/budget';
   static const String settings = '/settings';
+  static const String loan = '/loan';
 }

@@ -24,6 +24,8 @@ class NavigationHelper {
       GlobalKey<NavigatorState>(debugLabel: 'budgetNavigationKey');
   final GlobalKey<NavigatorState> settingsNavigationKey =
       GlobalKey<NavigatorState>(debugLabel: 'settingsNavigationKey');
+  final GlobalKey<NavigatorState> loanNavigationKey =
+      GlobalKey<NavigatorState>(debugLabel: 'loanNavigationKey');
 
   factory NavigationHelper() {
     return _instance;
@@ -138,6 +140,19 @@ class NavigationHelper {
                 path: Paths.settings,
                 pageBuilder: (context, state) {
                   return getPage(child: SettingsScreen(), state: state);
+                },
+              ),
+            ],
+          ),
+
+          // Loan Branch
+          StatefulShellBranch(
+            navigatorKey: loanNavigationKey,
+            routes: [
+              GoRoute(
+                path: Paths.loan,
+                pageBuilder: (context, state) {
+                  return getPage(child: LoanScreen(), state: state);
                 },
               ),
             ],
