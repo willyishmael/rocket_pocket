@@ -61,6 +61,11 @@ class TransactionListTile extends StatelessWidget {
       TransactionType.income => (Icons.arrow_downward, Colors.green),
       TransactionType.transfer => (Icons.compare_arrows, Colors.blue),
       TransactionType.refund => (Icons.replay, Colors.orange),
+      TransactionType.loanGiven => (Icons.call_made, Colors.deepOrange),
+      TransactionType.loanTaken => (Icons.call_received, Colors.teal),
+      TransactionType.loanRepayment => (Icons.payment, Colors.deepPurple),
+      TransactionType.loanCollection => (Icons.payments, Colors.indigo),
+      TransactionType.adjustment => (Icons.tune, Colors.blueGrey),
     };
 
     return ListTile(
