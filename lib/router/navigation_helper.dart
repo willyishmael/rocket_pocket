@@ -132,19 +132,6 @@ class NavigationHelper {
             ],
           ),
 
-          // Settings Branch
-          StatefulShellBranch(
-            navigatorKey: settingsNavigationKey,
-            routes: [
-              GoRoute(
-                path: Paths.settings,
-                pageBuilder: (context, state) {
-                  return getPage(child: SettingsScreen(), state: state);
-                },
-              ),
-            ],
-          ),
-
           // Loan Branch
           StatefulShellBranch(
             navigatorKey: loanNavigationKey,
@@ -153,6 +140,19 @@ class NavigationHelper {
                 path: Paths.loan,
                 pageBuilder: (context, state) {
                   return getPage(child: LoanScreen(), state: state);
+                },
+              ),
+            ],
+          ),
+
+          // Settings Branch
+          StatefulShellBranch(
+            navigatorKey: settingsNavigationKey,
+            routes: [
+              GoRoute(
+                path: Paths.settings,
+                pageBuilder: (context, state) {
+                  return getPage(child: SettingsScreen(), state: state);
                 },
               ),
             ],
