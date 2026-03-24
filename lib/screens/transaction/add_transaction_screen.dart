@@ -44,22 +44,32 @@ class AddTransactionScreen extends ConsumerWidget {
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                       const SizedBox(height: 8),
-                      SegmentedButton<TransactionType>(
-                        showSelectedIcon: false,
-                        segments:
-                            TransactionType.values
-                                .map(
-                                  (t) => ButtonSegment(
-                                    value: t,
-                                    label: Text(t.toReadableString()),
-                                  ),
-                                )
-                                .toList(),
-                        selected: {state.selectedType},
-                        onSelectionChanged:
-                            (value) => ref
-                                .read(addTransactionViewModelProvider.notifier)
-                                .setType(value.first),
+                      SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<TransactionType>(
+                          showSelectedIcon: false,
+                          segments: const [
+                            ButtonSegment(
+                              value: TransactionType.income,
+                              label: Text('Income'),
+                            ),
+                            ButtonSegment(
+                              value: TransactionType.expense,
+                              label: Text('Expense'),
+                            ),
+                            ButtonSegment(
+                              value: TransactionType.transfer,
+                              label: Text('Transfer'),
+                            ),
+                          ],
+                          selected: {state.selectedType},
+                          onSelectionChanged:
+                              (value) => ref
+                                  .read(
+                                    addTransactionViewModelProvider.notifier,
+                                  )
+                                  .setType(value.first),
+                        ),
                       ),
                       const SizedBox(height: 24),
 
@@ -252,37 +262,6 @@ class AddTransactionScreen extends ConsumerWidget {
                                   .setCategory(c);
                             }
                           },
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // ── Original Transaction (Refund only) ────────────
-                      if (state.selectedType == TransactionType.refund) ...[
-                        DropdownButtonFormField<int>(
-                          value: state.originalTransactionId,
-                          decoration: const InputDecoration(
-                            labelText: 'Original Transaction',
-                            border: OutlineInputBorder(),
-                            icon: Icon(Icons.receipt_long),
-                          ),
-                          items:
-                              state.refundableTransactions
-                                  .map(
-                                    (t) => DropdownMenuItem(
-                                      value: t.id,
-                                      child: Text(
-                                        '${t.description} — ${t.formattedAmount}',
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                          onChanged:
-                              (id) => ref
-                                  .read(
-                                    addTransactionViewModelProvider.notifier,
-                                  )
-                                  .setOriginalTransactionId(id),
                         ),
                         const SizedBox(height: 16),
                       ],
