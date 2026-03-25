@@ -19,4 +19,7 @@ class Paths {
   static const String budget = '/budget';
   static const String settings = '/settings';
   static const String loan = '/loan';
+  static const String loanDetails = '$loan/:loanId';
+
+  static String loanDetailsRoute(int loanId) => '$loan/$loanId';
 }

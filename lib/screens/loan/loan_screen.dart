@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
+import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/loan/loan_card.dart';
 
 class LoanScreen extends StatefulWidget {
@@ -147,9 +149,11 @@ class _LoanListTab extends StatelessWidget {
       itemBuilder:
           (context, index) => LoanCard(
             loan: loans[index],
-            onTap: () {
-              // TODO: navigate to loan detail screen
-            },
+            onTap:
+                () => context.push(
+                  Paths.loanDetailsRoute(loans[index].id!),
+                  extra: loans[index],
+                ),
           ),
     );
   }

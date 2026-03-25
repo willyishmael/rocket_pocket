@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/router/get_page.dart';
 import 'package:rocket_pocket/router/paths.dart';
@@ -139,6 +140,19 @@ class NavigationHelper {
               GoRoute(
                 path: Paths.loan,
                 pageBuilder: (context, state) {
+                  return getPage(child: LoanScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.loanDetails,
+                pageBuilder: (context, state) {
+                  final loan = state.extra;
+                  if (loan is Loan) {
+                    return getPage(
+                      child: LoanDetailScreen(loan: loan),
+                      state: state,
+                    );
+                  }
                   return getPage(child: LoanScreen(), state: state);
                 },
               ),
