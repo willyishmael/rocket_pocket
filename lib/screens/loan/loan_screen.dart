@@ -38,7 +38,7 @@ class _LoanScreenState extends State<LoanScreen>
                 pinned: true,
                 floating: true,
                 forceElevated: innerBoxIsScrolled,
-                expandedHeight: 120.0,
+                expandedHeight: 182.0,
                 flexibleSpace: const FlexibleSpaceBar(
                   title: Text('Loans'),
                   centerTitle: false,
@@ -62,9 +62,7 @@ class _LoanScreenState extends State<LoanScreen>
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: navigate to add loan screen
-        },
+        onPressed: () => context.push(Paths.addLoan),
         child: const Icon(Icons.add),
       ),
     );

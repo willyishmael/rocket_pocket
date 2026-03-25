@@ -144,6 +144,12 @@ class NavigationHelper {
                 },
               ),
               GoRoute(
+                path: Paths.addLoan,
+                pageBuilder: (context, state) {
+                  return getPage(child: AddLoanScreen(), state: state);
+                },
+              ),
+              GoRoute(
                 path: Paths.loanDetails,
                 pageBuilder: (context, state) {
                   final loan = state.extra;
