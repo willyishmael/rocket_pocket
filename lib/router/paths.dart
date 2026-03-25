@@ -21,6 +21,8 @@ class Paths {
   static const String loan = '/loan';
   static const String addLoan = '$loan/add';
   static const String loanDetails = '$loan/:loanId';
+  static const String addRepayment = '$loan/:loanId/repayment';
 
   static String loanDetailsRoute(int loanId) => '$loan/$loanId';
+  static String addRepaymentRoute(int loanId) => '$loan/$loanId/repayment';
 }

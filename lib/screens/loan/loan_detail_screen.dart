@@ -7,6 +7,7 @@ import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/screens/loan/loan_detail_header.dart';
 import 'package:rocket_pocket/screens/loan/loan_detail_info_card.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
+import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
@@ -240,9 +241,11 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
       floatingActionButton:
           loan.status == LoanStatus.ongoing || loan.status == LoanStatus.overdue
               ? FloatingActionButton.extended(
-                onPressed: () {
-                  // TODO: navigate to add repayment transaction screen
-                },
+                onPressed:
+                    () => context.push(
+                      Paths.addRepaymentRoute(loan.id!),
+                      extra: loan,
+                    ),
                 icon: const Icon(Icons.add),
                 label: Text(
                   loan.type == LoanType.given
