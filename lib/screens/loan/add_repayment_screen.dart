@@ -172,11 +172,20 @@ class _AddRepaymentForm extends ConsumerWidget {
                     hintText: 'Max: ${currencyFormat.format(remaining)}',
                     border: const OutlineInputBorder(),
                     icon: const Icon(Icons.payments_outlined),
+                    errorText: state.amount > remaining
+                        ? 'Amount cannot exceed remaining (${currencyFormat.format(remaining)})'
+                        : null,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  onChanged: (v) => notifier.setAmount(double.tryParse(v) ?? 0),
+                  onChanged: (v) {
+                    final parsed = double.tryParse(v) ?? 0;
+                    final clamped = parsed < 0
+                        ? 0
+                        : (parsed > remaining ? remaining : parsed);
+                    notifier.setAmount(clamped);
+                  },
                 ),
 
                 const SizedBox(height: 16),
