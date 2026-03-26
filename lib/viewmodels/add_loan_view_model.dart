@@ -83,7 +83,14 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
   void setStartDate(DateTime date) {
     final current = state.valueOrNull;
     if (current == null) return;
-    state = AsyncData(current.copyWith(startDate: date));
+    final adjustedDueDate =
+        current.dueDate.isBefore(date) ? date : current.dueDate;
+    state = AsyncData(
+      current.copyWith(
+        startDate: date,
+        dueDate: adjustedDueDate,
+      ),
+    );
   }
 
   void setDueDate(DateTime date) {
