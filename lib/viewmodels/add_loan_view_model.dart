@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/repositories/loan_repository.dart';
+import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 
 class AddLoanState {
   final LoanType selectedType;
@@ -110,7 +111,9 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
       );
 
       await _loanRepository.insertLoan(loan.toInsertCompanion());
-      ref.invalidate(addLoanViewModelProvider);
+      ref.invalidate(loanViewModelProvider);
+      // Reset form state directly instead of self-invalidating
+      state = AsyncData(AddLoanState());
     } catch (e, stack) {
       state = AsyncError(e, stack);
       rethrow;

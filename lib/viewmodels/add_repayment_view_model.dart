@@ -148,7 +148,14 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
       ref.invalidate(pocketViewModelProvider);
       ref.invalidate(transactionViewModelProvider);
       ref.invalidate(loanViewModelProvider);
-      ref.invalidate(addRepaymentViewModelProvider);
+      // Reset form state directly instead of self-invalidating
+      final pockets = await _pocketRepository.getAllPockets();
+      state = AsyncData(
+        AddRepaymentState(
+          pockets: pockets,
+          selectedPocket: pockets.isNotEmpty ? pockets.first : null,
+        ),
+      );
     } catch (e, stack) {
       state = AsyncError(e, stack);
       rethrow;

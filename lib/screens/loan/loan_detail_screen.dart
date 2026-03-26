@@ -8,6 +8,7 @@ import 'package:rocket_pocket/screens/loan/loan_detail_header.dart';
 import 'package:rocket_pocket/screens/loan/loan_detail_info_card.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
 import 'package:rocket_pocket/router/paths.dart';
+import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
@@ -46,7 +47,14 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loan = widget.loan;
+    // Keep loan data fresh after edits or repayments.
+    final loans = ref.watch(loanViewModelProvider).valueOrNull;
+    final loan =
+        loans?.firstWhere(
+          (l) => l.id == widget.loan.id,
+          orElse: () => widget.loan,
+        ) ??
+        widget.loan;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -98,6 +106,7 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           // ── Expanded header ─────────────────────────────────────────
           SliverAppBar(
@@ -113,10 +122,11 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
-                onPressed: () => context.push(
-                  Paths.editLoanRoute(loan.id!),
-                  extra: loan,
-                ),
+                onPressed:
+                    () => context.push(
+                      Paths.editLoanRoute(loan.id!),
+                      extra: loan,
+                    ),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
