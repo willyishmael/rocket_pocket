@@ -24,6 +24,8 @@ class LoanDetailScreen extends ConsumerStatefulWidget {
 class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
   late final ScrollController _scrollController;
   bool _isCollapsed = false;
+  bool _fabVisible = true;
+  double _lastScrollOffset = 0;
 
   static const double _expandedHeight = 280.0;
 
@@ -32,10 +34,18 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(() {
-      final collapsed =
-          _scrollController.hasClients &&
-          _scrollController.offset > _expandedHeight - kToolbarHeight - 8;
+      if (!_scrollController.hasClients) return;
+      final offset = _scrollController.offset;
+
+      final collapsed = offset > _expandedHeight - kToolbarHeight - 8;
       if (collapsed != _isCollapsed) setState(() => _isCollapsed = collapsed);
+
+      final scrollingUp = offset < _lastScrollOffset;
+      final fabShouldBeVisible = scrollingUp || offset <= 0;
+      if (fabShouldBeVisible != _fabVisible) {
+        setState(() => _fabVisible = fabShouldBeVisible);
+      }
+      _lastScrollOffset = offset;
     });
   }
 
@@ -251,17 +261,23 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
       ),
       floatingActionButton:
           loan.status == LoanStatus.ongoing || loan.status == LoanStatus.overdue
-              ? FloatingActionButton.extended(
-                onPressed:
-                    () => context.push(
-                      Paths.addRepaymentRoute(loan.id!),
-                      extra: loan,
-                    ),
-                icon: const Icon(Icons.add),
-                label: Text(
-                  loan.type == LoanType.given
-                      ? 'Record Collection'
-                      : 'Record Repayment',
+              ? AnimatedScale(
+                scale: _fabVisible ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                alignment: Alignment.bottomRight,
+                child: FloatingActionButton.extended(
+                  onPressed:
+                      () => context.push(
+                        Paths.addRepaymentRoute(loan.id!),
+                        extra: loan,
+                      ),
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    loan.type == LoanType.given
+                        ? 'Record Collection'
+                        : 'Record Repayment',
+                  ),
                 ),
               )
               : null,
