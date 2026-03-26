@@ -152,13 +152,26 @@ class NavigationHelper {
               GoRoute(
                 path: Paths.loanDetails,
                 pageBuilder: (context, state) {
-                  final loan = state.extra;
-                  if (loan is Loan) {
+                  final extra = state.extra;
+                  if (extra is Loan) {
                     return getPage(
-                      child: LoanDetailScreen(loan: loan),
+                      child: LoanDetailScreen(loan: extra),
                       state: state,
                     );
                   }
+
+                  // Fallback: parse loanId from path and let LoanDetailScreen
+                  // fetch the loan, mirroring the pocket routes pattern.
+                  final loanIdParam = state.pathParameters['loanId'];
+                  final loanId =
+                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
+                  if (loanId != null) {
+                    return getPage(
+                      child: LoanDetailScreen(loanId: loanId),
+                      state: state,
+                    );
+                  }
+
                   return getPage(child: LoanScreen(), state: state);
                 },
               ),
@@ -172,6 +185,19 @@ class NavigationHelper {
                       state: state,
                     );
                   }
+
+                  // Fallback: navigate to the loan detail screen where the
+                  // user can retry adding a repayment with the full context.
+                  final loanIdParam = state.pathParameters['loanId'];
+                  final loanId =
+                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
+                  if (loanId != null) {
+                    return getPage(
+                      child: LoanDetailScreen(loanId: loanId),
+                      state: state,
+                    );
+                  }
+
                   return getPage(child: LoanScreen(), state: state);
                 },
               ),
@@ -185,6 +211,19 @@ class NavigationHelper {
                       state: state,
                     );
                   }
+
+                  // Fallback: navigate to the loan detail screen where the
+                  // user can retry editing with the full context.
+                  final loanIdParam = state.pathParameters['loanId'];
+                  final loanId =
+                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
+                  if (loanId != null) {
+                    return getPage(
+                      child: LoanDetailScreen(loanId: loanId),
+                      state: state,
+                    );
+                  }
+
                   return getPage(child: LoanScreen(), state: state);
                 },
               ),
