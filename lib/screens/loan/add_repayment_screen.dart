@@ -181,7 +181,7 @@ class _AddRepaymentForm extends ConsumerWidget {
                   ),
                   onChanged: (v) {
                     final parsed = double.tryParse(v) ?? 0;
-                    final clamped = parsed < 0
+                    double clamped = parsed < 0
                         ? 0
                         : (parsed > remaining ? remaining : parsed);
                     notifier.setAmount(clamped);
