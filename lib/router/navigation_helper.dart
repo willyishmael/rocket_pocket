@@ -175,6 +175,19 @@ class NavigationHelper {
                   return getPage(child: LoanScreen(), state: state);
                 },
               ),
+              GoRoute(
+                path: Paths.editLoan,
+                pageBuilder: (context, state) {
+                  final loan = state.extra;
+                  if (loan is Loan) {
+                    return getPage(
+                      child: EditLoanScreen(loan: loan),
+                      state: state,
+                    );
+                  }
+                  return getPage(child: LoanScreen(), state: state);
+                },
+              ),
             ],
           ),
 

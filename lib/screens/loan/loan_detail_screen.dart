@@ -113,9 +113,10 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
-                onPressed: () {
-                  // TODO: navigate to edit loan screen
-                },
+                onPressed: () => context.push(
+                  Paths.editLoanRoute(loan.id!),
+                  extra: loan,
+                ),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(

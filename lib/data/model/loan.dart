@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:rocket_pocket/data/local/database.dart' as db;
 import 'package:rocket_pocket/data/model/enums.dart';
 
@@ -80,6 +81,28 @@ class Loan {
       status: status,
       repaidAmount: repaidAmount,
       updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Convert this Loan to a Companion for updating an existing row.
+  /// Requires a non-null id. Only writes fields explicitly set as Value(...)
+  /// (createdAt is omitted so the original value is preserved).
+  db.LoansCompanion toUpdateCompanion() {
+    assert(
+      id != null,
+      'toUpdateCompanion() requires a non-null id.',
+    );
+    return db.LoansCompanion(
+      id: Value(id!),
+      type: Value(type),
+      counterpartyName: Value(counterpartyName),
+      amount: Value(amount),
+      description: Value(description),
+      startDate: Value(startDate),
+      dueDate: Value(dueDate),
+      status: Value(status),
+      repaidAmount: Value(repaidAmount),
+      updatedAt: Value(DateTime.now()),
     );
   }
 
