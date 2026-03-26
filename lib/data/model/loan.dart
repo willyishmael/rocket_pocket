@@ -80,6 +80,7 @@ class Loan {
       dueDate: dueDate,
       status: status,
       repaidAmount: repaidAmount,
+      createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
   }
