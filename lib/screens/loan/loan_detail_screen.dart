@@ -13,9 +13,15 @@ import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
 class LoanDetailScreen extends ConsumerStatefulWidget {
-  final Loan loan;
+  final Loan? loan;
+  final int? loanId;
 
-  const LoanDetailScreen({super.key, required this.loan});
+  const LoanDetailScreen({super.key, this.loan, this.loanId})
+    : assert(
+        loan != null || loanId != null,
+        'Either loan or loanId must be provided. '
+        'When both are given, loan.id takes precedence over loanId.',
+      );
 
   @override
   ConsumerState<LoanDetailScreen> createState() => _LoanDetailScreenState();
@@ -57,14 +63,32 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Keep loan data fresh after edits or repayments.
-    final loans = ref.watch(loanViewModelProvider).valueOrNull;
-    final loan =
-        loans?.firstWhere(
-          (l) => l.id == widget.loan.id,
-          orElse: () => widget.loan,
-        ) ??
-        widget.loan;
+    final loansAsync = ref.watch(loanViewModelProvider);
+
+    // Resolve the effective id: prefer widget.loan.id, then widget.loanId.
+    final effectiveId = widget.loan?.id ?? widget.loanId;
+
+    // Resolve the loan from the provider list (keeps data fresh after edits/repayments).
+    final loans = loansAsync.valueOrNull;
+    final resolvedFromList =
+        effectiveId != null
+            ? loans?.where((l) => l.id == effectiveId).firstOrNull
+            : null;
+    final loan = resolvedFromList ?? widget.loan;
+
+    // When only a loanId was provided and the list is still loading (or the
+    // loan hasn't been found yet), show a spinner so the rest of the build
+    // can assume a non-null loan.
+    if (loan == null) {
+      if (loansAsync.isLoading) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+      return Scaffold(
+        body: Center(child: Text('Loan #$effectiveId not found')),
+      );
+    }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
