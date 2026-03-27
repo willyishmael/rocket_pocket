@@ -110,12 +110,16 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
               ? TransactionType.loanCollection
               : TransactionType.loanRepayment;
 
+      // Guard against overpayment: clamp to the remaining balance.
+      final remaining = loan.amount - loan.repaidAmount;
+      final amount = current.amount.clamp(0.0, remaining);
+
       final transaction = Transaction(
         type: transactionType,
         senderPocketId: current.selectedPocket!.id,
         loanId: loan.id,
         description: current.description.trim(),
-        amount: current.amount,
+        amount: amount,
         date: current.date,
       );
 
@@ -127,7 +131,6 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
 
         // Update pocket balance
         final pocket = current.selectedPocket!;
-        final amount = current.amount;
         if (transactionType.isPositive) {
           // loanCollection — money coming in, credit pocket
           await _pocketRepository.updatePocket(
@@ -140,9 +143,18 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
           );
         }
 
-        // Update loan's repaid amount
+        // Update loan's repaid amount.
         final newRepaidAmount = loan.repaidAmount + amount;
         await _loanRepository.updateRepaidAmount(loan.id!, newRepaidAmount);
+
+        // Auto-complete the loan when fully repaid.
+        if (newRepaidAmount >= loan.amount &&
+            loan.status != LoanStatus.completed) {
+          await _loanRepository.updateLoanStatus(
+            loan.id!,
+            LoanStatus.completed,
+          );
+        }
       });
 
       ref.invalidate(pocketViewModelProvider);
