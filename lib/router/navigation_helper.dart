@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/router/get_page.dart';
 import 'package:rocket_pocket/router/paths.dart';
@@ -24,6 +25,8 @@ class NavigationHelper {
       GlobalKey<NavigatorState>(debugLabel: 'budgetNavigationKey');
   final GlobalKey<NavigatorState> settingsNavigationKey =
       GlobalKey<NavigatorState>(debugLabel: 'settingsNavigationKey');
+  final GlobalKey<NavigatorState> loanNavigationKey =
+      GlobalKey<NavigatorState>(debugLabel: 'loanNavigationKey');
 
   factory NavigationHelper() {
     return _instance;
@@ -125,6 +128,103 @@ class NavigationHelper {
                 path: Paths.budget,
                 pageBuilder: (context, state) {
                   return getPage(child: BudgetScreen(), state: state);
+                },
+              ),
+            ],
+          ),
+
+          // Loan Branch
+          StatefulShellBranch(
+            navigatorKey: loanNavigationKey,
+            routes: [
+              GoRoute(
+                path: Paths.loan,
+                pageBuilder: (context, state) {
+                  return getPage(child: LoanScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.addLoan,
+                pageBuilder: (context, state) {
+                  return getPage(child: AddLoanScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.loanDetails,
+                pageBuilder: (context, state) {
+                  final extra = state.extra;
+                  if (extra is Loan) {
+                    return getPage(
+                      child: LoanDetailScreen(loan: extra),
+                      state: state,
+                    );
+                  }
+
+                  // Fallback: parse loanId from path and let LoanDetailScreen
+                  // fetch the loan, mirroring the pocket routes pattern.
+                  final loanIdParam = state.pathParameters['loanId'];
+                  final loanId =
+                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
+                  if (loanId != null) {
+                    return getPage(
+                      child: LoanDetailScreen(loanId: loanId),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: LoanScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.addRepayment,
+                pageBuilder: (context, state) {
+                  final loan = state.extra;
+                  if (loan is Loan) {
+                    return getPage(
+                      child: AddRepaymentScreen(loan: loan),
+                      state: state,
+                    );
+                  }
+
+                  // Fallback: navigate to the loan detail screen where the
+                  // user can retry adding a repayment with the full context.
+                  final loanIdParam = state.pathParameters['loanId'];
+                  final loanId =
+                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
+                  if (loanId != null) {
+                    return getPage(
+                      child: LoanDetailScreen(loanId: loanId),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: LoanScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.editLoan,
+                pageBuilder: (context, state) {
+                  final loan = state.extra;
+                  if (loan is Loan) {
+                    return getPage(
+                      child: EditLoanScreen(loan: loan),
+                      state: state,
+                    );
+                  }
+
+                  // Fallback: navigate to the loan detail screen where the
+                  // user can retry editing with the full context.
+                  final loanIdParam = state.pathParameters['loanId'];
+                  final loanId =
+                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
+                  if (loanId != null) {
+                    return getPage(
+                      child: LoanDetailScreen(loanId: loanId),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: LoanScreen(), state: state);
                 },
               ),
             ],

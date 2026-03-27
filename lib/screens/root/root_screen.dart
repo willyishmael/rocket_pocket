@@ -17,6 +17,7 @@ class _RootScreenState extends State<RootScreen> {
     NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
     NavigationDestination(icon: Icon(Icons.swap_horiz), label: 'Transaction'),
     NavigationDestination(icon: Icon(Icons.wallet), label: 'Budget'),
+    NavigationDestination(icon: Icon(Icons.handshake), label: 'Loan'),
     NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
   ];
 
