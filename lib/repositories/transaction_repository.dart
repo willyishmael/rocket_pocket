@@ -161,4 +161,35 @@ class TransactionRepository {
       DatabaseError('Failed to delete transaction', stack).throwError();
     }
   }
+
+  Future<int> insertCategory(TransactionCategoriesCompanion category) async {
+    try {
+      return await db.into(db.transactionCategories).insert(category);
+    } catch (e, stack) {
+      DatabaseError('Failed to insert category', stack).throwError();
+    }
+  }
+
+  Future updateCategoryName(int id, String name) async {
+    try {
+      return await (db.update(db.transactionCategories)
+        ..where((tbl) => tbl.id.equals(id))).write(
+        TransactionCategoriesCompanion(
+          name: Value(name),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    } catch (e, stack) {
+      DatabaseError('Failed to update category name', stack).throwError();
+    }
+  }
+
+  Future deleteCategory(int id) async {
+    try {
+      return await (db.delete(db.transactionCategories)
+        ..where((tbl) => tbl.id.equals(id))).go();
+    } catch (e, stack) {
+      DatabaseError('Failed to delete category', stack).throwError();
+    }
+  }
 }
