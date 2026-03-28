@@ -46,23 +46,15 @@ class _ManageCategoriesScreenState extends ConsumerState<ManageCategoriesScreen>
             (context, innerBoxIsScrolled) => [
               SliverAppBar(
                 pinned: true,
-                floating: true,
                 forceElevated: innerBoxIsScrolled,
-                expandedHeight: 130,
+                title: const Text('Manage Categories'),
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () => context.pop(),
                 ),
-                flexibleSpace: const FlexibleSpaceBar(
-                  title: Text('Manage Categories'),
-                  titlePadding: EdgeInsets.only(left: 56, bottom: 48),
-                ),
                 bottom: TabBar(
                   controller: _tabController,
-                  tabs: const [
-                    Tab(icon: Icon(Icons.arrow_downward), text: 'Expense'),
-                    Tab(icon: Icon(Icons.arrow_upward), text: 'Income'),
-                  ],
+                  tabs: const [Tab(text: 'Expense'), Tab(text: 'Income')],
                 ),
               ),
             ],
@@ -133,7 +125,6 @@ class _ManageCategoriesScreenState extends ConsumerState<ManageCategoriesScreen>
           .read(categoryViewModelProvider.notifier)
           .addCategory(controller.text.trim(), _activeType);
     }
-    controller.dispose();
   }
 }
 
@@ -236,7 +227,6 @@ class _CategoryList extends ConsumerWidget {
           .read(categoryViewModelProvider.notifier)
           .renameCategory(category.id, controller.text.trim());
     }
-    controller.dispose();
   }
 
   Future<void> _confirmDelete(
