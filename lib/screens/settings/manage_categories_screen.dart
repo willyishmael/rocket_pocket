@@ -240,7 +240,7 @@ class _CategoryList extends ConsumerWidget {
           (ctx) => AlertDialog(
             title: const Text('Delete Category?'),
             content: Text(
-              '"${category.name}" will be removed. Existing transactions using this category will not be affected.',
+              '"${category.name}" will be removed. This may affect transactions that are currently assigned to this category.',
             ),
             actions: [
               TextButton(
