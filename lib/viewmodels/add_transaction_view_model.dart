@@ -5,6 +5,7 @@ import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
@@ -120,14 +121,16 @@ final addTransactionViewModelProvider =
 class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   late PocketRepository _pocketRepository;
   late TransactionRepository _transactionRepository;
+  late TransactionCategoriesRepository _categoryRepository;
 
   @override
   FutureOr<AddTransactionState> build() async {
     _pocketRepository = ref.watch(pocketRepositoryProvider);
     _transactionRepository = ref.watch(transactionRepositoryProvider);
+    _categoryRepository = ref.watch(transactionCategoryRepositoryProvider);
 
     final pockets = await _pocketRepository.getAllPockets();
-    final categories = await _transactionRepository.getAllCategories();
+    final categories = await _categoryRepository.getAllTransactionCategories();
     final dbTransactions = await _transactionRepository.getAllTransactions();
     final transactions = dbTransactions.map(Transaction.fromDb).toList();
 

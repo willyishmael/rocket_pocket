@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
-import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
@@ -18,32 +17,6 @@ class TransactionRepository {
       return await db.select(db.transactions).get();
     } catch (e, stack) {
       DatabaseError('Failed to fetch all transactions', stack).throwError();
-    }
-  }
-
-  Future<List<TransactionCategory>> getAllCategories() async {
-    try {
-      return await db.select(db.transactionCategories).get();
-    } catch (e, stack) {
-      DatabaseError(
-        'Failed to fetch transaction categories',
-        stack,
-      ).throwError();
-    }
-  }
-
-  Future<List<TransactionCategory>> getAllCategoriesByType(
-    TransactionType type,
-  ) async {
-    try {
-      final query = db.select(db.transactionCategories)
-        ..where((tbl) => tbl.type.equalsValue(type));
-      return await query.get();
-    } catch (e, stack) {
-      DatabaseError(
-        'Failed to fetch transaction categories by type',
-        stack,
-      ).throwError();
     }
   }
 
@@ -159,37 +132,6 @@ class TransactionRepository {
         ..where((tbl) => tbl.id.equals(id))).go();
     } catch (e, stack) {
       DatabaseError('Failed to delete transaction', stack).throwError();
-    }
-  }
-
-  Future<int> insertCategory(TransactionCategoriesCompanion category) async {
-    try {
-      return await db.into(db.transactionCategories).insert(category);
-    } catch (e, stack) {
-      DatabaseError('Failed to insert category', stack).throwError();
-    }
-  }
-
-  Future updateCategoryName(int id, String name) async {
-    try {
-      return await (db.update(db.transactionCategories)
-        ..where((tbl) => tbl.id.equals(id))).write(
-        TransactionCategoriesCompanion(
-          name: Value(name),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
-    } catch (e, stack) {
-      DatabaseError('Failed to update category name', stack).throwError();
-    }
-  }
-
-  Future deleteCategory(int id) async {
-    try {
-      return await (db.delete(db.transactionCategories)
-        ..where((tbl) => tbl.id.equals(id))).go();
-    } catch (e, stack) {
-      DatabaseError('Failed to delete category', stack).throwError();
     }
   }
 }
