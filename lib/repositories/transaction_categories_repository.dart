@@ -1,5 +1,7 @@
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 
 final transactionCategoryRepositoryProvider =
@@ -18,6 +20,21 @@ class TransactionCategoriesRepository {
     } catch (e, stack) {
       DatabaseError(
         'Failed to fetch all transaction categories',
+        stack,
+      ).throwError();
+    }
+  }
+
+  Future<List<TransactionCategory>> getAllTransactionCategoriesByType(
+    TransactionType type,
+  ) async {
+    try {
+      final query = db.select(db.transactionCategories)
+        ..where((tbl) => tbl.type.equalsValue(type));
+      return await query.get();
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to fetch transaction categories by type',
         stack,
       ).throwError();
     }
@@ -72,6 +89,23 @@ class TransactionCategoriesRepository {
     } catch (e, stack) {
       DatabaseError(
         'Failed to delete transaction category',
+        stack,
+      ).throwError();
+    }
+  }
+
+  Future updateTransactionCategoryName(int id, String name) async {
+    try {
+      return await (db.update(db.transactionCategories)
+        ..where((tbl) => tbl.id.equals(id))).write(
+        TransactionCategoriesCompanion(
+          name: Value(name),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to update transaction category name',
         stack,
       ).throwError();
     }

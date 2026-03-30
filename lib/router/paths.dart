@@ -36,4 +36,5 @@ abstract final class Paths {
 
   // ── Settings ────────────────────────────────────────────────────────────────
   static const String settings = '/settings';
+  static const String manageCategories = '$settings/categories';
 }

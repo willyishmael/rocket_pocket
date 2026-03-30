@@ -240,6 +240,15 @@ class NavigationHelper {
                   return getPage(child: SettingsScreen(), state: state);
                 },
               ),
+              GoRoute(
+                path: Paths.manageCategories,
+                pageBuilder: (context, state) {
+                  return getPage(
+                    child: ManageCategoriesScreen(),
+                    state: state,
+                  );
+                },
+              ),
             ],
           ),
         ],
