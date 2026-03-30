@@ -89,40 +89,44 @@ class _ManageCategoriesScreenState extends ConsumerState<ManageCategoriesScreen>
 
   Future<void> _showAddDialog(BuildContext context) async {
     final controller = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: Text(
-              'Add ${_activeType == TransactionType.expense ? 'Expense' : 'Income'} Category',
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder:
+            (ctx) => AlertDialog(
+              title: Text(
+                'Add ${_activeType == TransactionType.expense ? 'Expense' : 'Income'} Category',
+              ),
+              content: TextField(
+                controller: controller,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Category name',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => Navigator.of(ctx).pop(true),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Add'),
+                ),
+              ],
             ),
-            content: TextField(
-              controller: controller,
-              autofocus: true,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Category name',
-                border: OutlineInputBorder(),
-              ),
-              onSubmitted: (_) => Navigator.of(ctx).pop(true),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Add'),
-              ),
-            ],
-          ),
-    );
+      );
 
-    if (confirmed == true && controller.text.trim().isNotEmpty) {
-      await ref
-          .read(categoryViewModelProvider.notifier)
-          .addCategory(controller.text.trim(), _activeType);
+      if (confirmed == true && controller.text.trim().isNotEmpty) {
+        await ref
+            .read(categoryViewModelProvider.notifier)
+            .addCategory(controller.text.trim(), _activeType);
+      }
+    } finally {
+      controller.dispose();
     }
   }
 }
@@ -193,38 +197,42 @@ class _CategoryList extends ConsumerWidget {
     TransactionCategory category,
   ) async {
     final controller = TextEditingController(text: category.name);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Rename Category'),
-            content: TextField(
-              controller: controller,
-              autofocus: true,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Category name',
-                border: OutlineInputBorder(),
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder:
+            (ctx) => AlertDialog(
+              title: const Text('Rename Category'),
+              content: TextField(
+                controller: controller,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Category name',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => Navigator.of(ctx).pop(true),
               ),
-              onSubmitted: (_) => Navigator.of(ctx).pop(true),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Save'),
+                ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Save'),
-              ),
-            ],
-          ),
-    );
+      );
 
-    if (confirmed == true && controller.text.trim().isNotEmpty) {
-      await ref
-          .read(categoryViewModelProvider.notifier)
-          .renameCategory(category.id, controller.text.trim());
+      if (confirmed == true && controller.text.trim().isNotEmpty) {
+        await ref
+            .read(categoryViewModelProvider.notifier)
+            .renameCategory(category.id, controller.text.trim());
+      }
+    } finally {
+      controller.dispose();
     }
   }
 
