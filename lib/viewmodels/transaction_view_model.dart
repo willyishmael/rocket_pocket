@@ -95,7 +95,7 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
   /// Does not trigger a DB fetch — filters the in-memory list.
   /// Returns all transactions if [type] is null.
   List<Transaction> filterByType(TransactionType? type) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return [];
     if (type == null) return current;
     return current.where((t) => t.type == type).toList();

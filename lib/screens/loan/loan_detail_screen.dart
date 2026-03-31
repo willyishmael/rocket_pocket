@@ -69,7 +69,7 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
     final effectiveId = widget.loan?.id ?? widget.loanId;
 
     // Resolve the loan from the provider list (keeps data fresh after edits/repayments).
-    final loans = loansAsync.valueOrNull;
+    final loans = loansAsync.value;
     final resolvedFromList =
         effectiveId != null
             ? loans?.where((l) => l.id == effectiveId).firstOrNull
@@ -102,7 +102,7 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
         loan.dueDate.isBefore(DateTime.now());
 
     final transactionsAsync = ref.watch(transactionViewModelProvider);
-    final pockets = ref.watch(pocketViewModelProvider).valueOrNull ?? [];
+    final pockets = ref.watch(pocketViewModelProvider).value ?? [];
     final pocketCurrency = {
       for (final p in pockets)
         if (p.id != null) p.id!: p.currency,
@@ -113,7 +113,7 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
     };
 
     final repaymentTransactions =
-        (transactionsAsync.valueOrNull ?? [])
+        (transactionsAsync.value ?? [])
             .where(
               (t) =>
                   t.loanId == loan.id &&

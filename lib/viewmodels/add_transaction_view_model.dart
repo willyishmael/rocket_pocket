@@ -150,7 +150,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   }
 
   void setType(TransactionType type) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
 
     final categoryLookup =
@@ -174,49 +174,49 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   }
 
   void setSenderPocket(Pocket pocket) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(senderPocket: pocket));
   }
 
   void setReceiverPocket(Pocket pocket) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(receiverPocket: pocket));
   }
 
   void setCategory(db.TransactionCategory category) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(selectedCategory: category));
   }
 
   void setOriginalTransactionId(int? id) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(originalTransactionId: id));
   }
 
   void setDescription(String description) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(description: description));
   }
 
   void setAmount(double amount) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(amount: amount));
   }
 
   void setDate(DateTime date) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(date: date));
   }
 
   Future<void> submit() async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || !current.isValid) return;
 
     state = const AsyncLoading();

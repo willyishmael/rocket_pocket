@@ -76,31 +76,31 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
   }
 
   void setSelectedPocket(Pocket pocket) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(selectedPocket: pocket));
   }
 
   void setAmount(double amount) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(amount: amount));
   }
 
   void setDescription(String description) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(description: description));
   }
 
   void setDate(DateTime date) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(date: date));
   }
 
   Future<void> submit(Loan loan) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || !current.isValid) return;
 
     state = const AsyncLoading();
