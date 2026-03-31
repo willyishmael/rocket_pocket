@@ -26,9 +26,7 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(
-      text: widget.loan.counterpartyName,
-    );
+    _nameController = TextEditingController(text: widget.loan.counterpartyName);
     _amountController = TextEditingController(
       text: widget.loan.amount.toString(),
     );
@@ -178,17 +176,18 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
                   Text('Status', style: theme.textTheme.labelLarge),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<LoanStatus>(
-                    value: _status,
+                    initialValue: _status,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       icon: Icon(Icons.flag_outlined),
                     ),
-                    items: LoanStatus.values.map((s) {
-                      return DropdownMenuItem(
-                        value: s,
-                        child: Text(_statusLabel(s)),
-                      );
-                    }).toList(),
+                    items:
+                        LoanStatus.values.map((s) {
+                          return DropdownMenuItem(
+                            value: s,
+                            child: Text(_statusLabel(s)),
+                          );
+                        }).toList(),
                     onChanged: (v) {
                       if (v != null) setState(() => _status = v);
                     },

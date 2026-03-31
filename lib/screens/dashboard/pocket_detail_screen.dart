@@ -62,7 +62,7 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pockets = ref.watch(pocketViewModelProvider).valueOrNull ?? [];
+    final pockets = ref.watch(pocketViewModelProvider).value ?? [];
     final pocket = pockets.where((p) => p.id == widget.pocketId).firstOrNull;
     final transactionsAsync = ref.watch(transactionViewModelProvider);
     final hasActiveFilters = _activeTypeFilters.isNotEmpty;
@@ -73,7 +73,7 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
 
     // Compute available months from all transactions for this pocket
     final allForPocket =
-        [...(transactionsAsync.valueOrNull ?? [])]
+        [...(transactionsAsync.value ?? [])]
           ..retainWhere(
             (t) =>
                 t.senderPocketId == widget.pocketId ||

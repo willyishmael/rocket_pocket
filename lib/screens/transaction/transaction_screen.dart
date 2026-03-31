@@ -39,7 +39,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
   @override
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionViewModelProvider);
-    final pockets = ref.watch(pocketViewModelProvider).valueOrNull ?? [];
+    final pockets = ref.watch(pocketViewModelProvider).value ?? [];
     final pocketCurrency = {
       for (final p in pockets)
         if (p.id != null) p.id!: p.currency,
@@ -53,7 +53,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
 
     // Derive unique months (newest first) from all loaded transactions,
     // independent of any filter so the selector is always stable.
-    final allSorted = [...(transactionsAsync.valueOrNull ?? [])]..sort((a, b) {
+    final allSorted = [...(transactionsAsync.value ?? [])]..sort((a, b) {
       final aTime = a.date ?? a.createdAt ?? DateTime(0);
       final bTime = b.date ?? b.createdAt ?? DateTime(0);
       return bTime.compareTo(aTime);

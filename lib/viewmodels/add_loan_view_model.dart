@@ -57,31 +57,31 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
   }
 
   void setType(LoanType type) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(selectedType: type));
   }
 
   void setCounterpartyName(String name) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(counterpartyName: name));
   }
 
   void setAmount(double amount) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(amount: amount));
   }
 
   void setDescription(String description) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(description: description));
   }
 
   void setStartDate(DateTime date) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     final adjustedDueDate =
         current.dueDate.isBefore(date) ? date : current.dueDate;
@@ -94,13 +94,13 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
   }
 
   void setDueDate(DateTime date) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(dueDate: date));
   }
 
   Future<void> submit() async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || !current.isValid) return;
 
     state = const AsyncLoading();

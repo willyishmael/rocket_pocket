@@ -128,7 +128,7 @@ class _AddRepaymentForm extends ConsumerWidget {
                   )
                 else
                   DropdownButtonFormField<Pocket>(
-                    value: state.selectedPocket,
+                    initialValue: state.selectedPocket,
                     decoration: InputDecoration(
                       border: const OutlineInputBorder(),
                       icon: Icon(
@@ -172,18 +172,20 @@ class _AddRepaymentForm extends ConsumerWidget {
                     hintText: 'Max: ${currencyFormat.format(remaining)}',
                     border: const OutlineInputBorder(),
                     icon: const Icon(Icons.payments_outlined),
-                    errorText: state.amount > remaining
-                        ? 'Amount cannot exceed remaining (${currencyFormat.format(remaining)})'
-                        : null,
+                    errorText:
+                        state.amount > remaining
+                            ? 'Amount cannot exceed remaining (${currencyFormat.format(remaining)})'
+                            : null,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   onChanged: (v) {
                     final parsed = double.tryParse(v) ?? 0;
-                    double clamped = parsed < 0
-                        ? 0
-                        : (parsed > remaining ? remaining : parsed);
+                    double clamped =
+                        parsed < 0
+                            ? 0
+                            : (parsed > remaining ? remaining : parsed);
                     notifier.setAmount(clamped);
                   },
                 ),
