@@ -5,6 +5,7 @@ import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/transaction.dart' as model;
 import 'package:rocket_pocket/repositories/budget_repository.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
+import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
@@ -82,6 +83,14 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
                   onPressed: () => context.pop(),
                 ),
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed:
+                        () => context.push(
+                          Paths.editBudgetRoute(budget.id!),
+                          extra: budget,
+                        ),
+                  ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () => _confirmDelete(context, ref, budget.name),

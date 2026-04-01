@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/model/budget.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/router/get_page.dart';
@@ -143,6 +144,32 @@ class NavigationHelper {
                     child: BudgetDetailScreen(budgetId: budgetId),
                     state: state,
                   );
+                },
+              ),
+              GoRoute(
+                path: Paths.editBudget,
+                pageBuilder: (context, state) {
+                  final budget = state.extra;
+                  if (budget is Budget) {
+                    return getPage(
+                      child: EditBudgetScreen(budget: budget),
+                      state: state,
+                    );
+                  }
+
+                  final budgetIdParam = state.pathParameters['budgetId'];
+                  final budgetId =
+                      budgetIdParam != null
+                          ? int.tryParse(budgetIdParam)
+                          : null;
+                  if (budgetId != null) {
+                    return getPage(
+                      child: BudgetDetailScreen(budgetId: budgetId),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: BudgetScreen(), state: state);
                 },
               ),
             ],
