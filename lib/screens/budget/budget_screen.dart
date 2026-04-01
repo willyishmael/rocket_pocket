@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/router/paths.dart';
+import 'package:rocket_pocket/screens/budget/budget_status_chip.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 
 class BudgetScreen extends ConsumerWidget {
@@ -86,8 +87,7 @@ class _BudgetCard extends ConsumerWidget {
     final total = item.budget.amount;
     final remaining = item.remaining;
 
-    final progressColor =
-        item.isOverBudget ? colorScheme.error : colorScheme.primary;
+    final progressColor = budgetStatusColor(item.status, colorScheme);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -108,10 +108,8 @@ class _BudgetCard extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Icon(
-                    Icons.chevron_right,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  const SizedBox(width: 8),
+                  BudgetStatusChip(item: item),
                 ],
               ),
               const SizedBox(height: 4),

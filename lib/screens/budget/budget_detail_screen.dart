@@ -6,6 +6,7 @@ import 'package:rocket_pocket/data/model/transaction.dart' as model;
 import 'package:rocket_pocket/repositories/budget_repository.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
 import 'package:rocket_pocket/router/paths.dart';
+import 'package:rocket_pocket/screens/budget/budget_status_chip.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
@@ -62,11 +63,17 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
         }
 
         final budget = item.budget;
-        final headerColor =
-            item.isOverBudget ? colorScheme.error : colorScheme.primary;
+        final headerColor = budgetStatusColor(item.status, colorScheme);
         final foregroundColor = colorScheme.onPrimary;
 
         return Scaffold(
+          floatingActionButton: FloatingActionButton(
+            onPressed: () async {
+              await context.push(Paths.addTransaction);
+              ref.invalidate(budgetViewModelProvider);
+            },
+            child: const Icon(Icons.add),
+          ),
           body: CustomScrollView(
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
@@ -229,9 +236,16 @@ class _BudgetDetailHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    _periodLabel(budget.period),
-                    style: subtleStyle.copyWith(fontSize: 13),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        _periodLabel(budget.period),
+                        style: subtleStyle.copyWith(fontSize: 13),
+                      ),
+                      const SizedBox(width: 8),
+                      BudgetStatusChip(item: item),
+                    ],
                   ),
                 ],
               ),

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/model/budget.dart' as model;
 import 'package:rocket_pocket/repositories/budget_repository.dart';
 
+enum BudgetStatus { onTrack, nearLimit, overBudget }
+
 class BudgetWithSpent {
   final model.Budget budget;
   final double spent;
@@ -13,6 +15,13 @@ class BudgetWithSpent {
   double get progress =>
       budget.amount > 0 ? (spent / budget.amount).clamp(0, 1) : 0;
   bool get isOverBudget => spent > budget.amount;
+
+  BudgetStatus get status {
+    final ratio = budget.amount > 0 ? spent / budget.amount : 0;
+    if (ratio >= 1.0) return BudgetStatus.overBudget;
+    if (ratio >= 0.8) return BudgetStatus.nearLimit;
+    return BudgetStatus.onTrack;
+  }
 }
 
 final budgetViewModelProvider =
