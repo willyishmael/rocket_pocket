@@ -25,8 +25,9 @@ class NavigationHelper {
       GlobalKey<NavigatorState>(debugLabel: 'budgetNavigationKey');
   final GlobalKey<NavigatorState> settingsNavigationKey =
       GlobalKey<NavigatorState>(debugLabel: 'settingsNavigationKey');
-  final GlobalKey<NavigatorState> loanNavigationKey =
-      GlobalKey<NavigatorState>(debugLabel: 'loanNavigationKey');
+  final GlobalKey<NavigatorState> loanNavigationKey = GlobalKey<NavigatorState>(
+    debugLabel: 'loanNavigationKey',
+  );
 
   factory NavigationHelper() {
     return _instance;
@@ -61,9 +62,7 @@ class NavigationHelper {
               GoRoute(
                 path: Paths.pocketDetails,
                 pageBuilder: (context, state) {
-                  final pocketId = int.parse(
-                    state.pathParameters['pocketId']!,
-                  );
+                  final pocketId = int.parse(state.pathParameters['pocketId']!);
                   return getPage(
                     child: PocketDetailScreen(pocketId: pocketId),
                     state: state,
@@ -83,7 +82,10 @@ class NavigationHelper {
 
                   // Fallback: try to get pocketId from the path and show details instead.
                   final pocketIdParam = state.pathParameters['pocketId'];
-                  final pocketId = pocketIdParam != null ? int.tryParse(pocketIdParam) : null;
+                  final pocketId =
+                      pocketIdParam != null
+                          ? int.tryParse(pocketIdParam)
+                          : null;
                   if (pocketId != null) {
                     return getPage(
                       child: PocketDetailScreen(pocketId: pocketId),
@@ -92,10 +94,7 @@ class NavigationHelper {
                   }
 
                   // Final fallback: navigate to dashboard if we cannot determine the pocket.
-                  return getPage(
-                    child: DashboardScreen(),
-                    state: state,
-                  );
+                  return getPage(child: DashboardScreen(), state: state);
                 },
               ),
             ],
@@ -128,6 +127,12 @@ class NavigationHelper {
                 path: Paths.budget,
                 pageBuilder: (context, state) {
                   return getPage(child: BudgetScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.addBudget,
+                pageBuilder: (context, state) {
+                  return getPage(child: AddBudgetScreen(), state: state);
                 },
               ),
             ],
@@ -243,10 +248,7 @@ class NavigationHelper {
               GoRoute(
                 path: Paths.manageCategories,
                 pageBuilder: (context, state) {
-                  return getPage(
-                    child: ManageCategoriesScreen(),
-                    state: state,
-                  );
+                  return getPage(child: ManageCategoriesScreen(), state: state);
                 },
               ),
             ],

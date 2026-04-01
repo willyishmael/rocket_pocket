@@ -2,6 +2,7 @@
 // This allows for easy access to all screens from a single file.
 
 export 'budget/budget_screen.dart';
+export 'budget/add_budget_screen.dart';
 export 'dashboard/dashboard_screen.dart';
 export 'dashboard/create_pocket_screen.dart';
 export 'dashboard/edit_pocket_screen.dart';
