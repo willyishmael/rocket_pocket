@@ -18,6 +18,8 @@ class Transactions extends Table {
       integer().nullable().customConstraint(
         'NULL REFERENCES transactions(id)',
       )();
+  IntColumn get budgetId =>
+      integer().nullable().customConstraint('NULL REFERENCES budgets(id)')();
   TextColumn get description => text()();
   RealColumn get amount => real()();
   DateTimeColumn get date => dateTime().nullable()();
