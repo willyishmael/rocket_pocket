@@ -49,7 +49,12 @@ class BudgetScreen extends ConsumerWidget {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = budgets[index];
-                    return _BudgetCard(item: item);
+                    return _BudgetCard(
+                      item: item,
+                      onTap: () {
+                        context.push(Paths.budgetDetailsRoute(item.budget.id!));
+                      },
+                    );
                   },
                 ),
               );
@@ -70,7 +75,8 @@ class BudgetScreen extends ConsumerWidget {
 
 class _BudgetCard extends ConsumerWidget {
   final BudgetWithSpent item;
-  const _BudgetCard({required this.item});
+  final VoidCallback? onTap;
+  const _BudgetCard({required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,109 +90,81 @@ class _BudgetCard extends ConsumerWidget {
         item.isOverBudget ? colorScheme.error : colorScheme.primary;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.budget.name,
+                      style: theme.textTheme.titleMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _periodLabel(item.budget.period),
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: item.progress.toDouble(),
+                  minHeight: 8,
+                  color: progressColor,
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Spent: ${spent.toStringAsFixed(0)}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  Text(
+                    'of ${total.toStringAsFixed(0)}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              if (item.isOverBudget)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    item.budget.name,
-                    style: theme.textTheme.titleMedium,
-                    overflow: TextOverflow.ellipsis,
+                    'Over budget by ${(-remaining).toStringAsFixed(0)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.error,
+                    ),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '${remaining.toStringAsFixed(0)} remaining',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.primary,
+                    ),
                   ),
                 ),
-                PopupMenuButton<String>(
-                  onSelected: (value) async {
-                    if (value == 'delete') {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder:
-                            (ctx) => AlertDialog(
-                              title: const Text('Delete Budget'),
-                              content: Text(
-                                'Delete "${item.budget.name}"? '
-                                'Linked transactions will be unlinked.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => ctx.pop(false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => ctx.pop(true),
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            ),
-                      );
-                      if (confirm == true) {
-                        await ref
-                            .read(budgetViewModelProvider.notifier)
-                            .deleteBudget(item.budget.id!);
-                      }
-                    }
-                  },
-                  itemBuilder:
-                      (_) => const [
-                        PopupMenuItem(value: 'delete', child: Text('Delete')),
-                      ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _periodLabel(item.budget.period),
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: item.progress.toDouble(),
-                minHeight: 8,
-                color: progressColor,
-                backgroundColor: colorScheme.surfaceContainerHighest,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Spent: ${spent.toStringAsFixed(0)}',
-                  style: theme.textTheme.bodySmall,
-                ),
-                Text(
-                  'of ${total.toStringAsFixed(0)}',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-            if (item.isOverBudget)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'Over budget by ${(-remaining).toStringAsFixed(0)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.error,
-                  ),
-                ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${remaining.toStringAsFixed(0)} remaining',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

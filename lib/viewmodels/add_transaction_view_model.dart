@@ -9,6 +9,7 @@ import 'package:rocket_pocket/repositories/budget_repository.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
 /// Sentinel used in [AddTransactionState.copyWith] to distinguish
@@ -300,6 +301,8 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
 
       // Ensure pocket balances in the UI are refreshed after DB updates
       ref.invalidate(pocketViewModelProvider);
+      // Refresh budget spent amounts after the new transaction
+      ref.invalidate(budgetViewModelProvider);
       // Reset form after successful submit
       state = AsyncData(current.copyWith(description: '', amount: 0));
     } catch (e, stack) {

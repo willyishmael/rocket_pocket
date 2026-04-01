@@ -135,6 +135,16 @@ class NavigationHelper {
                   return getPage(child: AddBudgetScreen(), state: state);
                 },
               ),
+              GoRoute(
+                path: Paths.budgetDetails,
+                pageBuilder: (context, state) {
+                  final budgetId = int.parse(state.pathParameters['budgetId']!);
+                  return getPage(
+                    child: BudgetDetailScreen(budgetId: budgetId),
+                    state: state,
+                  );
+                },
+              ),
             ],
           ),
 

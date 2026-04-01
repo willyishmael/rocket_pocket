@@ -23,7 +23,10 @@ abstract final class Paths {
   // ── Budget ──────────────────────────────────────────────────────────────────
   static const String budget = '/budget';
   static const String addBudget = '$budget/add';
-  // ── Loan ────────────────────────────────────────────────────────────────────
+  static const String budgetDetails = '$budget/:budgetId';
+
+  static String budgetDetailsRoute(int budgetId) =>
+      '$budget/$budgetId'; // ── Loan ────────────────────────────────────────────────────────────────────
   static const String loan = '/loan';
   static const String addLoan = '$loan/add';
   static const String loanDetails = '$loan/:loanId';
