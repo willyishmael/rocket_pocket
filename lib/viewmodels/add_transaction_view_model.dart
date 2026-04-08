@@ -188,6 +188,8 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
         selectedCategory: newCategory,
         // Keep originalTransactionId only when switching to refund
         originalTransactionId: type == TransactionType.refund ? _absent : null,
+        // Budget only applies to expenses — clear it for other types
+        selectedBudget: type == TransactionType.expense ? _absent : null,
       ),
     );
   }

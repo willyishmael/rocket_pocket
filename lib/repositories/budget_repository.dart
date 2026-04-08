@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 
 final budgetRepositoryProvider = Provider<BudgetRepository>((ref) {
@@ -72,6 +73,7 @@ class BudgetRepository {
           db.selectOnly(db.transactions)
             ..addColumns([db.transactions.amount.sum()])
             ..where(db.transactions.budgetId.equals(budgetId))
+            ..where(db.transactions.type.equalsValue(TransactionType.expense))
             ..where(
               db.transactions.date.isBiggerOrEqualValue(periodRange.$1) &
                   db.transactions.date.isSmallerThanValue(periodRange.$2),

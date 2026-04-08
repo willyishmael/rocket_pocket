@@ -267,8 +267,9 @@ class AddTransactionScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                       ],
 
-                      // ── Budget (optional) ─────────────────────────────
-                      if (state.allBudgets.isNotEmpty) ...[
+                      // ── Budget (optional, expense only) ──────────────
+                      if (state.selectedType == TransactionType.expense &&
+                          state.allBudgets.isNotEmpty) ...[
                         DropdownButtonFormField<budget_model.Budget?>(
                           value: state.selectedBudget,
                           decoration: const InputDecoration(
