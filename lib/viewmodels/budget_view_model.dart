@@ -40,17 +40,23 @@ class BudgetViewModel extends AsyncNotifier<List<BudgetWithSpent>> {
 
   Future<List<BudgetWithSpent>> _loadBudgets() async {
     final dbBudgets = await _repository.getAllBudgets();
-    final results = <BudgetWithSpent>[];
-    for (final dbBudget in dbBudgets) {
-      final budget = model.Budget.fromDb(dbBudget);
-      final spent = await _repository.getSpentAmount(
-        budget.id!,
-        budget.period,
-        budget.startDate,
-      );
-      results.add(BudgetWithSpent(budget: budget, spent: spent));
+    final budgets = dbBudgets.map(model.Budget.fromDb).toList();
+    final spentAmounts = await Future.wait(
+      budgets.map(
+        (budget) => _repository.getSpentAmount(
+          budget.id!,
+          budget.period,
+          budget.startDate,
+        ),
+      ),
+    );
+
+    final result = <BudgetWithSpent>[];
+    for (var i = 0; i < budgets.length; i++) {
+      result.add(BudgetWithSpent(budget: budgets[i], spent: spentAmounts[i]));
     }
-    return results;
+
+    return result;
   }
 
   Future<void> addBudget(model.Budget budget) async {
