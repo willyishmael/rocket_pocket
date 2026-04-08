@@ -449,6 +449,7 @@ class _TransactionsSection extends ConsumerWidget {
       builder: (context, snapshot) {
         final transactions = snapshot.data ?? [];
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
+        final hasError = snapshot.hasError;
 
         return MultiSliver(
           children: [
@@ -484,6 +485,24 @@ class _TransactionsSection extends ConsumerWidget {
                 child: Padding(
                   padding: EdgeInsets.all(32),
                   child: Center(child: CircularProgressIndicator()),
+                ),
+              )
+            else if (hasError)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 48,
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Failed to load transactions.\n${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.error,
+                      ),
+                    ),
+                  ),
                 ),
               )
             else if (transactions.isEmpty)
