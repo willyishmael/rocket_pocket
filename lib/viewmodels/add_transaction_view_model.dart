@@ -215,6 +215,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   void setBudget(budget_model.Budget? budget) {
     final current = state.value;
     if (current == null) return;
+    if (current.selectedType != TransactionType.expense) return;
     state = AsyncData(current.copyWith(selectedBudget: budget));
   }
 
