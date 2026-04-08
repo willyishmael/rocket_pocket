@@ -253,7 +253,10 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
         senderPocketId: current.senderPocket?.id,
         receiverPocketId: current.receiverPocket?.id,
         categoryId: current.selectedCategory?.id,
-        budgetId: current.selectedBudget?.id,
+        budgetId:
+            current.selectedType == TransactionType.expense
+                ? current.selectedBudget?.id
+                : null,
         description: current.description.trim(),
         amount: current.amount,
         date: current.date,
