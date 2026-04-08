@@ -66,6 +66,7 @@ class BudgetViewModel extends AsyncNotifier<List<BudgetWithSpent>> {
       state = AsyncData(await _loadBudgets());
     } catch (e, stack) {
       state = AsyncError(e, stack);
+      rethrow;
     }
   }
 
@@ -76,6 +77,7 @@ class BudgetViewModel extends AsyncNotifier<List<BudgetWithSpent>> {
       state = AsyncData(await _loadBudgets());
     } catch (e, stack) {
       state = AsyncError(e, stack);
+      rethrow;
     }
   }
 
@@ -86,6 +88,7 @@ class BudgetViewModel extends AsyncNotifier<List<BudgetWithSpent>> {
       state = AsyncData(await _loadBudgets());
     } catch (e, stack) {
       state = AsyncError(e, stack);
+      rethrow;
     }
   }
 
@@ -95,6 +98,7 @@ class BudgetViewModel extends AsyncNotifier<List<BudgetWithSpent>> {
       state = AsyncData(await _loadBudgets());
     } catch (e, stack) {
       state = AsyncError(e, stack);
+      rethrow;
     }
   }
 }
