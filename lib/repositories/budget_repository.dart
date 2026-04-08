@@ -121,28 +121,57 @@ class BudgetRepository {
         );
         return (periodStart, periodStart.add(const Duration(days: 7)));
       case BudgetPeriod.monthly:
-        final periodStart = DateTime(now.year, now.month, startDate.day);
+        final day = _clampDay(startDate.day, now.year, now.month);
+        final periodStart = DateTime(now.year, now.month, day);
         final adjustedStart =
             periodStart.isAfter(now)
-                ? DateTime(now.year, now.month - 1, startDate.day)
+                ? DateTime(
+                  now.year,
+                  now.month - 1,
+                  _clampDay(startDate.day, now.year, now.month - 1),
+                )
                 : periodStart;
+        final endDay = _clampDay(
+          startDate.day,
+          adjustedStart.year,
+          adjustedStart.month + 1,
+        );
         return (
           adjustedStart,
-          DateTime(adjustedStart.year, adjustedStart.month + 1, startDate.day),
+          DateTime(adjustedStart.year, adjustedStart.month + 1, endDay),
         );
       case BudgetPeriod.yearly:
-        final periodStart = DateTime(now.year, startDate.month, startDate.day);
+        final day = _clampDay(startDate.day, now.year, startDate.month);
+        final periodStart = DateTime(now.year, startDate.month, day);
         final adjustedStart =
             periodStart.isAfter(now)
-                ? DateTime(now.year - 1, startDate.month, startDate.day)
+                ? DateTime(
+                  now.year - 1,
+                  startDate.month,
+                  _clampDay(startDate.day, now.year - 1, startDate.month),
+                )
                 : periodStart;
+        final endDay = _clampDay(
+          startDate.day,
+          adjustedStart.year + 1,
+          startDate.month,
+        );
         return (
           adjustedStart,
-          DateTime(adjustedStart.year + 1, startDate.month, startDate.day),
+          DateTime(adjustedStart.year + 1, startDate.month, endDay),
         );
       case BudgetPeriod.once:
         // One-time budget: the entire window from startDate to far future
         return (startDate, DateTime(9999));
     }
+  }
+
+  /// Returns [day] clamped to the last valid day of [month] in [year].
+  /// e.g. _clampDay(31, 2024, 2) → 29  (leap year)
+  ///      _clampDay(31, 2023, 2) → 28
+  int _clampDay(int day, int year, int month) {
+    // DateTime(year, month + 1, 0) gives the last day of the month
+    final lastDay = DateTime(year, month + 1, 0).day;
+    return day.clamp(1, lastDay);
   }
 }
