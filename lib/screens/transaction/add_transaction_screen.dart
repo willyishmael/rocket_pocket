@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/model/budget.dart' as budget_model;
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/viewmodels/add_transaction_view_model.dart';
 
@@ -261,6 +262,37 @@ class AddTransactionScreen extends ConsumerWidget {
                                   )
                                   .setCategory(c);
                             }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // ── Budget (optional, expense only) ──────────────
+                      if (state.selectedType == TransactionType.expense &&
+                          state.allBudgets.isNotEmpty) ...[
+                        DropdownButtonFormField<budget_model.Budget?>(
+                          value: state.selectedBudget,
+                          decoration: const InputDecoration(
+                            labelText: 'Budget (optional)',
+                            border: OutlineInputBorder(),
+                            icon: Icon(Icons.savings),
+                          ),
+                          items: [
+                            const DropdownMenuItem<budget_model.Budget?>(
+                              value: null,
+                              child: Text('None'),
+                            ),
+                            ...state.allBudgets.map(
+                              (b) => DropdownMenuItem<budget_model.Budget?>(
+                                value: b,
+                                child: Text(b.name),
+                              ),
+                            ),
+                          ],
+                          onChanged: (b) {
+                            ref
+                                .read(addTransactionViewModelProvider.notifier)
+                                .setBudget(b);
                           },
                         ),
                         const SizedBox(height: 16),

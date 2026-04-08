@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:rocket_pocket/data/local/default_values/default_categories.dart';
 import 'package:rocket_pocket/data/local/default_values/default_gradients.dart';
+import 'package:rocket_pocket/data/local/tables/budgets.dart';
 import 'package:rocket_pocket/data/local/tables/color_gradients.dart';
 import 'package:rocket_pocket/data/local/tables/loans.dart';
 import 'package:rocket_pocket/data/local/tables/pockets.dart';
@@ -13,6 +14,7 @@ import 'package:rocket_pocket/data/local/tables/transaction_categories.dart';
 import 'package:rocket_pocket/data/local/tables/transactions.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
+import 'package:rocket_pocket/data/model/type_converter/budget_period_converter.dart';
 import 'package:rocket_pocket/data/model/type_converter/color_list_converter.dart';
 import 'package:rocket_pocket/data/model/type_converter/loan_status_converter.dart';
 import 'package:rocket_pocket/data/model/type_converter/loan_type_converter.dart';
@@ -26,13 +28,20 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 
 // Create the database
 @DriftDatabase(
-  tables: [Pockets, TransactionCategories, Loans, Transactions, ColorGradients],
+  tables: [
+    Pockets,
+    TransactionCategories,
+    Loans,
+    Transactions,
+    ColorGradients,
+    Budgets,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -59,6 +68,10 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
         await m.addColumn(transactions, transactions.date);
+      }
+      if (from < 3) {
+        await m.createTable(budgets);
+        await m.addColumn(transactions, transactions.budgetId);
       }
     },
   );

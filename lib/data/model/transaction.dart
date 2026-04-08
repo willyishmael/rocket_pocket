@@ -10,6 +10,7 @@ class Transaction {
   final int? categoryId;
   final int? loanId;
   final int? originalTransactionId;
+  final int? budgetId;
   final String description;
   final double amount;
   final DateTime? date;
@@ -24,6 +25,7 @@ class Transaction {
     this.categoryId,
     this.loanId,
     this.originalTransactionId,
+    this.budgetId,
     required this.description,
     required this.amount,
     this.date,
@@ -52,6 +54,7 @@ class Transaction {
     int? categoryId,
     int? loanId,
     int? originalTransactionId,
+    int? budgetId,
     String? description,
     double? amount,
     DateTime? date,
@@ -67,6 +70,7 @@ class Transaction {
       loanId: loanId ?? this.loanId,
       originalTransactionId:
           originalTransactionId ?? this.originalTransactionId,
+      budgetId: budgetId ?? this.budgetId,
       description: description ?? this.description,
       amount: amount ?? this.amount,
       date: date ?? this.date,
@@ -85,6 +89,7 @@ class Transaction {
       categoryId: dbRow.categoryId,
       loanId: dbRow.loanId,
       originalTransactionId: dbRow.originalTransactionId,
+      budgetId: dbRow.budgetId,
       description: dbRow.description,
       amount: dbRow.amount,
       date: dbRow.date,
@@ -103,6 +108,7 @@ class Transaction {
       categoryId: Value(categoryId),
       loanId: Value(loanId),
       originalTransactionId: Value(originalTransactionId),
+      budgetId: Value(budgetId),
       description: description,
       amount: amount,
       date: Value(date),
@@ -125,6 +131,7 @@ class Transaction {
       categoryId: Value(categoryId),
       loanId: Value(loanId),
       originalTransactionId: Value(originalTransactionId),
+      budgetId: Value(budgetId),
       description: Value(description),
       amount: Value(amount),
       date: Value(date),
@@ -147,6 +154,7 @@ class Transaction {
       categoryId: categoryId,
       loanId: loanId,
       originalTransactionId: originalTransactionId,
+      budgetId: budgetId,
       description: description,
       amount: amount,
       date: date,
