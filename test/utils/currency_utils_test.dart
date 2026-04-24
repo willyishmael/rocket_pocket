@@ -10,7 +10,7 @@ void main() {
 
     test('format returns fallback for invalid ISO code', () {
       const code = 'NOT_A_CURRENCY';
-      expect(CurrencyUtils.format(123.456, code), '${code}123.46');
+      expect(CurrencyUtils.format(123.456, code), '${code} 123.46');
     });
 
     test('format with valid code produces non-empty output', () {
