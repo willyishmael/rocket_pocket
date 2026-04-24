@@ -109,7 +109,7 @@ class SettingsScreen extends ConsumerWidget {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    error: (_, _) => Text(
+                    error: (_, __) => Text(
                       'Unknown',
                       style: textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
