@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 
+enum TransactionSortOrder { newest, oldest }
+
 /// Shows a modal bottom sheet for filtering transactions by type.
 ///
 /// [activeFilters] is the current set of active type filters.
@@ -9,76 +11,131 @@ import 'package:rocket_pocket/data/model/transaction_type.dart';
 void showTransactionFilterSheet({
   required BuildContext context,
   required Set<TransactionType> activeFilters,
+  required TransactionSortOrder sortOrder,
   required void Function(Set<TransactionType>) onChanged,
+  required void Function(TransactionSortOrder) onSortChanged,
 }) {
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (ctx) {
+      var selectedSortOrder = sortOrder;
+      var selectedFilters = Set<TransactionType>.from(activeFilters);
+
       return StatefulBuilder(
         builder: (ctx, setSheetState) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Filter Transactions',
-                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.5,
+            minChildSize: 0.3,
+            maxChildSize: 0.9,
+            builder: (ctx, scrollController) {
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  20,
+                  16,
+                  MediaQuery.of(ctx).viewInsets.bottom + 32,
+                ),
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(ctx).colorScheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        final cleared = <TransactionType>{};
-                        onChanged(cleared);
-                        setSheetState(() {});
-                      },
-                      child: const Text('Clear all'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Transaction type',
-                  style: Theme.of(ctx).textTheme.labelLarge,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children:
-                      TransactionType.values.map((type) {
-                        final selected = activeFilters.contains(type);
-                        return FilterChip(
-                          label: Text(type.toReadableString()),
-                          selected: selected,
-                          onSelected: (on) {
-                            final updated = Set<TransactionType>.from(
-                              activeFilters,
-                            );
-                            on ? updated.add(type) : updated.remove(type);
-                            onChanged(updated);
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Filter Transactions',
+                            style: Theme.of(ctx).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              selectedFilters = <TransactionType>{};
+                              selectedSortOrder = TransactionSortOrder.newest;
+                              onChanged(selectedFilters);
+                              onSortChanged(selectedSortOrder);
+                              setSheetState(() {});
+                            },
+                            child: const Text('Clear all'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sort order',
+                        style: Theme.of(ctx).textTheme.labelLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<TransactionSortOrder>(
+                          showSelectedIcon: false,
+                          segments: const [
+                            ButtonSegment(
+                              value: TransactionSortOrder.newest,
+                              label: Text('Newest First'),
+                            ),
+                            ButtonSegment(
+                              value: TransactionSortOrder.oldest,
+                              label: Text('Oldest First'),
+                            ),
+                          ],
+                          selected: {selectedSortOrder},
+                          onSelectionChanged: (value) {
+                            selectedSortOrder = value.first;
+                            onSortChanged(selectedSortOrder);
                             setSheetState(() {});
                           },
-                        );
-                      }).toList(),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('Apply'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Transaction type',
+                        style: Theme.of(ctx).textTheme.labelLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children:
+                            TransactionType.values.map((type) {
+                              final selected = selectedFilters.contains(type);
+                              return FilterChip(
+                                label: Text(type.toReadableString()),
+                                selected: selected,
+                                onSelected: (on) {
+                                  final updated = Set<TransactionType>.from(
+                                    selectedFilters,
+                                  );
+                                  on ? updated.add(type) : updated.remove(type);
+                                  selectedFilters = updated;
+                                  onChanged(updated);
+                                  setSheetState(() {});
+                                },
+                              );
+                            }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           );
         },
       );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/0_widgets/month_selector_delegate.dart';
@@ -23,16 +24,45 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
   /// null means "auto-select the most recent month with transactions"
   DateTime? _selectedMonth;
 
+  TransactionSortOrder _sortOrder = TransactionSortOrder.newest;
+
+  int _compareTransactionsByDate(Transaction a, Transaction b) {
+    final aPrimaryTime = a.date ?? DateTime(0);
+    final bPrimaryTime = b.date ?? DateTime(0);
+    final primaryComparison = bPrimaryTime.compareTo(aPrimaryTime);
+    if (primaryComparison != 0) {
+      return _sortOrder == TransactionSortOrder.newest
+          ? primaryComparison
+          : -primaryComparison;
+    }
+
+    final aCreatedAt = a.createdAt ?? DateTime(0);
+    final bCreatedAt = b.createdAt ?? DateTime(0);
+    final createdAtComparison = bCreatedAt.compareTo(aCreatedAt);
+    if (createdAtComparison != 0) {
+      return _sortOrder == TransactionSortOrder.newest
+          ? createdAtComparison
+          : -createdAtComparison;
+    }
+
+    final idComparison = (b.id ?? 0).compareTo(a.id ?? 0);
+    return _sortOrder == TransactionSortOrder.newest
+        ? idComparison
+        : -idComparison;
+  }
+
   void _showFilterSheet() {
     showTransactionFilterSheet(
       context: context,
       activeFilters: _activeTypeFilters,
+      sortOrder: _sortOrder,
       onChanged:
           (updated) => setState(() {
             _activeTypeFilters
               ..clear()
               ..addAll(updated);
           }),
+      onSortChanged: (updated) => setState(() => _sortOrder = updated),
     );
   }
 
@@ -53,11 +83,8 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
 
     // Derive unique months (newest first) from all loaded transactions,
     // independent of any filter so the selector is always stable.
-    final allSorted = [...(transactionsAsync.value ?? [])]..sort((a, b) {
-      final aTime = a.date ?? a.createdAt ?? DateTime(0);
-      final bTime = b.date ?? b.createdAt ?? DateTime(0);
-      return bTime.compareTo(aTime);
-    });
+    final allSorted = [...(transactionsAsync.value ?? <Transaction>[])]
+      ..sort(_compareTransactionsByDate);
 
     final availableMonths = <DateTime>[];
     final seenMonths = <DateTime>{};
@@ -126,12 +153,8 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
                   child: Center(child: Text('Error: $e')),
                 ),
             data: (transactions) {
-              // Sort by transaction date (newest first), fall back to createdAt
-              final sorted = [...transactions]..sort((a, b) {
-                final aTime = a.date ?? a.createdAt ?? DateTime(0);
-                final bTime = b.date ?? b.createdAt ?? DateTime(0);
-                return bTime.compareTo(aTime);
-              });
+              final sorted = [...transactions]
+                ..sort(_compareTransactionsByDate);
 
               // Apply month filter
               final monthFiltered =
