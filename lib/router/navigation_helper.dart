@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/budget.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/router/get_page.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/screens.dart';
@@ -115,6 +116,30 @@ class NavigationHelper {
                 path: Paths.addTransaction,
                 pageBuilder: (context, state) {
                   return getPage(child: AddTransactionScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.transactionDetails,
+                pageBuilder: (context, state) {
+                  final extra = state.extra;
+                  if (extra is Transaction) {
+                    return getPage(
+                      child: TransactionDetailScreen(transaction: extra),
+                      state: state,
+                    );
+                  }
+
+                  final txIdParam = state.pathParameters['transactionId'];
+                  final txId =
+                      txIdParam != null ? int.tryParse(txIdParam) : null;
+                  if (txId != null) {
+                    return getPage(
+                      child: TransactionDetailScreen(transactionId: txId),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: TransactionScreen(), state: state);
                 },
               ),
             ],

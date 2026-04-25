@@ -288,6 +288,13 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
                     transaction: t,
                     currency: currency,
                     pocketName: resolvedPocketName,
+                    onTap:
+                        t.id == null
+                            ? null
+                            : () => context.push(
+                              Paths.transactionDetailsRoute(t.id!),
+                              extra: t,
+                            ),
                   );
                 }, childCount: filtered.length),
               );

@@ -7,12 +7,14 @@ class TransactionListTile extends StatelessWidget {
   final Transaction transaction;
   final String currency;
   final String? pocketName;
+  final VoidCallback? onTap;
 
   const TransactionListTile({
     super.key,
     required this.transaction,
     this.currency = 'IDR',
     this.pocketName,
+    this.onTap,
   });
 
   static const _months = [
@@ -69,6 +71,7 @@ class TransactionListTile extends StatelessWidget {
     };
 
     return ListTile(
+      onTap: onTap,
       title: Text(transaction.description),
       subtitle: Text(
         pocketName != null
