@@ -11,10 +11,7 @@ import 'package:rocket_pocket/repositories/transaction_categories_repository.dar
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
-
-/// Sentinel used in [EditTransactionState.copyWith] to distinguish
-/// "keep existing value" from "explicitly set to null".
-const Object _absent = Object();
+import 'package:rocket_pocket/viewmodels/viewmodel_utils.dart';
 
 class EditTransactionState {
   final Transaction? original;
@@ -69,38 +66,38 @@ class EditTransactionState {
   }
 
   EditTransactionState copyWith({
-    Object? original = _absent,
+    Object? original = absent,
     List<Pocket>? pockets,
     List<db.TransactionCategory>? allCategories,
     List<budget_model.Budget>? allBudgets,
     TransactionType? selectedType,
-    Object? senderPocket = _absent,
-    Object? receiverPocket = _absent,
-    Object? selectedCategory = _absent,
-    Object? selectedBudget = _absent,
+    Object? senderPocket = absent,
+    Object? receiverPocket = absent,
+    Object? selectedCategory = absent,
+    Object? selectedBudget = absent,
     String? description,
     double? amount,
     DateTime? date,
     bool? isSaving,
   }) {
     return EditTransactionState(
-      original: original == _absent ? this.original : original as Transaction?,
+      original: original == absent ? this.original : original as Transaction?,
       pockets: pockets ?? this.pockets,
       allCategories: allCategories ?? this.allCategories,
       allBudgets: allBudgets ?? this.allBudgets,
       selectedType: selectedType ?? this.selectedType,
       senderPocket:
-          senderPocket == _absent ? this.senderPocket : senderPocket as Pocket?,
+          senderPocket == absent ? this.senderPocket : senderPocket as Pocket?,
       receiverPocket:
-          receiverPocket == _absent
+          receiverPocket == absent
               ? this.receiverPocket
               : receiverPocket as Pocket?,
       selectedCategory:
-          selectedCategory == _absent
+          selectedCategory == absent
               ? this.selectedCategory
               : selectedCategory as db.TransactionCategory?,
       selectedBudget:
-          selectedBudget == _absent
+          selectedBudget == absent
               ? this.selectedBudget
               : selectedBudget as budget_model.Budget?,
       description: description ?? this.description,
@@ -195,9 +192,9 @@ class EditTransactionNotifier extends AsyncNotifier<EditTransactionState> {
     state = AsyncData(
       current.copyWith(
         selectedType: type,
-        receiverPocket: type == TransactionType.transfer ? _absent : null,
+        receiverPocket: type == TransactionType.transfer ? absent : null,
         selectedCategory: newCategory,
-        selectedBudget: type == TransactionType.expense ? _absent : null,
+        selectedBudget: type == TransactionType.expense ? absent : null,
       ),
     );
   }

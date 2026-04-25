@@ -11,10 +11,7 @@ import 'package:rocket_pocket/repositories/transaction_categories_repository.dar
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
-
-/// Sentinel used in [AddTransactionState.copyWith] to distinguish
-/// "keep existing value" from "explicitly set to null".
-const Object _absent = Object();
+import 'package:rocket_pocket/viewmodels/viewmodel_utils.dart';
 
 class AddTransactionState {
   final List<Pocket> pockets;
@@ -78,11 +75,11 @@ class AddTransactionState {
     List<budget_model.Budget>? allBudgets,
     TransactionType? selectedType,
     // Nullable fields — pass null to clear, omit to keep existing value.
-    Object? senderPocket = _absent,
-    Object? receiverPocket = _absent,
-    Object? selectedCategory = _absent,
-    Object? selectedBudget = _absent,
-    Object? originalTransactionId = _absent,
+    Object? senderPocket = absent,
+    Object? receiverPocket = absent,
+    Object? selectedCategory = absent,
+    Object? selectedBudget = absent,
+    Object? originalTransactionId = absent,
     // Non-nullable fields.
     String? description,
     double? amount,
@@ -98,21 +95,21 @@ class AddTransactionState {
       allBudgets: allBudgets ?? this.allBudgets,
       selectedType: selectedType ?? this.selectedType,
       senderPocket:
-          senderPocket == _absent ? this.senderPocket : senderPocket as Pocket?,
+          senderPocket == absent ? this.senderPocket : senderPocket as Pocket?,
       receiverPocket:
-          receiverPocket == _absent
+          receiverPocket == absent
               ? this.receiverPocket
               : receiverPocket as Pocket?,
       selectedCategory:
-          selectedCategory == _absent
+          selectedCategory == absent
               ? this.selectedCategory
               : selectedCategory as db.TransactionCategory?,
       selectedBudget:
-          selectedBudget == _absent
+          selectedBudget == absent
               ? this.selectedBudget
               : selectedBudget as budget_model.Budget?,
       originalTransactionId:
-          originalTransactionId == _absent
+          originalTransactionId == absent
               ? this.originalTransactionId
               : originalTransactionId as int?,
       description: description ?? this.description,
@@ -195,13 +192,13 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
       current.copyWith(
         selectedType: type,
         // Keep receiverPocket only when switching to transfer
-        receiverPocket: type == TransactionType.transfer ? _absent : null,
+        receiverPocket: type == TransactionType.transfer ? absent : null,
         // Auto-select first matching category (null for types with no categories)
         selectedCategory: newCategory,
         // Keep originalTransactionId only when switching to refund
-        originalTransactionId: type == TransactionType.refund ? _absent : null,
+        originalTransactionId: type == TransactionType.refund ? absent : null,
         // Budget only applies to expenses — clear it for other types
-        selectedBudget: type == TransactionType.expense ? _absent : null,
+        selectedBudget: type == TransactionType.expense ? absent : null,
         // Tip & Tax only apply to expenses — clear for other types
         tipAmount: type == TransactionType.expense ? null : 0,
         taxAmount: type == TransactionType.expense ? null : 0,
