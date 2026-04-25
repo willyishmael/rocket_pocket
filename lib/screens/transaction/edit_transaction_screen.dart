@@ -13,7 +13,7 @@ import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/screens/transaction/widgets/transaction_form_fields.dart';
 import 'package:rocket_pocket/viewmodels/edit_transaction_view_model.dart';
 
-class EditTransactionScreen extends ConsumerWidget {
+class EditTransactionScreen extends ConsumerStatefulWidget {
   const EditTransactionScreen({this.transaction, this.transactionId, super.key})
     : assert(transaction != null || transactionId != null);
 
@@ -21,17 +21,30 @@ class EditTransactionScreen extends ConsumerWidget {
   final int? transactionId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final txId = transactionId ?? transaction?.id;
-    if (txId == null) {
+  ConsumerState<EditTransactionScreen> createState() =>
+      _EditTransactionScreenState();
+}
+
+class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
+  late int _txId;
+
+  @override
+  void initState() {
+    super.initState();
+    _txId = widget.transactionId ?? widget.transaction?.id ?? 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_txId == 0) {
       return Scaffold(
         appBar: AppBar(title: const Text('Edit Transaction')),
         body: const Center(child: Text('Transaction not found.')),
       );
     }
 
-    // Import the provider from edit_transaction_view_model.dart
-    final loadAsync = ref.watch(_editTransactionLoadProvider(txId));
+    // Watch the load provider to display loading/error states
+    final loadAsync = ref.watch(_editTransactionLoadProvider(_txId));
 
     return loadAsync.when(
       loading:
@@ -40,14 +53,15 @@ class EditTransactionScreen extends ConsumerWidget {
       error:
           (err, stack) => Scaffold(
             appBar: AppBar(title: const Text('Edit Transaction')),
-            body: Center(child: Text('Error loading transaction')),
+            body: const Center(child: Text('Error loading transaction')),
           ),
       data: (data) {
-        // Initialize the notifier with loaded data
-        ref
-            .read(editTransactionViewModelProvider.notifier)
-            .initializeFromData(data.$1, data.$2, data.$3, data.$4);
-
+        // Defer the initialization to after the build phase completes
+        Future(() {
+          ref
+              .read(editTransactionViewModelProvider.notifier)
+              .initializeFromData(data.$1, data.$2, data.$3, data.$4);
+        });
         return _EditTransactionContent(ref: ref);
       },
     );
