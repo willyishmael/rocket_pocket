@@ -117,6 +117,7 @@ db.TransactionCategory buildCategoryRow({
   int id = 1,
   String name = 'Food',
   TransactionType type = TransactionType.expense,
+  bool? isSystem,
   DateTime? createdAt,
   DateTime? updatedAt,
 }) {
@@ -124,8 +125,9 @@ db.TransactionCategory buildCategoryRow({
     id: id,
     name: name,
     type: type,
+    isSystem: isSystem ?? false,
     createdAt: createdAt ?? fixedDate(1),
-    updatedAt: updatedAt ?? fixedDate(2),
+    updatedAt: updatedAt ?? fixedDate(2)
   );
 }
 

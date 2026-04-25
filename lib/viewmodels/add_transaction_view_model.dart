@@ -28,6 +28,8 @@ class AddTransactionState {
   final budget_model.Budget? selectedBudget;
   final String description;
   final double amount;
+  final double tipAmount;
+  final double taxAmount;
   final DateTime date;
   final int? originalTransactionId;
 
@@ -43,6 +45,8 @@ class AddTransactionState {
     this.selectedBudget,
     this.description = '',
     this.amount = 0,
+    this.tipAmount = 0,
+    this.taxAmount = 0,
     DateTime? date,
     this.originalTransactionId,
   }) : date = date ?? DateTime.now();
@@ -80,6 +84,8 @@ class AddTransactionState {
     // Non-nullable fields.
     String? description,
     double? amount,
+    double? tipAmount,
+    double? taxAmount,
     DateTime? date,
   }) {
     return AddTransactionState(
@@ -108,6 +114,8 @@ class AddTransactionState {
               : originalTransactionId as int?,
       description: description ?? this.description,
       amount: amount ?? this.amount,
+      tipAmount: tipAmount ?? this.tipAmount,
+      taxAmount: taxAmount ?? this.taxAmount,
       date: date ?? this.date,
     );
   }
@@ -190,6 +198,9 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
         originalTransactionId: type == TransactionType.refund ? _absent : null,
         // Budget only applies to expenses — clear it for other types
         selectedBudget: type == TransactionType.expense ? _absent : null,
+        // Tip & Tax only apply to expenses — clear for other types
+        tipAmount: type == TransactionType.expense ? null : 0,
+        taxAmount: type == TransactionType.expense ? null : 0,
       ),
     );
   }
@@ -237,6 +248,18 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
     state = AsyncData(current.copyWith(amount: amount));
   }
 
+  void setTipAmount(double amount) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(tipAmount: amount));
+  }
+
+  void setTaxAmount(double amount) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(taxAmount: amount));
+  }
+
   void setDate(DateTime date) {
     final current = state.value;
     if (current == null) return;
@@ -271,8 +294,60 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
           transaction.toInsertCompanion(),
         );
 
+        // Create separate transactions for tip and tax (expense only)
+        if (current.selectedType == TransactionType.expense) {
+          // Helper to find category by name
+          db.TransactionCategory? findCategory(String name) {
+            final results =
+                current.allCategories.where((c) => c.name == name).toList();
+            return results.isNotEmpty ? results.first : null;
+          }
+
+          if (current.tipAmount > 0) {
+            final tipCategory = findCategory('Tip');
+            if (tipCategory != null) {
+              final tipTransaction = Transaction(
+                type: TransactionType.expense,
+                senderPocketId: current.senderPocket?.id,
+                categoryId: tipCategory.id,
+                description: 'Tip for: ${current.description.trim()}',
+                amount: current.tipAmount,
+                date: current.date,
+              );
+              await _transactionRepository.insertTransaction(
+                tipTransaction.toInsertCompanion(),
+              );
+            }
+          }
+
+          if (current.taxAmount > 0) {
+            final taxCategory = findCategory('Tax');
+            if (taxCategory != null) {
+              final taxTransaction = Transaction(
+                type: TransactionType.expense,
+                senderPocketId: current.senderPocket?.id,
+                categoryId: taxCategory.id,
+                description: 'Tax for: ${current.description.trim()}',
+                amount: current.taxAmount,
+                date: current.date,
+              );
+              await _transactionRepository.insertTransaction(
+                taxTransaction.toInsertCompanion(),
+              );
+            }
+          }
+        }
+
         // Update pocket balance(s) based on transaction type
         final amount = current.amount;
+        final tipAmount =
+            current.selectedType == TransactionType.expense
+                ? current.tipAmount
+                : 0.0;
+        final taxAmount =
+            current.selectedType == TransactionType.expense
+                ? current.taxAmount
+                : 0.0;
         final sender = current.senderPocket;
         final receiver = current.receiverPocket;
 
@@ -296,10 +371,12 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
             );
           }
         } else {
-          // expense — deduct from pocket
+          // expense — deduct from pocket (including tip & tax)
           if (sender != null) {
             await _pocketRepository.updatePocket(
-              sender.copyWith(balance: sender.balance - amount),
+              sender.copyWith(
+                balance: sender.balance - amount - tipAmount - taxAmount,
+              ),
             );
           }
         }
@@ -310,7 +387,14 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
       // Refresh budget spent amounts after the new transaction
       ref.invalidate(budgetViewModelProvider);
       // Reset form after successful submit
-      state = AsyncData(current.copyWith(description: '', amount: 0));
+      state = AsyncData(
+        current.copyWith(
+          description: '',
+          amount: 0,
+          tipAmount: 0,
+          taxAmount: 0,
+        ),
+      );
     } catch (e, stack) {
       state = AsyncError(e, stack);
       rethrow;

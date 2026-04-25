@@ -331,6 +331,48 @@ class AddTransactionScreen extends ConsumerWidget {
                         },
                       ),
 
+                      // ── Tip (expense only) ─────────────────────────────
+                      if (state.selectedType == TransactionType.expense) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: 'Tip (optional)',
+                            border: const OutlineInputBorder(),
+                            icon: const Icon(Icons.card_giftcard),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (v) {
+                            final amount = double.tryParse(v) ?? 0.0;
+                            ref
+                                .read(addTransactionViewModelProvider.notifier)
+                                .setTipAmount(amount);
+                          },
+                        ),
+                      ],
+
+                      // ── Tax (expense only) ─────────────────────────────
+                      if (state.selectedType == TransactionType.expense) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: 'Tax (optional)',
+                            border: const OutlineInputBorder(),
+                            icon: const Icon(Icons.percent),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (v) {
+                            final amount = double.tryParse(v) ?? 0.0;
+                            ref
+                                .read(addTransactionViewModelProvider.notifier)
+                                .setTaxAmount(amount);
+                          },
+                        ),
+                      ],
+
                       const SizedBox(height: 32),
 
                       // ── Submit ────────────────────────────────────────
