@@ -172,13 +172,25 @@ class _CategoryList extends ConsumerWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
-                tooltip: 'Rename',
-                onPressed: () => _showRenameDialog(context, ref, category),
+                tooltip: category.isSystem ? 'System category' : 'Rename',
+                onPressed:
+                    category.isSystem
+                        ? null
+                        : () => _showRenameDialog(context, ref, category),
               ),
               IconButton(
-                icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                tooltip: 'Delete',
-                onPressed: () => _confirmDelete(context, ref, category),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color:
+                      category.isSystem
+                          ? colorScheme.outlineVariant
+                          : colorScheme.error,
+                ),
+                tooltip: category.isSystem ? 'System category' : 'Delete',
+                onPressed:
+                    category.isSystem
+                        ? null
+                        : () => _confirmDelete(context, ref, category),
               ),
             ],
           ),
