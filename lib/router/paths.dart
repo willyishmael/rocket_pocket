@@ -20,9 +20,12 @@ abstract final class Paths {
   static const String transaction = '/transaction';
   static const String addTransaction = '$transaction/add';
   static const String transactionDetails = '$transaction/:transactionId';
+  static const String editTransaction = '$transaction/:transactionId/edit';
 
   static String transactionDetailsRoute(int transactionId) =>
       '$transaction/$transactionId';
+  static String editTransactionRoute(int transactionId) =>
+      '$transaction/$transactionId/edit';
 
   // ── Budget ──────────────────────────────────────────────────────────────────
   static const String budget = '/budget';

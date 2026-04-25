@@ -8,6 +8,7 @@ import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/utils/currency_utils.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
@@ -132,155 +133,21 @@ class _TransactionDetailScreenState
     final tx = _transaction;
     if (tx == null || tx.id == null || _isSaving) return;
 
-    final descController = TextEditingController(text: tx.description);
-    final amountController = TextEditingController(
-      text: tx.amount.toStringAsFixed(2),
-    );
-    var selectedDate = tx.date ?? tx.createdAt ?? DateTime.now();
-
-    final updated = await showModalBottomSheet<Transaction>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Edit Transaction',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: descController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: amountController,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Date'),
-                    subtitle: Text(
-                      DateFormat.yMMMd().add_Hm().format(selectedDate),
-                    ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate == null) return;
-
-                      final pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(selectedDate),
-                      );
-
-                      setSheetState(() {
-                        selectedDate = DateTime(
-                          pickedDate.year,
-                          pickedDate.month,
-                          pickedDate.day,
-                          pickedTime?.hour ?? selectedDate.hour,
-                          pickedTime?.minute ?? selectedDate.minute,
-                        );
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {
-                        final description = descController.text.trim();
-                        final amount = double.tryParse(amountController.text);
-                        if (description.isEmpty ||
-                            amount == null ||
-                            amount <= 0) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Enter valid description and amount.',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-
-                        Navigator.of(context).pop(
-                          tx.copyWith(
-                            description: description,
-                            amount: amount,
-                            date: selectedDate,
-                          ),
-                        );
-                      },
-                      child: const Text('Save Changes'),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+    final result = await context.push(
+      Paths.editTransactionRoute(tx.id!),
+      extra: tx,
     );
 
-    if (updated == null) return;
+    if (result != true) return;
 
-    setState(() => _isSaving = true);
-    try {
-      final database = ref.read(db.appDatabaseProvider);
-      await database.transaction(() async {
-        await _applyPocketImpact(tx, revert: true);
-        await _transactionRepository.updateTransaction(
-          updated.toUpdateCompanion(),
-        );
-        await _applyPocketImpact(updated, revert: false);
-      });
-
-      ref.invalidate(transactionViewModelProvider);
-      ref.invalidate(pocketViewModelProvider);
-      ref.invalidate(budgetViewModelProvider);
-
-      if (!mounted) return;
-      setState(() {
-        _transaction = updated;
-        _isSaving = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Transaction updated.')));
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update transaction.')),
-      );
+    final row = await _transactionRepository.getTransactionById(tx.id!);
+    if (!mounted) return;
+    if (row == null) {
+      setState(() => _transaction = null);
+      return;
     }
+
+    setState(() => _transaction = Transaction.fromDb(row));
   }
 
   Future<Map<int, Pocket>> _loadPocketMap() async {
