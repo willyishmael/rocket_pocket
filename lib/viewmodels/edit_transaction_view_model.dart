@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart' as db;
 import 'package:rocket_pocket/data/model/budget.dart' as budget_model;
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
+import 'package:rocket_pocket/repositories/budget_repository.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
@@ -108,26 +111,37 @@ class EditTransactionState {
   }
 }
 
-/// StateNotifier for managing edit transaction form state
-class _EditTransactionNotifier extends Notifier<EditTransactionState> {
+/// StateNotifier for managing edit transaction form state.
+/// Parameterized by transaction ID so it loads its own data from all
+/// required repositories without any external initialization call.
+class EditTransactionNotifier extends AsyncNotifier<EditTransactionState> {
+  EditTransactionNotifier(this._transactionId);
+
+  final int _transactionId;
   late PocketRepository _pocketRepository;
   late TransactionRepository _transactionRepository;
+  late TransactionCategoriesRepository _categoryRepository;
+  late BudgetRepository _budgetRepository;
 
   @override
-  EditTransactionState build() {
+  Future<EditTransactionState> build() async {
     _pocketRepository = ref.read(pocketRepositoryProvider);
     _transactionRepository = ref.read(transactionRepositoryProvider);
+    _categoryRepository = ref.read(transactionCategoryRepositoryProvider);
+    _budgetRepository = ref.read(budgetRepositoryProvider);
 
-    return EditTransactionState(pockets: const [], allCategories: const []);
-  }
+    final transactionRow = await _transactionRepository.getTransactionById(
+      _transactionId,
+    );
+    if (transactionRow == null) throw Exception('Transaction not found');
 
-  void initializeFromData(
-    Transaction transaction,
-    List<Pocket> pockets,
-    List<db.TransactionCategory> categories,
-    List<budget_model.Budget> budgets,
-  ) {
-    state = EditTransactionState(
+    final transaction = Transaction.fromDb(transactionRow);
+    final pockets = await _pocketRepository.getAllPockets();
+    final categories = await _categoryRepository.getAllTransactionCategories();
+    final budgetRows = await _budgetRepository.getAllBudgets();
+    final budgets = budgetRows.map(budget_model.Budget.fromDb).toList();
+
+    return EditTransactionState(
       original: transaction,
       pockets: pockets,
       allCategories: categories,
@@ -174,67 +188,85 @@ class _EditTransactionNotifier extends Notifier<EditTransactionState> {
   }
 
   void setType(TransactionType type) {
+    final current = state.value;
+    if (current == null) return;
     final newCategory =
-        state.allCategories.where((c) => c.type == type).firstOrNull;
-
-    state = state.copyWith(
-      selectedType: type,
-      receiverPocket: type == TransactionType.transfer ? _absent : null,
-      selectedCategory: newCategory,
-      selectedBudget: type == TransactionType.expense ? _absent : null,
+        current.allCategories.where((c) => c.type == type).firstOrNull;
+    state = AsyncData(
+      current.copyWith(
+        selectedType: type,
+        receiverPocket: type == TransactionType.transfer ? _absent : null,
+        selectedCategory: newCategory,
+        selectedBudget: type == TransactionType.expense ? _absent : null,
+      ),
     );
   }
 
   void setSenderPocket(Pocket pocket) {
-    state = state.copyWith(senderPocket: pocket);
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(senderPocket: pocket));
   }
 
   void setReceiverPocket(Pocket pocket) {
-    state = state.copyWith(receiverPocket: pocket);
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(receiverPocket: pocket));
   }
 
   void setCategory(db.TransactionCategory category) {
-    state = state.copyWith(selectedCategory: category);
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(selectedCategory: category));
   }
 
   void setBudget(budget_model.Budget? budget) {
-    if (state.selectedType != TransactionType.expense) return;
-    state = state.copyWith(selectedBudget: budget);
+    final current = state.value;
+    if (current == null || current.selectedType != TransactionType.expense) {
+      return;
+    }
+    state = AsyncData(current.copyWith(selectedBudget: budget));
   }
 
   void setDescription(String description) {
-    state = state.copyWith(description: description);
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(description: description));
   }
 
   void setAmount(double amount) {
-    state = state.copyWith(amount: amount);
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(amount: amount));
   }
 
   void setDate(DateTime date) {
-    state = state.copyWith(date: date);
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(date: date));
   }
 
   /// Builds the updated transaction with current form values.
-  Transaction _buildUpdatedTransaction() {
-    final original = state.original!;
+  Transaction _buildUpdatedTransaction(EditTransactionState current) {
+    final original = current.original!;
     return original.copyWith(
-      type: state.selectedType,
-      senderPocketId: state.senderPocket?.id,
+      type: current.selectedType,
+      senderPocketId: current.senderPocket?.id,
       receiverPocketId:
-          state.selectedType == TransactionType.transfer
-              ? state.receiverPocket?.id
+          current.selectedType == TransactionType.transfer
+              ? current.receiverPocket?.id
               : null,
       categoryId:
-          state.selectedType == TransactionType.transfer
+          current.selectedType == TransactionType.transfer
               ? null
-              : state.selectedCategory?.id,
+              : current.selectedCategory?.id,
       budgetId:
-          state.selectedType == TransactionType.expense
-              ? state.selectedBudget?.id
+          current.selectedType == TransactionType.expense
+              ? current.selectedBudget?.id
               : null,
-      description: state.description.trim(),
-      amount: state.amount,
-      date: state.date,
+      description: current.description.trim(),
+      amount: current.amount,
+      date: current.date,
     );
   }
 
@@ -298,18 +330,19 @@ class _EditTransactionNotifier extends Notifier<EditTransactionState> {
 
   /// Updates the transaction atomically with balance adjustments.
   Future<void> submitUpdate() async {
-    if (state.original == null ||
-        state.original!.id == null ||
-        !state.isValid ||
-        state.isSaving) {
+    final current = state.value;
+    if (current == null ||
+        current.original?.id == null ||
+        !current.isValid ||
+        current.isSaving) {
       return;
     }
 
-    state = state.copyWith(isSaving: true);
+    state = AsyncData(current.copyWith(isSaving: true));
     try {
       final database = ref.read(db.appDatabaseProvider);
-      final original = state.original!;
-      final updated = _buildUpdatedTransaction();
+      final original = current.original!;
+      final updated = _buildUpdatedTransaction(current);
 
       await database.transaction(() async {
         // Revert the original transaction's balance impact
@@ -329,16 +362,17 @@ class _EditTransactionNotifier extends Notifier<EditTransactionState> {
       ref.invalidate(budgetViewModelProvider);
 
       // Reset state to reflect success
-      state = state.copyWith(isSaving: false, original: updated);
+      state = AsyncData(current.copyWith(isSaving: false, original: updated));
     } catch (e) {
-      state = state.copyWith(isSaving: false);
+      state = AsyncData(current.copyWith(isSaving: false));
       rethrow;
     }
   }
 }
 
-/// Provider for the edit transaction view model
-final editTransactionViewModelProvider =
-    NotifierProvider<_EditTransactionNotifier, EditTransactionState>(
-      _EditTransactionNotifier.new,
-    );
+/// Provider for the edit transaction view model, keyed by transaction ID.
+final editTransactionViewModelProvider = AsyncNotifierProvider.family<
+  EditTransactionNotifier,
+  EditTransactionState,
+  int
+>(EditTransactionNotifier.new);
