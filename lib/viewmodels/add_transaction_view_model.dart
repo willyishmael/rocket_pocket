@@ -278,163 +278,163 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
     state = AsyncData(current.copyWith(date: date));
   }
 
+  Transaction _buildPrimaryTransaction(AddTransactionState current) {
+    return Transaction(
+      type: current.selectedType,
+      senderPocketId: current.senderPocket?.id,
+      receiverPocketId: current.receiverPocket?.id,
+      categoryId: current.selectedCategory?.id,
+      budgetId:
+          current.selectedType == TransactionType.expense
+              ? current.selectedBudget?.id
+              : null,
+      description: current.description.trim(),
+      amount: current.amount,
+      date: current.date,
+      originalTransactionId: current.originalTransactionId,
+    );
+  }
+
+  db.TransactionCategory? _findCategory(
+    AddTransactionState current,
+    String name,
+  ) {
+    final results = current.allCategories.where((c) => c.name == name).toList();
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<void> _insertTransaction(Transaction transaction) {
+    return _transactionRepository.insertTransaction(
+      transaction.toInsertCompanion(),
+    );
+  }
+
+  Future<void> _creditPocket(Pocket? pocket, double amount) async {
+    if (pocket == null) return;
+    await _pocketRepository.updatePocket(
+      pocket.copyWith(balance: pocket.balance + amount),
+    );
+  }
+
+  Future<void> _debitPocket(Pocket? pocket, double amount) async {
+    if (pocket == null) return;
+    await _pocketRepository.updatePocket(
+      pocket.copyWith(balance: pocket.balance - amount),
+    );
+  }
+
+  Future<void> _insertNamedExpense(
+    AddTransactionState current, {
+    required String categoryName,
+    required String descriptionPrefix,
+    required double amount,
+  }) async {
+    if (amount <= 0) return;
+
+    final category = _findCategory(current, categoryName);
+    if (category == null) return;
+
+    final transaction = Transaction(
+      type: TransactionType.expense,
+      senderPocketId: current.senderPocket?.id,
+      categoryId: category.id,
+      description: '$descriptionPrefix: ${current.description.trim()}',
+      amount: amount,
+      date: current.date,
+    );
+
+    await _insertTransaction(transaction);
+  }
+
+  Future<void> _submitIncome(AddTransactionState current) async {
+    await _insertTransaction(_buildPrimaryTransaction(current));
+    await _creditPocket(current.senderPocket, current.amount);
+  }
+
+  Future<void> _submitExpense(AddTransactionState current) async {
+    await _insertTransaction(_buildPrimaryTransaction(current));
+    await _insertNamedExpense(
+      current,
+      categoryName: 'Tip',
+      descriptionPrefix: 'Tip for',
+      amount: current.tipAmount,
+    );
+    await _insertNamedExpense(
+      current,
+      categoryName: 'Tax',
+      descriptionPrefix: 'Tax for',
+      amount: current.taxAmount,
+    );
+
+    await _debitPocket(
+      current.senderPocket,
+      current.amount + current.tipAmount + current.taxAmount,
+    );
+  }
+
+  Future<void> _submitTransfer(AddTransactionState current) async {
+    await _insertTransaction(_buildPrimaryTransaction(current));
+    await _insertNamedExpense(
+      current,
+      categoryName: 'Admin Fee',
+      descriptionPrefix: 'Admin Fee for',
+      amount: current.adminFeeAmount,
+    );
+
+    await _debitPocket(
+      current.senderPocket,
+      current.amount + current.adminFeeAmount,
+    );
+    await _creditPocket(current.receiverPocket, current.amount);
+  }
+
+  Future<void> _submitFallback(AddTransactionState current) async {
+    await _insertTransaction(_buildPrimaryTransaction(current));
+    if (current.selectedType.isPositive) {
+      await _creditPocket(current.senderPocket, current.amount);
+      return;
+    }
+    await _debitPocket(current.senderPocket, current.amount);
+  }
+
+  Future<void> _submitForType(AddTransactionState current) {
+    switch (current.selectedType) {
+      case TransactionType.income:
+        return _submitIncome(current);
+      case TransactionType.expense:
+        return _submitExpense(current);
+      case TransactionType.transfer:
+        return _submitTransfer(current);
+      default:
+        return _submitFallback(current);
+    }
+  }
+
+  Future<void> _resetAfterSubmit(AddTransactionState current) async {
+    await ref.read(pocketViewModelProvider.notifier).refreshPockets();
+    ref.invalidate(budgetViewModelProvider);
+    state = AsyncData(
+      current.copyWith(
+        description: '',
+        amount: 0,
+        tipAmount: 0,
+        taxAmount: 0,
+        adminFeeAmount: 0,
+      ),
+    );
+  }
+
   Future<void> submit() async {
     final current = state.value;
     if (current == null || !current.isValid) return;
 
     state = const AsyncLoading();
     try {
-      final transaction = Transaction(
-        type: current.selectedType,
-        senderPocketId: current.senderPocket?.id,
-        receiverPocketId: current.receiverPocket?.id,
-        categoryId: current.selectedCategory?.id,
-        budgetId:
-            current.selectedType == TransactionType.expense
-                ? current.selectedBudget?.id
-                : null,
-        description: current.description.trim(),
-        amount: current.amount,
-        date: current.date,
-        originalTransactionId: current.originalTransactionId,
-      );
-
-      // Ensure the insert and all balance updates happen atomically.
       final database = ref.read(db.appDatabaseProvider);
       await database.transaction(() async {
-        await _transactionRepository.insertTransaction(
-          transaction.toInsertCompanion(),
-        );
-
-        // Create separate transactions for tip and tax (expense only)
-        if (current.selectedType == TransactionType.expense) {
-          // Helper to find category by name
-          db.TransactionCategory? findCategory(String name) {
-            final results =
-                current.allCategories.where((c) => c.name == name).toList();
-            return results.isNotEmpty ? results.first : null;
-          }
-
-          if (current.tipAmount > 0) {
-            final tipCategory = findCategory('Tip');
-            if (tipCategory != null) {
-              final tipTransaction = Transaction(
-                type: TransactionType.expense,
-                senderPocketId: current.senderPocket?.id,
-                categoryId: tipCategory.id,
-                description: 'Tip for: ${current.description.trim()}',
-                amount: current.tipAmount,
-                date: current.date,
-              );
-              await _transactionRepository.insertTransaction(
-                tipTransaction.toInsertCompanion(),
-              );
-            }
-          }
-
-          if (current.taxAmount > 0) {
-            final taxCategory = findCategory('Tax');
-            if (taxCategory != null) {
-              final taxTransaction = Transaction(
-                type: TransactionType.expense,
-                senderPocketId: current.senderPocket?.id,
-                categoryId: taxCategory.id,
-                description: 'Tax for: ${current.description.trim()}',
-                amount: current.taxAmount,
-                date: current.date,
-              );
-              await _transactionRepository.insertTransaction(
-                taxTransaction.toInsertCompanion(),
-              );
-            }
-          }
-        }
-
-        // Create separate transaction for admin fee (transfer only)
-        if (current.selectedType == TransactionType.transfer &&
-            current.adminFeeAmount > 0) {
-          db.TransactionCategory? findCategory(String name) {
-            final results =
-                current.allCategories.where((c) => c.name == name).toList();
-            return results.isNotEmpty ? results.first : null;
-          }
-
-          final adminFeeCategory = findCategory('Admin Fee');
-          if (adminFeeCategory != null) {
-            final adminFeeTransaction = Transaction(
-              type: TransactionType.expense,
-              senderPocketId: current.senderPocket?.id,
-              categoryId: adminFeeCategory.id,
-              description: 'Admin Fee for: ${current.description.trim()}',
-              amount: current.adminFeeAmount,
-              date: current.date,
-            );
-            await _transactionRepository.insertTransaction(
-              adminFeeTransaction.toInsertCompanion(),
-            );
-          }
-        }
-
-        // Update pocket balance(s) based on transaction type
-        final amount = current.amount;
-        final tipAmount =
-            current.selectedType == TransactionType.expense
-                ? current.tipAmount
-                : 0.0;
-        final taxAmount =
-            current.selectedType == TransactionType.expense
-                ? current.taxAmount
-                : 0.0;
-        final sender = current.senderPocket;
-        final receiver = current.receiverPocket;
-
-        if (current.selectedType == TransactionType.transfer) {
-          // Deduct from sender, credit receiver
-          if (sender != null) {
-            await _pocketRepository.updatePocket(
-              sender.copyWith(
-                balance: sender.balance - amount - current.adminFeeAmount,
-              ),
-            );
-          }
-          if (receiver != null) {
-            await _pocketRepository.updatePocket(
-              receiver.copyWith(balance: receiver.balance + amount),
-            );
-          }
-        } else if (current.selectedType.isPositive) {
-          // income / refund — credit the pocket
-          if (sender != null) {
-            await _pocketRepository.updatePocket(
-              sender.copyWith(balance: sender.balance + amount),
-            );
-          }
-        } else {
-          // expense — deduct from pocket (including tip & tax)
-          if (sender != null) {
-            await _pocketRepository.updatePocket(
-              sender.copyWith(
-                balance: sender.balance - amount - tipAmount - taxAmount,
-              ),
-            );
-          }
-        }
+        await _submitForType(current);
       });
-
-      // Refresh pockets eagerly so callers that immediately pop show updated balances.
-      await ref.read(pocketViewModelProvider.notifier).refreshPockets();
-      // Refresh budget spent amounts after the new transaction
-      ref.invalidate(budgetViewModelProvider);
-      // Reset form after successful submit
-      state = AsyncData(
-        current.copyWith(
-          description: '',
-          amount: 0,
-          tipAmount: 0,
-          taxAmount: 0,
-          adminFeeAmount: 0,
-        ),
-      );
+      await _resetAfterSubmit(current);
     } catch (e, stack) {
       state = AsyncError(e, stack);
       rethrow;
