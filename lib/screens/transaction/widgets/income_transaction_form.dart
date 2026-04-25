@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/local/database.dart' as db;
+import 'package:rocket_pocket/utils/currency_utils.dart';
 import 'package:rocket_pocket/viewmodels/add_transaction_view_model.dart';
 
 class IncomeTransactionForm extends ConsumerWidget {
@@ -26,7 +27,7 @@ class IncomeTransactionForm extends ConsumerWidget {
                     (p) => DropdownMenuItem(
                       value: p,
                       child: Text(
-                        '${p.emoticon}  ${p.name}',
+                        '${p.emoticon}  ${p.name} (${CurrencyUtils.format(p.balance, p.currency)})',
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
