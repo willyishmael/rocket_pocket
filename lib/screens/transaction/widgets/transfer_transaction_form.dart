@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rocket_pocket/utils/currency_utils.dart';
 import 'package:rocket_pocket/viewmodels/add_transaction_view_model.dart';
+import 'package:rocket_pocket/screens/transaction/widgets/transaction_form_fields.dart';
 
 class TransferTransactionForm extends ConsumerWidget {
   const TransferTransactionForm({required this.state, super.key});
@@ -13,25 +13,10 @@ class TransferTransactionForm extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
-        DropdownButtonFormField(
+        TransactionPocketDropdown(
+          label: 'From Pocket',
+          pockets: state.pockets,
           value: state.senderPocket,
-          decoration: const InputDecoration(
-            labelText: 'From Pocket',
-            border: OutlineInputBorder(),
-            icon: Icon(Icons.account_balance_wallet),
-          ),
-          items:
-              state.pockets
-                  .map(
-                    (p) => DropdownMenuItem(
-                      value: p,
-                      child: Text(
-                        '${p.emoticon}  ${p.name} (${CurrencyUtils.format(p.balance, p.currency)})',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  )
-                  .toList(),
           onChanged: (p) {
             if (p != null) {
               ref
@@ -41,26 +26,10 @@ class TransferTransactionForm extends ConsumerWidget {
           },
         ),
         const SizedBox(height: 16),
-        DropdownButtonFormField(
+        TransactionPocketDropdown(
+          label: 'To Pocket',
+          pockets: state.pockets.where((p) => p != state.senderPocket).toList(),
           value: state.receiverPocket,
-          decoration: const InputDecoration(
-            labelText: 'To Pocket',
-            border: OutlineInputBorder(),
-            icon: Icon(Icons.account_balance_wallet),
-          ),
-          items:
-              state.pockets
-                  .where((p) => p != state.senderPocket)
-                  .map(
-                    (p) => DropdownMenuItem(
-                      value: p,
-                      child: Text(
-                        '${p.emoticon}  ${p.name} (${CurrencyUtils.format(p.balance, p.currency)})',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  )
-                  .toList(),
           onChanged: (p) {
             if (p != null) {
               ref
@@ -70,24 +39,18 @@ class TransferTransactionForm extends ConsumerWidget {
           },
         ),
         const SizedBox(height: 16),
-        TextField(
-          decoration: const InputDecoration(
-            labelText: 'Description',
-            border: OutlineInputBorder(),
-            icon: Icon(Icons.notes),
-          ),
+        TransactionTextField(
+          label: 'Description',
+          icon: Icons.notes,
           onChanged:
               (value) => ref
                   .read(addTransactionViewModelProvider.notifier)
                   .setDescription(value),
         ),
         const SizedBox(height: 16),
-        TextField(
-          decoration: const InputDecoration(
-            labelText: 'Amount',
-            border: OutlineInputBorder(),
-            icon: Icon(Icons.payments),
-          ),
+        TransactionTextField(
+          label: 'Amount',
+          icon: Icons.payments,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           onChanged: (value) {
             final amount = double.tryParse(value) ?? 0.0;
@@ -97,12 +60,9 @@ class TransferTransactionForm extends ConsumerWidget {
           },
         ),
         const SizedBox(height: 16),
-        TextField(
-          decoration: const InputDecoration(
-            labelText: 'Admin Fee (optional)',
-            border: OutlineInputBorder(),
-            icon: Icon(Icons.receipt_long),
-          ),
+        TransactionTextField(
+          label: 'Admin Fee (optional)',
+          icon: Icons.receipt_long,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           onChanged: (value) {
             final amount = double.tryParse(value) ?? 0.0;
