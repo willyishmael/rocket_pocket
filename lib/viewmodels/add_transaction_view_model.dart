@@ -30,6 +30,7 @@ class AddTransactionState {
   final double amount;
   final double tipAmount;
   final double taxAmount;
+  final double adminFeeAmount;
   final DateTime date;
   final int? originalTransactionId;
 
@@ -47,6 +48,7 @@ class AddTransactionState {
     this.amount = 0,
     this.tipAmount = 0,
     this.taxAmount = 0,
+    this.adminFeeAmount = 0,
     DateTime? date,
     this.originalTransactionId,
   }) : date = date ?? DateTime.now();
@@ -86,6 +88,7 @@ class AddTransactionState {
     double? amount,
     double? tipAmount,
     double? taxAmount,
+    double? adminFeeAmount,
     DateTime? date,
   }) {
     return AddTransactionState(
@@ -116,6 +119,7 @@ class AddTransactionState {
       amount: amount ?? this.amount,
       tipAmount: tipAmount ?? this.tipAmount,
       taxAmount: taxAmount ?? this.taxAmount,
+      adminFeeAmount: adminFeeAmount ?? this.adminFeeAmount,
       date: date ?? this.date,
     );
   }
@@ -201,6 +205,8 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
         // Tip & Tax only apply to expenses — clear for other types
         tipAmount: type == TransactionType.expense ? null : 0,
         taxAmount: type == TransactionType.expense ? null : 0,
+        // Admin Fee only applies to transfers — clear for other types
+        adminFeeAmount: type == TransactionType.transfer ? null : 0,
       ),
     );
   }
@@ -258,6 +264,12 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
     final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(taxAmount: amount));
+  }
+
+  void setAdminFeeAmount(double amount) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(adminFeeAmount: amount));
   }
 
   void setDate(DateTime date) {
@@ -338,6 +350,31 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
           }
         }
 
+        // Create separate transaction for admin fee (transfer only)
+        if (current.selectedType == TransactionType.transfer &&
+            current.adminFeeAmount > 0) {
+          db.TransactionCategory? findCategory(String name) {
+            final results =
+                current.allCategories.where((c) => c.name == name).toList();
+            return results.isNotEmpty ? results.first : null;
+          }
+
+          final adminFeeCategory = findCategory('Admin Fee');
+          if (adminFeeCategory != null) {
+            final adminFeeTransaction = Transaction(
+              type: TransactionType.expense,
+              senderPocketId: current.senderPocket?.id,
+              categoryId: adminFeeCategory.id,
+              description: 'Admin Fee for: ${current.description.trim()}',
+              amount: current.adminFeeAmount,
+              date: current.date,
+            );
+            await _transactionRepository.insertTransaction(
+              adminFeeTransaction.toInsertCompanion(),
+            );
+          }
+        }
+
         // Update pocket balance(s) based on transaction type
         final amount = current.amount;
         final tipAmount =
@@ -355,7 +392,9 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
           // Deduct from sender, credit receiver
           if (sender != null) {
             await _pocketRepository.updatePocket(
-              sender.copyWith(balance: sender.balance - amount),
+              sender.copyWith(
+                balance: sender.balance - amount - current.adminFeeAmount,
+              ),
             );
           }
           if (receiver != null) {
@@ -393,6 +432,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
           amount: 0,
           tipAmount: 0,
           taxAmount: 0,
+          adminFeeAmount: 0,
         ),
       );
     } catch (e, stack) {

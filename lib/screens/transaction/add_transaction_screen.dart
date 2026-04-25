@@ -331,6 +331,27 @@ class AddTransactionScreen extends ConsumerWidget {
                         },
                       ),
 
+                      // ── Admin Fee (transfer only) ──────────────────────
+                      if (state.selectedType == TransactionType.transfer) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          decoration: const InputDecoration(
+                            labelText: 'Admin Fee (optional)',
+                            border: OutlineInputBorder(),
+                            icon: Icon(Icons.receipt_long),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (v) {
+                            final amount = double.tryParse(v) ?? 0.0;
+                            ref
+                                .read(addTransactionViewModelProvider.notifier)
+                                .setAdminFeeAmount(amount);
+                          },
+                        ),
+                      ],
+
                       // ── Tip (expense only) ─────────────────────────────
                       if (state.selectedType == TransactionType.expense) ...[
                         const SizedBox(height: 16),
