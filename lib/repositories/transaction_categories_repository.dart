@@ -84,9 +84,14 @@ class TransactionCategoriesRepository {
 
   Future deleteTransactionCategory(int id) async {
     try {
+      final category = await getTransactionCategoryById(id);
+      if (category != null && category.isSystem) {
+        throw const SystemCategoryError('System categories cannot be deleted.');
+      }
       return await (db.delete(db.transactionCategories)
         ..where((tbl) => tbl.id.equals(id))).go();
     } catch (e, stack) {
+      if (e is SystemCategoryError) rethrow;
       DatabaseError(
         'Failed to delete transaction category',
         stack,
@@ -96,6 +101,10 @@ class TransactionCategoriesRepository {
 
   Future updateTransactionCategoryName(int id, String name) async {
     try {
+      final category = await getTransactionCategoryById(id);
+      if (category != null && category.isSystem) {
+        throw const SystemCategoryError('System categories cannot be renamed.');
+      }
       return await (db.update(db.transactionCategories)
         ..where((tbl) => tbl.id.equals(id))).write(
         TransactionCategoriesCompanion(
@@ -104,6 +113,7 @@ class TransactionCategoriesRepository {
         ),
       );
     } catch (e, stack) {
+      if (e is SystemCategoryError) rethrow;
       DatabaseError(
         'Failed to update transaction category name',
         stack,

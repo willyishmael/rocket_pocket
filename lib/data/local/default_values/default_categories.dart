@@ -5,14 +5,22 @@ import 'package:rocket_pocket/data/model/transaction_type.dart';
 List<TransactionCategoriesCompanion> get defaultCategories {
   final now = DateTime.now();
 
-  TransactionCategoriesCompanion cat(String name, TransactionType type) =>
-      TransactionCategoriesCompanion.insert(
-        name: name,
-        type: Value(type),
-        updatedAt: now,
-      );
+  TransactionCategoriesCompanion cat(
+    String name,
+    TransactionType type, {
+    bool isSystem = false,
+  }) => TransactionCategoriesCompanion.insert(
+    name: name,
+    type: Value(type),
+    isSystem: Value(isSystem),
+    updatedAt: now,
+  );
 
   return [
+    // System expense categories (protected — cannot be renamed or deleted)
+    cat('Tax', TransactionType.expense, isSystem: true),
+    cat('Tip', TransactionType.expense, isSystem: true),
+    cat('Admin Fee', TransactionType.expense, isSystem: true),
     // Expense & Refund categories
     cat('Food & Drinks', TransactionType.expense),
     cat('Groceries', TransactionType.expense),
