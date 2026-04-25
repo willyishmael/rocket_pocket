@@ -421,8 +421,8 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
         }
       });
 
-      // Ensure pocket balances in the UI are refreshed after DB updates
-      ref.invalidate(pocketViewModelProvider);
+      // Refresh pockets eagerly so callers that immediately pop show updated balances.
+      await ref.read(pocketViewModelProvider.notifier).refreshPockets();
       // Refresh budget spent amounts after the new transaction
       ref.invalidate(budgetViewModelProvider);
       // Reset form after successful submit
