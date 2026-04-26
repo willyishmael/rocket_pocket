@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
@@ -45,10 +46,10 @@ class TransactionRepository {
     }
   }
 
-  Future<List<Transaction>> getTransactionsByType(String type) async {
+  Future<List<Transaction>> getTransactionsByType(TransactionType type) async {
     try {
       return await (db.select(db.transactions)
-        ..where((tbl) => tbl.type.equals(type))).get();
+        ..where((tbl) => tbl.type.equals(type.name))).get();
     } catch (e, stack) {
       DatabaseError('Failed to fetch transactions by type', stack).throwError();
     }

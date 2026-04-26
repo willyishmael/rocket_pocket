@@ -73,7 +73,12 @@ void main() {
         ),
       );
 
-      expect((await repository.getTransactionsByType('expense')).length, 1);
+      expect(
+        (await repository.getTransactionsByType(
+          TransactionType.expense,
+        )).length,
+        1,
+      );
       expect(
         (await repository.getTransactionsByCategoryId(categoryId)).length,
         1,
