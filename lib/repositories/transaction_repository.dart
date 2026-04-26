@@ -29,7 +29,7 @@ class TransactionRepository {
     }
   }
 
-  Future updateTransaction(TransactionsCompanion transaction) async {
+  Future<bool> updateTransaction(TransactionsCompanion transaction) async {
     try {
       return await db.update(db.transactions).replace(transaction);
     } catch (e, stack) {
@@ -127,7 +127,7 @@ class TransactionRepository {
     }
   }
 
-  Future deleteTransaction(int id) async {
+  Future<int> deleteTransaction(int id) async {
     try {
       return await (db.delete(db.transactions)
         ..where((tbl) => tbl.id.equals(id))).go();

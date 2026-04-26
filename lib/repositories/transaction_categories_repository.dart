@@ -67,7 +67,7 @@ class TransactionCategoriesRepository {
     }
   }
 
-  Future updateTransactionCategory(
+  Future<bool> updateTransactionCategory(
     TransactionCategoriesCompanion transactionCategory,
   ) async {
     try {
@@ -82,7 +82,7 @@ class TransactionCategoriesRepository {
     }
   }
 
-  Future deleteTransactionCategory(int id) async {
+  Future<int> deleteTransactionCategory(int id) async {
     try {
       final category = await getTransactionCategoryById(id);
       if (category != null && category.isSystem) {
@@ -99,7 +99,7 @@ class TransactionCategoriesRepository {
     }
   }
 
-  Future updateTransactionCategoryName(int id, String name) async {
+  Future<int> updateTransactionCategoryName(int id, String name) async {
     try {
       final category = await getTransactionCategoryById(id);
       if (category != null && category.isSystem) {

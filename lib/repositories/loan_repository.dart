@@ -81,7 +81,7 @@ class LoanRepository {
     }
   }
 
-  Future updateRepaidAmount(int id, double repaidAmount) async {
+  Future<int> updateRepaidAmount(int id, double repaidAmount) async {
     try {
       return await (db.update(db.loans)..where(
         (tbl) => tbl.id.equals(id),
@@ -91,7 +91,7 @@ class LoanRepository {
     }
   }
 
-  Future updateLoan(LoansCompanion loan) async {
+  Future<int> updateLoan(LoansCompanion loan) async {
     try {
       return await (db.update(db.loans)
         ..where((tbl) => tbl.id.equals(loan.id.value))).write(loan);
@@ -100,7 +100,7 @@ class LoanRepository {
     }
   }
 
-  Future updateLoanStatus(int id, LoanStatus status) async {
+  Future<int> updateLoanStatus(int id, LoanStatus status) async {
     try {
       return await (db.update(db.loans)..where(
         (tbl) => tbl.id.equals(id),
