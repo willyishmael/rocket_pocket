@@ -111,8 +111,8 @@ class EditTransactionState {
 /// StateNotifier for managing edit transaction form state.
 /// Parameterized by transaction ID so it loads its own data from all
 /// required repositories without any external initialization call.
-class EditTransactionNotifier extends AsyncNotifier<EditTransactionState> {
-  EditTransactionNotifier(this._transactionId);
+class EditTransactionViewModel extends AsyncNotifier<EditTransactionState> {
+  EditTransactionViewModel(this._transactionId);
 
   final int _transactionId;
   late PocketRepository _pocketRepository;
@@ -369,7 +369,7 @@ class EditTransactionNotifier extends AsyncNotifier<EditTransactionState> {
 
 /// Provider for the edit transaction view model, keyed by transaction ID.
 final editTransactionViewModelProvider = AsyncNotifierProvider.family<
-  EditTransactionNotifier,
+  EditTransactionViewModel,
   EditTransactionState,
   int
->(EditTransactionNotifier.new);
+>(EditTransactionViewModel.new);
