@@ -3,6 +3,67 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/screens/0_widgets/transaction_filter_sheet.dart';
+
+// ── Filter / sort state ──────────────────────────────────────────────────────
+
+class TransactionFilterState {
+  /// Empty set means "show all types"; non-empty set filters to those types.
+  final Set<TransactionType> activeTypeFilters;
+
+  /// `null` means "auto-select the most recent month that has transactions".
+  final DateTime? selectedMonth;
+
+  final TransactionSortOrder sortOrder;
+
+  const TransactionFilterState({
+    this.activeTypeFilters = const {},
+    this.selectedMonth,
+    this.sortOrder = TransactionSortOrder.newest,
+  });
+
+  TransactionFilterState copyWith({
+    Set<TransactionType>? activeTypeFilters,
+    Object? selectedMonth = _absent,
+    TransactionSortOrder? sortOrder,
+  }) {
+    return TransactionFilterState(
+      activeTypeFilters: activeTypeFilters ?? this.activeTypeFilters,
+      selectedMonth:
+          selectedMonth == _absent
+              ? this.selectedMonth
+              : selectedMonth as DateTime?,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
+}
+
+// Sentinel for nullable copyWith.
+const _absent = Object();
+
+class TransactionFilterViewModel extends Notifier<TransactionFilterState> {
+  @override
+  TransactionFilterState build() => const TransactionFilterState();
+
+  void setTypeFilters(Set<TransactionType> filters) {
+    state = state.copyWith(activeTypeFilters: Set.unmodifiable(filters));
+  }
+
+  void setSelectedMonth(DateTime? month) {
+    state = state.copyWith(selectedMonth: month);
+  }
+
+  void setSortOrder(TransactionSortOrder order) {
+    state = state.copyWith(sortOrder: order);
+  }
+}
+
+final transactionFilterProvider =
+    NotifierProvider<TransactionFilterViewModel, TransactionFilterState>(
+      TransactionFilterViewModel.new,
+    );
+
+// ── Transaction list ─────────────────────────────────────────────────────────
 
 final transactionViewModelProvider =
     AsyncNotifierProvider<TransactionViewModel, List<Transaction>>(
@@ -38,15 +99,6 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
         transaction.toInsertCompanion(),
       );
       await refreshTransactions();
-    } catch (e, st) {
-      state = AsyncError(e, st);
-      rethrow;
-    }
-  }
-
-  Future<Transaction?> getTransactionById(int id) async {
-    try {
-      return await _transactionRepository.getTransactionById(id);
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;

@@ -8,7 +8,7 @@ import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/utils/currency_utils.dart';
 import 'package:rocket_pocket/viewmodels/transaction_detail_view_model.dart';
 
-class TransactionDetailScreen extends ConsumerStatefulWidget {
+class TransactionDetailScreen extends ConsumerWidget {
   const TransactionDetailScreen({
     this.transaction,
     this.transactionId,
@@ -19,32 +19,18 @@ class TransactionDetailScreen extends ConsumerStatefulWidget {
   final int? transactionId;
 
   @override
-  ConsumerState<TransactionDetailScreen> createState() =>
-      _TransactionDetailScreenState();
-}
-
-class _TransactionDetailScreenState
-    extends ConsumerState<TransactionDetailScreen> {
-  late int _txId;
-
-  @override
-  void initState() {
-    super.initState();
-    _txId = widget.transactionId ?? widget.transaction?.id ?? 0;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_txId == 0) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final txId = transactionId ?? transaction?.id ?? 0;
+    if (txId == 0) {
       return Scaffold(
         appBar: AppBar(title: const Text('Transaction Detail')),
         body: const Center(child: Text('Transaction not found.')),
       );
     }
 
-    final loadAsync = ref.watch(transactionDetailLoadProvider(_txId));
+    final detailAsync = ref.watch(transactionDetailViewModelProvider(txId));
 
-    return loadAsync.when(
+    return detailAsync.when(
       loading:
           () =>
               const Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -53,26 +39,20 @@ class _TransactionDetailScreenState
             appBar: AppBar(title: const Text('Transaction Detail')),
             body: const Center(child: Text('Transaction not found.')),
           ),
-      data: (data) {
-        Future(() {
-          ref
-              .read(transactionDetailViewModelProvider.notifier)
-              .initializeFrom(data.$1, data.$2);
-        });
-        return _TransactionDetailContent(txId: _txId);
-      },
+      data: (detail) => _TransactionDetailContent(txId: txId, detail: detail),
     );
   }
 }
 
 class _TransactionDetailContent extends ConsumerWidget {
-  const _TransactionDetailContent({required this.txId});
+  const _TransactionDetailContent({required this.txId, required this.detail});
 
   final int txId;
+  final TransactionDetailState detail;
 
   Future<void> _onEdit(BuildContext context, WidgetRef ref) async {
-    final tx = ref.read(transactionDetailViewModelProvider).transaction;
-    if (tx == null || tx.id == null) return;
+    final tx = detail.transaction;
+    if (tx.id == null) return;
 
     final result = await context.push(
       Paths.editTransactionRoute(tx.id!),
@@ -81,7 +61,7 @@ class _TransactionDetailContent extends ConsumerWidget {
 
     if (result != true) return;
     await ref
-        .read(transactionDetailViewModelProvider.notifier)
+        .read(transactionDetailViewModelProvider(txId).notifier)
         .refreshTransaction();
   }
 
@@ -111,7 +91,7 @@ class _TransactionDetailContent extends ConsumerWidget {
 
     try {
       await ref
-          .read(transactionDetailViewModelProvider.notifier)
+          .read(transactionDetailViewModelProvider(txId).notifier)
           .deleteTransaction();
       if (context.mounted) context.pop(true);
     } catch (_) {
@@ -125,21 +105,16 @@ class _TransactionDetailContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel = ref.watch(transactionDetailViewModelProvider);
-    final tx = viewModel.transaction;
+    // Watch so the UI reacts to isSaving changes during delete/refresh.
+    final viewModel = ref.watch(transactionDetailViewModelProvider(txId));
+    final current = viewModel.value ?? detail;
 
-    if (tx == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Transaction Detail')),
-        body: const Center(child: Text('Transaction not found.')),
-      );
-    }
-
+    final tx = current.transaction;
     final sender =
-        tx.senderPocketId != null ? viewModel.pockets[tx.senderPocketId] : null;
+        tx.senderPocketId != null ? current.pockets[tx.senderPocketId] : null;
     final receiver =
         tx.receiverPocketId != null
-            ? viewModel.pockets[tx.receiverPocketId]
+            ? current.pockets[tx.receiverPocketId]
             : null;
     final currency = sender?.currency ?? receiver?.currency ?? 'IDR';
     final amountText = CurrencyUtils.format(tx.amount, currency);
@@ -178,14 +153,13 @@ class _TransactionDetailContent extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: viewModel.isSaving ? null : () => _onEdit(context, ref),
+            onPressed: current.isSaving ? null : () => _onEdit(context, ref),
             icon: const Icon(Icons.edit),
             label: const Text('Edit Transaction'),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed:
-                viewModel.isSaving ? null : () => _onDelete(context, ref),
+            onPressed: current.isSaving ? null : () => _onDelete(context, ref),
             icon: const Icon(Icons.delete_outline),
             label: const Text('Delete Transaction'),
           ),

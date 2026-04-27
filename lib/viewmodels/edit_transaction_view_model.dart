@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart' as db;
+import 'package:rocket_pocket/utils/pocket_balance_utils.dart';
 import 'package:rocket_pocket/data/model/budget.dart' as budget_model;
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
@@ -270,64 +271,6 @@ class EditTransactionViewModel extends AsyncNotifier<EditTransactionState> {
     );
   }
 
-  /// Applies pocket balance changes (delta) for a transaction.
-  Future<void> _applyPocketImpact(
-    Transaction tx, {
-    required bool revert,
-  }) async {
-    final multiplier = revert ? -1.0 : 1.0;
-
-    if (tx.type.isPositive) {
-      // Income: sender pocket gets credited
-      if (tx.senderPocketId != null) {
-        final pocket = await _pocketRepository.getPocketById(
-          tx.senderPocketId!,
-        );
-        if (pocket != null) {
-          await _pocketRepository.updatePocket(
-            pocket.copyWith(balance: pocket.balance + tx.amount * multiplier),
-          );
-        }
-      }
-      return;
-    }
-
-    if (tx.type == TransactionType.transfer) {
-      // Transfer: sender debited, receiver credited
-      if (tx.senderPocketId != null) {
-        final pocket = await _pocketRepository.getPocketById(
-          tx.senderPocketId!,
-        );
-        if (pocket != null) {
-          await _pocketRepository.updatePocket(
-            pocket.copyWith(balance: pocket.balance - tx.amount * multiplier),
-          );
-        }
-      }
-      if (tx.receiverPocketId != null) {
-        final pocket = await _pocketRepository.getPocketById(
-          tx.receiverPocketId!,
-        );
-        if (pocket != null) {
-          await _pocketRepository.updatePocket(
-            pocket.copyWith(balance: pocket.balance + tx.amount * multiplier),
-          );
-        }
-      }
-      return;
-    }
-
-    // Expense or other negative type: sender debited
-    if (tx.senderPocketId != null) {
-      final pocket = await _pocketRepository.getPocketById(tx.senderPocketId!);
-      if (pocket != null) {
-        await _pocketRepository.updatePocket(
-          pocket.copyWith(balance: pocket.balance - tx.amount * multiplier),
-        );
-      }
-    }
-  }
-
   /// Updates the transaction atomically with balance adjustments.
   Future<void> submitUpdate() async {
     final current = state.value;
@@ -345,16 +288,19 @@ class EditTransactionViewModel extends AsyncNotifier<EditTransactionState> {
       final updated = _buildUpdatedTransaction(current);
 
       await database.transaction(() async {
-        // Revert the original transaction's balance impact
-        await _applyPocketImpact(original, revert: true);
-
-        // Update the transaction record
+        await applyPocketImpact(
+          original,
+          revert: true,
+          pocketRepository: _pocketRepository,
+        );
         await _transactionRepository.updateTransaction(
           updated.toUpdateCompanion(),
         );
-
-        // Apply the new transaction's balance impact
-        await _applyPocketImpact(updated, revert: false);
+        await applyPocketImpact(
+          updated,
+          revert: false,
+          pocketRepository: _pocketRepository,
+        );
       });
 
       // Refresh dependent providers

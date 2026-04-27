@@ -33,11 +33,11 @@ class TransactionRepository {
     }
   }
 
-  Future<bool> updateTransaction(
+  Future<void> updateTransaction(
     drift_db.TransactionsCompanion transaction,
   ) async {
     try {
-      return await db.update(db.transactions).replace(transaction);
+      await db.update(db.transactions).replace(transaction);
     } catch (e, stack) {
       DatabaseError('Failed to update transaction', stack).throwError();
     }
@@ -148,9 +148,9 @@ class TransactionRepository {
     }
   }
 
-  Future<int> deleteTransaction(int id) async {
+  Future<void> deleteTransaction(int id) async {
     try {
-      return await (db.delete(db.transactions)
+      await (db.delete(db.transactions)
         ..where((tbl) => tbl.id.equals(id))).go();
     } catch (e, stack) {
       DatabaseError('Failed to delete transaction', stack).throwError();

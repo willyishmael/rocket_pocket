@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
-import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/0_widgets/month_selector_delegate.dart';
 import 'package:rocket_pocket/screens/0_widgets/transaction_filter_sheet.dart';
@@ -10,66 +9,15 @@ import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
-class TransactionScreen extends ConsumerStatefulWidget {
+class TransactionScreen extends ConsumerWidget {
   const TransactionScreen({super.key});
 
   @override
-  ConsumerState<TransactionScreen> createState() => _TransactionScreenState();
-}
-
-class _TransactionScreenState extends ConsumerState<TransactionScreen> {
-  /// Empty set means "show all types"; non-empty set filters to those types.
-  final Set<TransactionType> _activeTypeFilters = {};
-
-  /// null means "auto-select the most recent month with transactions"
-  DateTime? _selectedMonth;
-
-  TransactionSortOrder _sortOrder = TransactionSortOrder.newest;
-
-  int _compareTransactionsByDate(Transaction a, Transaction b) {
-    final aPrimaryTime = a.date ?? DateTime(0);
-    final bPrimaryTime = b.date ?? DateTime(0);
-    final primaryComparison = bPrimaryTime.compareTo(aPrimaryTime);
-    if (primaryComparison != 0) {
-      return _sortOrder == TransactionSortOrder.newest
-          ? primaryComparison
-          : -primaryComparison;
-    }
-
-    final aCreatedAt = a.createdAt ?? DateTime(0);
-    final bCreatedAt = b.createdAt ?? DateTime(0);
-    final createdAtComparison = bCreatedAt.compareTo(aCreatedAt);
-    if (createdAtComparison != 0) {
-      return _sortOrder == TransactionSortOrder.newest
-          ? createdAtComparison
-          : -createdAtComparison;
-    }
-
-    final idComparison = (b.id ?? 0).compareTo(a.id ?? 0);
-    return _sortOrder == TransactionSortOrder.newest
-        ? idComparison
-        : -idComparison;
-  }
-
-  void _showFilterSheet() {
-    showTransactionFilterSheet(
-      context: context,
-      activeFilters: _activeTypeFilters,
-      sortOrder: _sortOrder,
-      onChanged:
-          (updated) => setState(() {
-            _activeTypeFilters
-              ..clear()
-              ..addAll(updated);
-          }),
-      onSortChanged: (updated) => setState(() => _sortOrder = updated),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(transactionViewModelProvider);
+    final filterState = ref.watch(transactionFilterProvider);
     final pockets = ref.watch(pocketViewModelProvider).value ?? [];
+
     final pocketCurrency = {
       for (final p in pockets)
         if (p.id != null) p.id!: p.currency,
@@ -79,12 +27,12 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
         if (p.id != null) p.id!: p.name,
     };
 
-    final hasActiveFilters = _activeTypeFilters.isNotEmpty;
+    final hasActiveFilters = filterState.activeTypeFilters.isNotEmpty;
 
     // Derive unique months (newest first) from all loaded transactions,
     // independent of any filter so the selector is always stable.
     final allSorted = [...(transactionsAsync.value ?? <Transaction>[])]
-      ..sort(_compareTransactionsByDate);
+      ..sort(_compareTransactionsByDate(filterState.sortOrder));
 
     final availableMonths = <DateTime>[];
     final seenMonths = <DateTime>{};
@@ -102,12 +50,29 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
     final effectiveMonth =
         availableMonths.isEmpty
             ? null
-            : (_selectedMonth != null && seenMonths.contains(_selectedMonth!))
-            ? _selectedMonth!
+            : (filterState.selectedMonth != null &&
+                seenMonths.contains(filterState.selectedMonth!))
+            ? filterState.selectedMonth!
             : availableMonths.first;
 
+    void showFilterSheet() {
+      showTransactionFilterSheet(
+        context: context,
+        activeFilters: filterState.activeTypeFilters,
+        sortOrder: filterState.sortOrder,
+        onChanged:
+            (updated) => ref
+                .read(transactionFilterProvider.notifier)
+                .setTypeFilters(updated),
+        onSortChanged:
+            (updated) => ref
+                .read(transactionFilterProvider.notifier)
+                .setSortOrder(updated),
+      );
+    }
+
     return Scaffold(
-      floatingActionButton: _addTransactionButton(),
+      floatingActionButton: _addTransactionButton(context, ref),
       floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
       floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
       body: CustomScrollView(
@@ -125,11 +90,11 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
               IconButton(
                 icon: Badge(
                   isLabelVisible: hasActiveFilters,
-                  label: Text('${_activeTypeFilters.length}'),
+                  label: Text('${filterState.activeTypeFilters.length}'),
                   child: const Icon(Icons.filter_list),
                 ),
                 tooltip: 'Filter',
-                onPressed: _showFilterSheet,
+                onPressed: showFilterSheet,
               ),
             ],
           ),
@@ -140,7 +105,10 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
               delegate: MonthSelectorDelegate(
                 months: availableMonths,
                 selectedMonth: effectiveMonth!,
-                onMonthSelected: (m) => setState(() => _selectedMonth = m),
+                onMonthSelected:
+                    (m) => ref
+                        .read(transactionFilterProvider.notifier)
+                        .setSelectedMonth(m),
               ),
             ),
           transactionsAsync.when(
@@ -154,9 +122,9 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
                 ),
             data: (transactions) {
               final sorted = [...transactions]
-                ..sort(_compareTransactionsByDate);
+                ..sort(_compareTransactionsByDate(filterState.sortOrder));
 
-              // Apply month filter
+              // Apply month filter.
               final monthFiltered =
                   effectiveMonth == null
                       ? sorted
@@ -167,11 +135,14 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
                             d.month == effectiveMonth.month;
                       }).toList();
 
-              // Apply type filter
+              // Apply type filter.
               final filtered =
                   hasActiveFilters
                       ? monthFiltered
-                          .where((t) => _activeTypeFilters.contains(t.type))
+                          .where(
+                            (t) =>
+                                filterState.activeTypeFilters.contains(t.type),
+                          )
                           .toList()
                       : monthFiltered;
 
@@ -219,7 +190,10 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
     );
   }
 
-  FloatingActionButton _addTransactionButton() {
+  FloatingActionButton _addTransactionButton(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     return FloatingActionButton(
       onPressed: () async {
         await context.push(Paths.addTransaction);
@@ -231,4 +205,34 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
       child: const Icon(Icons.add),
     );
   }
+}
+
+/// Returns a comparator for transactions that respects the given [sortOrder].
+Comparator<Transaction> _compareTransactionsByDate(
+  TransactionSortOrder sortOrder,
+) {
+  return (a, b) {
+    final aPrimaryTime = a.date ?? DateTime(0);
+    final bPrimaryTime = b.date ?? DateTime(0);
+    final primaryComparison = bPrimaryTime.compareTo(aPrimaryTime);
+    if (primaryComparison != 0) {
+      return sortOrder == TransactionSortOrder.newest
+          ? primaryComparison
+          : -primaryComparison;
+    }
+
+    final aCreatedAt = a.createdAt ?? DateTime(0);
+    final bCreatedAt = b.createdAt ?? DateTime(0);
+    final createdAtComparison = bCreatedAt.compareTo(aCreatedAt);
+    if (createdAtComparison != 0) {
+      return sortOrder == TransactionSortOrder.newest
+          ? createdAtComparison
+          : -createdAtComparison;
+    }
+
+    final idComparison = (b.id ?? 0).compareTo(a.id ?? 0);
+    return sortOrder == TransactionSortOrder.newest
+        ? idComparison
+        : -idComparison;
+  };
 }

@@ -62,19 +62,11 @@ class _EditTransactionContent extends ConsumerWidget {
     final viewModel = ref.watch(editTransactionViewModelProvider(txId)).value!;
     final notifier = ref.read(editTransactionViewModelProvider(txId).notifier);
 
-    final original = viewModel.original;
+    final original = viewModel.original!;
     final supportsFullEdit =
-        original != null &&
-        (original.type == TransactionType.income ||
-            original.type == TransactionType.expense ||
-            original.type == TransactionType.transfer);
-
-    if (original == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Edit Transaction')),
-        body: const Center(child: Text('Transaction not found.')),
-      );
-    }
+        original.type == TransactionType.income ||
+        original.type == TransactionType.expense ||
+        original.type == TransactionType.transfer;
 
     if (!supportsFullEdit) {
       return Scaffold(
