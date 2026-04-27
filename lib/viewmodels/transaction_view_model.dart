@@ -20,8 +20,7 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
 
   Future<List<Transaction>> _fetchTransactions() async {
     try {
-      final rows = await _transactionRepository.getAllTransactions();
-      return rows.map(Transaction.fromDb).toList();
+      return await _transactionRepository.getAllTransactions();
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;
@@ -47,9 +46,7 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
 
   Future<Transaction?> getTransactionById(int id) async {
     try {
-      final row = await _transactionRepository.getTransactionById(id);
-      if (row == null) return null;
-      return Transaction.fromDb(row);
+      return await _transactionRepository.getTransactionById(id);
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;
@@ -72,19 +69,6 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
     try {
       await _transactionRepository.deleteTransaction(id);
       await refreshTransactions();
-    } catch (e, st) {
-      state = AsyncError(e, st);
-      rethrow;
-    }
-  }
-
-  /// Returns all transactions involving a specific pocket,
-  /// either as sender or receiver. Useful for a pocket detail screen.
-  Future<List<Transaction>> getTransactionsByPocketId(int pocketId) async {
-    try {
-      final rows =
-          await _transactionRepository.getTransactionsByPocketId(pocketId);
-      return rows.map(Transaction.fromDb).toList();
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;

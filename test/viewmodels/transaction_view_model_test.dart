@@ -37,8 +37,8 @@ void main() {
   });
 
   test('build loads rows and filterByType filters in-memory list', () async {
-    final expense = buildTransactionRow(id: 1, type: TransactionType.expense);
-    final income = buildTransactionRow(id: 2, type: TransactionType.income);
+    final expense = buildTransactionModel(id: 1, type: TransactionType.expense);
+    final income = buildTransactionModel(id: 2, type: TransactionType.income);
 
     when(
       () => mockRepository.getAllTransactions(),
@@ -59,7 +59,7 @@ void main() {
   });
 
   test('addTransaction refreshes state on success', () async {
-    final row = buildTransactionRow(id: 1, type: TransactionType.expense);
+    final row = buildTransactionModel(id: 1, type: TransactionType.expense);
     final model = buildTransactionModel(type: TransactionType.expense);
 
     when(

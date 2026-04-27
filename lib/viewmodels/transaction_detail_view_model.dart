@@ -57,10 +57,7 @@ class _TransactionDetailNotifier extends Notifier<TransactionDetailState> {
         if (p.id != null) p.id!: p,
     };
 
-    state = TransactionDetailState(
-      transaction: row == null ? null : Transaction.fromDb(row),
-      pockets: pocketMap,
-    );
+    state = TransactionDetailState(transaction: row, pockets: pocketMap);
   }
 
   /// Reverts the transaction's pocket-balance impact and deletes the record.
@@ -133,10 +130,11 @@ final transactionDetailLoadProvider =
       final transactionRepository = ref.watch(transactionRepositoryProvider);
       final pocketRepository = ref.watch(pocketRepositoryProvider);
 
-      final row = await transactionRepository.getTransactionById(transactionId);
-      if (row == null) throw Exception('Transaction not found');
+      final transaction = await transactionRepository.getTransactionById(
+        transactionId,
+      );
+      if (transaction == null) throw Exception('Transaction not found');
 
-      final transaction = Transaction.fromDb(row);
       final pocketList = await pocketRepository.getAllPockets();
       final pockets = {
         for (final p in pocketList)

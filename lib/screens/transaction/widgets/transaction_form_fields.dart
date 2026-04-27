@@ -13,6 +13,7 @@ class TransactionTypeDateSection extends StatelessWidget {
     required this.date,
     required this.onTypeChanged,
     required this.onDateChanged,
+    this.segments,
     super.key,
   });
 
@@ -20,6 +21,10 @@ class TransactionTypeDateSection extends StatelessWidget {
   final DateTime date;
   final ValueChanged<TransactionType> onTypeChanged;
   final ValueChanged<DateTime> onDateChanged;
+
+  /// Override the displayed type segments.
+  /// Defaults to income / expense / transfer.
+  final List<ButtonSegment<TransactionType>>? segments;
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +37,22 @@ class TransactionTypeDateSection extends StatelessWidget {
           width: double.infinity,
           child: SegmentedButton<TransactionType>(
             showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(
-                value: TransactionType.income,
-                label: Text('Income'),
-              ),
-              ButtonSegment(
-                value: TransactionType.expense,
-                label: Text('Expense'),
-              ),
-              ButtonSegment(
-                value: TransactionType.transfer,
-                label: Text('Transfer'),
-              ),
-            ],
+            segments:
+                segments ??
+                const [
+                  ButtonSegment(
+                    value: TransactionType.income,
+                    label: Text('Income'),
+                  ),
+                  ButtonSegment(
+                    value: TransactionType.expense,
+                    label: Text('Expense'),
+                  ),
+                  ButtonSegment(
+                    value: TransactionType.transfer,
+                    label: Text('Transfer'),
+                  ),
+                ],
             selected: {selectedType},
             onSelectionChanged: (value) => onTypeChanged(value.first),
           ),

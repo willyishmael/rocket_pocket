@@ -46,12 +46,16 @@ class EditTransactionState {
        date = date ?? DateTime.now();
 
   /// Categories filtered to match the selected type.
+  /// Refund borrows expense categories.
   List<db.TransactionCategory> get filteredCategories {
-    if (selectedType != TransactionType.expense &&
-        selectedType != TransactionType.income) {
+    final lookup =
+        selectedType == TransactionType.refund
+            ? TransactionType.expense
+            : selectedType;
+    if (lookup != TransactionType.expense && lookup != TransactionType.income) {
       return [];
     }
-    return allCategories.where((c) => c.type == selectedType).toList();
+    return allCategories.where((c) => c.type == lookup).toList();
   }
 
   /// Whether all required fields are valid for saving.
@@ -127,12 +131,11 @@ class EditTransactionViewModel extends AsyncNotifier<EditTransactionState> {
     _categoryRepository = ref.read(transactionCategoryRepositoryProvider);
     _budgetRepository = ref.read(budgetRepositoryProvider);
 
-    final transactionRow = await _transactionRepository.getTransactionById(
+    final transaction = await _transactionRepository.getTransactionById(
       _transactionId,
     );
-    if (transactionRow == null) throw Exception('Transaction not found');
+    if (transaction == null) throw Exception('Transaction not found');
 
-    final transaction = Transaction.fromDb(transactionRow);
     final pockets = await _pocketRepository.getAllPockets();
     final categories = await _categoryRepository.getAllTransactionCategories();
     final budgetRows = await _budgetRepository.getAllBudgets();

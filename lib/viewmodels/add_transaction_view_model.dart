@@ -156,8 +156,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
 
     final pockets = await _pocketRepository.getAllPockets();
     final categories = await _categoryRepository.getAllTransactionCategories();
-    final dbTransactions = await _transactionRepository.getAllTransactions();
-    final transactions = dbTransactions.map(Transaction.fromDb).toList();
+    final transactions = await _transactionRepository.getAllTransactions();
     final dbBudgets = await _budgetRepository.getAllBudgets();
     final budgets = dbBudgets.map(budget_model.Budget.fromDb).toList();
 
