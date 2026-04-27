@@ -4,6 +4,7 @@ import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/screens/0_widgets/transaction_filter_sheet.dart';
+import 'package:rocket_pocket/viewmodels/viewmodel_utils.dart';
 
 // ── Filter / sort state ──────────────────────────────────────────────────────
 
@@ -24,22 +25,19 @@ class TransactionFilterState {
 
   TransactionFilterState copyWith({
     Set<TransactionType>? activeTypeFilters,
-    Object? selectedMonth = _absent,
+    Object? selectedMonth = absent,
     TransactionSortOrder? sortOrder,
   }) {
     return TransactionFilterState(
       activeTypeFilters: activeTypeFilters ?? this.activeTypeFilters,
       selectedMonth:
-          selectedMonth == _absent
+          selectedMonth == absent
               ? this.selectedMonth
               : selectedMonth as DateTime?,
       sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 }
-
-// Sentinel for nullable copyWith.
-const _absent = Object();
 
 class TransactionFilterViewModel extends Notifier<TransactionFilterState> {
   @override
