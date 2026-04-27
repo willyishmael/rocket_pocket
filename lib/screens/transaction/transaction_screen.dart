@@ -32,7 +32,7 @@ class TransactionScreen extends ConsumerWidget {
     // Derive unique months (newest first) from all loaded transactions,
     // independent of any filter so the selector is always stable.
     final allSorted = [...(transactionsAsync.value ?? <Transaction>[])]
-      ..sort(_compareTransactionsByDate(filterState.sortOrder));
+      ..sort(_compareTransactionsByDate(TransactionSortOrder.newest));
 
     final availableMonths = <DateTime>[];
     final seenMonths = <DateTime>{};
