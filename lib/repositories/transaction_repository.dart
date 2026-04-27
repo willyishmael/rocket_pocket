@@ -58,7 +58,7 @@ class TransactionRepository {
     try {
       final rows =
           await (db.select(db.transactions)
-            ..where((tbl) => tbl.type.equals(type.name))).get();
+            ..where((tbl) => tbl.type.equals(type))).get();
       return rows.map(Transaction.fromDb).toList();
     } catch (e, stack) {
       DatabaseError('Failed to fetch transactions by type', stack).throwError();
