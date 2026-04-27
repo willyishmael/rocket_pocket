@@ -61,7 +61,7 @@ class ColorGradientRepository {
 
   /// Updates an existing color gradient in the database
   /// Throws [DatabaseError] if the operation fails
-  Future updateGradient(ColorGradient gradient) async {
+  Future<bool> updateGradient(ColorGradient gradient) async {
     try {
       return await db.update(db.colorGradients).replace(gradient.toDb());
     } catch (e, stack) {
@@ -71,7 +71,7 @@ class ColorGradientRepository {
 
   /// Deletes a color gradient by its ID
   /// Throws [DatabaseError] if the operation fails
-  Future deleteGradient(int id) async {
+  Future<int> deleteGradient(int id) async {
     try {
       return await (db.delete(db.colorGradients)
         ..where((tbl) => tbl.id.equals(id))).go();

@@ -52,3 +52,11 @@ class UnknownError extends AppError {
     super.stackTrace = StackTrace.empty,
   ]);
 }
+
+class SystemCategoryError implements Exception {
+  final String message;
+  const SystemCategoryError(this.message);
+
+  @override
+  String toString() => 'SystemCategoryError: $message';
+}

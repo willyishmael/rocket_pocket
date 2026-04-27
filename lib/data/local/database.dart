@@ -41,7 +41,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -72,6 +72,35 @@ class AppDatabase extends _$AppDatabase {
       if (from < 3) {
         await m.createTable(budgets);
         await m.addColumn(transactions, transactions.budgetId);
+      }
+      if (from < 4) {
+        await m.addColumn(
+          transactionCategories,
+          transactionCategories.isSystem,
+        );
+        final now = DateTime.now();
+        await batch((b) {
+          b.insertAll(transactionCategories, [
+            TransactionCategoriesCompanion.insert(
+              name: 'Tax',
+              type: const Value(TransactionType.expense),
+              isSystem: const Value(true),
+              updatedAt: now,
+            ),
+            TransactionCategoriesCompanion.insert(
+              name: 'Tip',
+              type: const Value(TransactionType.expense),
+              isSystem: const Value(true),
+              updatedAt: now,
+            ),
+            TransactionCategoriesCompanion.insert(
+              name: 'Admin Fee',
+              type: const Value(TransactionType.expense),
+              isSystem: const Value(true),
+              updatedAt: now,
+            ),
+          ]);
+        });
       }
     },
   );

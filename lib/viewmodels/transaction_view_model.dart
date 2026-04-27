@@ -3,6 +3,65 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/data/model/enums.dart';
+import 'package:rocket_pocket/viewmodels/viewmodel_utils.dart';
+
+// ── Filter / sort state ──────────────────────────────────────────────────────
+
+class TransactionFilterState {
+  /// Empty set means "show all types"; non-empty set filters to those types.
+  final Set<TransactionType> activeTypeFilters;
+
+  /// `null` means "auto-select the most recent month that has transactions".
+  final DateTime? selectedMonth;
+
+  final TransactionSortOrder sortOrder;
+
+  const TransactionFilterState({
+    this.activeTypeFilters = const {},
+    this.selectedMonth,
+    this.sortOrder = TransactionSortOrder.newest,
+  });
+
+  TransactionFilterState copyWith({
+    Set<TransactionType>? activeTypeFilters,
+    Object? selectedMonth = absent,
+    TransactionSortOrder? sortOrder,
+  }) {
+    return TransactionFilterState(
+      activeTypeFilters: activeTypeFilters ?? this.activeTypeFilters,
+      selectedMonth:
+          selectedMonth == absent
+              ? this.selectedMonth
+              : selectedMonth as DateTime?,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
+}
+
+class TransactionFilterViewModel extends Notifier<TransactionFilterState> {
+  @override
+  TransactionFilterState build() => const TransactionFilterState();
+
+  void setTypeFilters(Set<TransactionType> filters) {
+    state = state.copyWith(activeTypeFilters: Set.unmodifiable(filters));
+  }
+
+  void setSelectedMonth(DateTime? month) {
+    state = state.copyWith(selectedMonth: month);
+  }
+
+  void setSortOrder(TransactionSortOrder order) {
+    state = state.copyWith(sortOrder: order);
+  }
+}
+
+final transactionFilterProvider =
+    NotifierProvider<TransactionFilterViewModel, TransactionFilterState>(
+      TransactionFilterViewModel.new,
+    );
+
+// ── Transaction list ─────────────────────────────────────────────────────────
 
 final transactionViewModelProvider =
     AsyncNotifierProvider<TransactionViewModel, List<Transaction>>(
@@ -20,8 +79,7 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
 
   Future<List<Transaction>> _fetchTransactions() async {
     try {
-      final rows = await _transactionRepository.getAllTransactions();
-      return rows.map(Transaction.fromDb).toList();
+      return await _transactionRepository.getAllTransactions();
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;
@@ -45,17 +103,6 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
     }
   }
 
-  Future<Transaction?> getTransactionById(int id) async {
-    try {
-      final row = await _transactionRepository.getTransactionById(id);
-      if (row == null) return null;
-      return Transaction.fromDb(row);
-    } catch (e, st) {
-      state = AsyncError(e, st);
-      rethrow;
-    }
-  }
-
   Future<void> updateTransaction(Transaction transaction) async {
     try {
       await _transactionRepository.updateTransaction(
@@ -72,19 +119,6 @@ class TransactionViewModel extends AsyncNotifier<List<Transaction>> {
     try {
       await _transactionRepository.deleteTransaction(id);
       await refreshTransactions();
-    } catch (e, st) {
-      state = AsyncError(e, st);
-      rethrow;
-    }
-  }
-
-  /// Returns all transactions involving a specific pocket,
-  /// either as sender or receiver. Useful for a pocket detail screen.
-  Future<List<Transaction>> getTransactionsByPocketId(int pocketId) async {
-    try {
-      final rows =
-          await _transactionRepository.getTransactionsByPocketId(pocketId);
-      return rows.map(Transaction.fromDb).toList();
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;

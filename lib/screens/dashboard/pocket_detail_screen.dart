@@ -25,7 +25,7 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
   final Set<TransactionType> _activeTypeFilters = {};
   late final ScrollController _scrollController;
   bool _isCollapsed = false;
-
+  TransactionSortOrder _sortOrder = TransactionSortOrder.newest;
   // expandedHeight - kToolbarHeight = the threshold where the bar is fully collapsed
   static const double _expandedHeight = 250.0;
 
@@ -51,12 +51,14 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
     showTransactionFilterSheet(
       context: context,
       activeFilters: _activeTypeFilters,
+      sortOrder: _sortOrder,
       onChanged:
           (updated) => setState(() {
             _activeTypeFilters
               ..clear()
               ..addAll(updated);
           }),
+      onSortChanged: (updated) => setState(() => _sortOrder = updated),
     );
   }
 
@@ -72,13 +74,11 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
     };
 
     // Compute available months from all transactions for this pocket
-    final allForPocket =
-        [...(transactionsAsync.value ?? [])]
-          ..retainWhere(
-            (t) =>
-                t.senderPocketId == widget.pocketId ||
-                t.receiverPocketId == widget.pocketId,
-          );
+    final allForPocket = [...(transactionsAsync.value ?? [])]..retainWhere(
+      (t) =>
+          t.senderPocketId == widget.pocketId ||
+          t.receiverPocketId == widget.pocketId,
+    );
 
     final availableMonths = <DateTime>[];
     final seenMonths = <DateTime>{};
@@ -223,9 +223,26 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
                       )
                       .toList()
                     ..sort((a, b) {
-                      final aTime = a.date ?? a.createdAt ?? DateTime(0);
-                      final bTime = b.date ?? b.createdAt ?? DateTime(0);
-                      return bTime.compareTo(aTime);
+                      final aPrimary = a.date ?? a.createdAt ?? DateTime(0);
+                      final bPrimary = b.date ?? b.createdAt ?? DateTime(0);
+                      final primary = bPrimary.compareTo(aPrimary);
+                      if (primary != 0) {
+                        return _sortOrder == TransactionSortOrder.newest
+                            ? primary
+                            : -primary;
+                      }
+                      final aCreated = a.createdAt ?? DateTime(0);
+                      final bCreated = b.createdAt ?? DateTime(0);
+                      final secondary = bCreated.compareTo(aCreated);
+                      if (secondary != 0) {
+                        return _sortOrder == TransactionSortOrder.newest
+                            ? secondary
+                            : -secondary;
+                      }
+                      final idCmp = (b.id ?? 0).compareTo(a.id ?? 0);
+                      return _sortOrder == TransactionSortOrder.newest
+                          ? idCmp
+                          : -idCmp;
                     });
 
               final monthFiltered =
@@ -271,6 +288,13 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
                     transaction: t,
                     currency: currency,
                     pocketName: resolvedPocketName,
+                    onTap:
+                        t.id == null
+                            ? null
+                            : () => context.push(
+                              Paths.transactionDetailsRoute(t.id!),
+                              extra: t,
+                            ),
                   );
                 }, childCount: filtered.length),
               );

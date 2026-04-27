@@ -530,6 +530,13 @@ class _TransactionsSection extends ConsumerWidget {
                   return TransactionListTile(
                     transaction: tx,
                     currency: currency,
+                    onTap:
+                        tx.id == null
+                            ? null
+                            : () => context.push(
+                              Paths.transactionDetailsRoute(tx.id!),
+                              extra: tx,
+                            ),
                     pocketName: pocket,
                   );
                 },

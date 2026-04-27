@@ -5,7 +5,10 @@ class TransactionCategories extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   TextColumn get type =>
-      text().withDefault(const Constant('expense')).map(const TransactionTypeConverter())();
+      text()
+          .withDefault(const Constant('expense'))
+          .map(const TransactionTypeConverter())();
+  BoolColumn get isSystem => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime()();
 }

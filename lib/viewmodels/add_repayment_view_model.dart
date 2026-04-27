@@ -12,6 +12,7 @@ import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
+import 'package:rocket_pocket/viewmodels/viewmodel_utils.dart';
 
 class AddRepaymentState {
   final List<Pocket> pockets;
@@ -32,7 +33,7 @@ class AddRepaymentState {
 
   AddRepaymentState copyWith({
     List<Pocket>? pockets,
-    Object? selectedPocket = _absent,
+    Object? selectedPocket = absent,
     double? amount,
     String? description,
     DateTime? date,
@@ -40,7 +41,7 @@ class AddRepaymentState {
     return AddRepaymentState(
       pockets: pockets ?? this.pockets,
       selectedPocket:
-          selectedPocket == _absent
+          selectedPocket == absent
               ? this.selectedPocket
               : selectedPocket as Pocket?,
       amount: amount ?? this.amount,
@@ -49,8 +50,6 @@ class AddRepaymentState {
     );
   }
 }
-
-const Object _absent = Object();
 
 final addRepaymentViewModelProvider =
     AsyncNotifierProvider<AddRepaymentViewModel, AddRepaymentState>(

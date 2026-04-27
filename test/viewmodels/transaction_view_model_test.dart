@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:rocket_pocket/data/local/database.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
@@ -37,8 +38,8 @@ void main() {
   });
 
   test('build loads rows and filterByType filters in-memory list', () async {
-    final expense = buildTransactionRow(id: 1, type: TransactionType.expense);
-    final income = buildTransactionRow(id: 2, type: TransactionType.income);
+    final expense = buildTransactionModel(id: 1, type: TransactionType.expense);
+    final income = buildTransactionModel(id: 2, type: TransactionType.income);
 
     when(
       () => mockRepository.getAllTransactions(),
@@ -59,7 +60,7 @@ void main() {
   });
 
   test('addTransaction refreshes state on success', () async {
-    final row = buildTransactionRow(id: 1, type: TransactionType.expense);
+    final row = buildTransactionModel(id: 1, type: TransactionType.expense);
     final model = buildTransactionModel(type: TransactionType.expense);
 
     when(
@@ -111,5 +112,127 @@ void main() {
     );
 
     expect(container.read(transactionViewModelProvider).hasError, isTrue);
+  });
+
+  test('updateTransaction calls repository and refreshes state', () async {
+    final initial = buildTransactionModel(
+      id: 1,
+      type: TransactionType.expense,
+      description: 'Original',
+    );
+    final updated = buildTransactionModel(
+      id: 1,
+      type: TransactionType.expense,
+      description: 'Updated',
+    );
+
+    when(
+      () => mockRepository.getAllTransactions(),
+    ).thenAnswer((_) async => [initial]);
+    when(
+      () => mockRepository.updateTransaction(any()),
+    ).thenAnswer((_) async {});
+
+    // Second call (after update) returns the updated model.
+    var callCount = 0;
+    when(() => mockRepository.getAllTransactions()).thenAnswer((_) async {
+      callCount++;
+      return callCount == 1 ? [initial] : [updated];
+    });
+
+    final container = ProviderContainer(
+      overrides: [
+        transactionRepositoryProvider.overrideWithValue(mockRepository),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(transactionViewModelProvider.future);
+    await container
+        .read(transactionViewModelProvider.notifier)
+        .updateTransaction(updated);
+
+    verify(() => mockRepository.updateTransaction(any())).called(1);
+    final state = container.read(transactionViewModelProvider).requireValue;
+    expect(state.first.description, 'Updated');
+  });
+
+  test('refreshTransactions transitions through loading', () async {
+    final tx = buildTransactionModel(id: 1);
+    when(
+      () => mockRepository.getAllTransactions(),
+    ).thenAnswer((_) async => [tx]);
+
+    final container = ProviderContainer(
+      overrides: [
+        transactionRepositoryProvider.overrideWithValue(mockRepository),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(transactionViewModelProvider.future);
+    await container
+        .read(transactionViewModelProvider.notifier)
+        .refreshTransactions();
+
+    expect(
+      container.read(transactionViewModelProvider).requireValue,
+      hasLength(1),
+    );
+    verify(() => mockRepository.getAllTransactions()).called(greaterThan(1));
+  });
+
+  group('TransactionFilterViewModel', () {
+    test('initial state has empty filters and newest sort', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final state = container.read(transactionFilterProvider);
+      expect(state.activeTypeFilters, isEmpty);
+      expect(state.sortOrder, TransactionSortOrder.newest);
+      expect(state.selectedMonth, isNull);
+    });
+
+    test('setTypeFilters updates active filters', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container.read(transactionFilterProvider.notifier).setTypeFilters({
+        TransactionType.expense,
+        TransactionType.income,
+      });
+
+      final state = container.read(transactionFilterProvider);
+      expect(state.activeTypeFilters, hasLength(2));
+      expect(state.activeTypeFilters, contains(TransactionType.expense));
+    });
+
+    test('setSortOrder updates sort order', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(transactionFilterProvider.notifier)
+          .setSortOrder(TransactionSortOrder.oldest);
+
+      expect(
+        container.read(transactionFilterProvider).sortOrder,
+        TransactionSortOrder.oldest,
+      );
+    });
+
+    test('setSelectedMonth can be set and cleared', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final month = DateTime(2026, 3);
+      container
+          .read(transactionFilterProvider.notifier)
+          .setSelectedMonth(month);
+      expect(container.read(transactionFilterProvider).selectedMonth, month);
+
+      container.read(transactionFilterProvider.notifier).setSelectedMonth(null);
+      expect(container.read(transactionFilterProvider).selectedMonth, isNull);
+    });
   });
 }

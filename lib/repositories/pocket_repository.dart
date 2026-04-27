@@ -68,7 +68,7 @@ class PocketRepository {
 
   /// Updates an existing pocket in the database
   /// Throws [DatabaseError] if the operation fails
-  Future updatePocket(Pocket pocket) async {
+  Future<bool> updatePocket(Pocket pocket) async {
     try {
       return await db.update(db.pockets).replace(pocket.toDb());
     } catch (e, stack) {
@@ -78,7 +78,7 @@ class PocketRepository {
 
   /// Deletes a pocket by its ID
   /// Throws [DatabaseError] if the operation fails
-  Future deletePocket(int id) async {
+  Future<int> deletePocket(int id) async {
     try {
       return await (db.delete(db.pockets)
         ..where((tbl) => tbl.id.equals(id))).go();

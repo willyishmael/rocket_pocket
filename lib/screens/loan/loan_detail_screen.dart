@@ -81,9 +81,7 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
     // can assume a non-null loan.
     if (loan == null) {
       if (loansAsync.isLoading) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
       return Scaffold(
         body: Center(child: Text('Loan #$effectiveId not found')),
@@ -274,6 +272,13 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
                     transaction: tx,
                     currency: currency,
                     pocketName: pocket,
+                    onTap:
+                        tx.id == null
+                            ? null
+                            : () => context.push(
+                              Paths.transactionDetailsRoute(tx.id!),
+                              extra: tx,
+                            ),
                   );
                 },
               );

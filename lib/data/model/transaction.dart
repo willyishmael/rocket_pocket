@@ -138,28 +138,4 @@ class Transaction {
       updatedAt: Value(DateTime.now()),
     );
   }
-
-  /// Convert this Transaction to a database row for updates.
-  /// Requires a non-null id (the row must already exist).
-  db_provider.Transaction toDb() {
-    assert(
-      id != null,
-      'toDb() requires a non-null id. Use toInsertCompanion() for new transactions.',
-    );
-    return db_provider.Transaction(
-      id: id!,
-      senderPocketId: senderPocketId,
-      receiverPocketId: receiverPocketId,
-      type: type,
-      categoryId: categoryId,
-      loanId: loanId,
-      originalTransactionId: originalTransactionId,
-      budgetId: budgetId,
-      description: description,
-      amount: amount,
-      date: date,
-      createdAt: createdAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-  }
 }
