@@ -223,8 +223,8 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
                       )
                       .toList()
                     ..sort((a, b) {
-                      final aPrimary = a.date ?? DateTime(0);
-                      final bPrimary = b.date ?? DateTime(0);
+                      final aPrimary = a.date ?? a.createdAt ?? DateTime(0);
+                      final bPrimary = b.date ?? b.createdAt ?? DateTime(0);
                       final primary = bPrimary.compareTo(aPrimary);
                       if (primary != 0) {
                         return _sortOrder == TransactionSortOrder.newest
