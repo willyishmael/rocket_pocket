@@ -212,8 +212,8 @@ Comparator<Transaction> _compareTransactionsByDate(
   TransactionSortOrder sortOrder,
 ) {
   return (a, b) {
-    final aPrimaryTime = a.date ?? DateTime(0);
-    final bPrimaryTime = b.date ?? DateTime(0);
+    final aPrimaryTime = a.date ?? a.createdAt ?? DateTime(0);
+    final bPrimaryTime = b.date ?? b.createdAt ?? DateTime(0);
     final primaryComparison = bPrimaryTime.compareTo(aPrimaryTime);
     if (primaryComparison != 0) {
       return sortOrder == TransactionSortOrder.newest
