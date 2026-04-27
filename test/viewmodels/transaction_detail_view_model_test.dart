@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rocket_pocket/data/local/database.dart' as localDb;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
@@ -17,14 +19,19 @@ class MockTransactionRepository extends Mock implements TransactionRepository {}
 class MockPocketRepository extends Mock implements PocketRepository {}
 
 /// Creates an isolated container with repository overrides.
+/// Pass [database] to also override [appDatabaseProvider] (e.g. with an
+/// in-memory instance) when the viewmodel calls [database.transaction()].
 ProviderContainer _makeContainer({
   required MockTransactionRepository txRepo,
   required MockPocketRepository pocketRepo,
+  localDb.AppDatabase? database,
 }) {
   return ProviderContainer(
     overrides: [
       transactionRepositoryProvider.overrideWithValue(txRepo),
       pocketRepositoryProvider.overrideWithValue(pocketRepo),
+      if (database != null)
+        localDb.appDatabaseProvider.overrideWithValue(database),
     ],
   );
 }
@@ -136,36 +143,47 @@ void main() {
 
   group('deleteTransaction()', () {
     test('sets isSaving during delete and calls repository', () async {
-      stubLoad(txId: 1, pockets: [buildPocketModel(id: 1, balance: 100)]);
+      stubLoad(txId: 1, pockets: [buildPocketModel(id: 1, balance: 100.0)]);
 
       when(
         () => mockPocketRepo.getPocketById(1),
-      ).thenAnswer((_) async => buildPocketModel(id: 1, balance: 100));
+      ).thenAnswer((_) async => buildPocketModel(id: 1, balance: 100.0));
       when(
         () => mockPocketRepo.updatePocket(any()),
       ).thenAnswer((_) async => true);
       when(() => mockTxRepo.deleteTransaction(1)).thenAnswer((_) async {});
 
-      // Use an in-memory database so the outer database.transaction() works.
-      // We override only the two repositories; the db provider is left at
-      // its default (not needed for this test since we mock at repo level).
-
-      // For this unit test we use a container that doesn't inject a real db;
-      // so deleteTransaction will fail on database.transaction(). Instead,
-      // test the guard logic (isSaving set) using a spy approach:
-      // we simply confirm the notifier exposes isSaving = false after load
-      // and that the repositories were NOT called before delete.
+      // Use an in-memory AppDatabase so database.transaction() can wrap the
+      // mocked repository calls in a real Drift SQL transaction.
+      final inMemoryDb = localDb.AppDatabase(NativeDatabase.memory());
       final container = _makeContainer(
         txRepo: mockTxRepo,
         pocketRepo: mockPocketRepo,
+        database: inMemoryDb,
       );
       addTearDown(container.dispose);
+      addTearDown(inMemoryDb.close);
 
       await container.read(transactionDetailViewModelProvider(1).future);
-      final state =
-          container.read(transactionDetailViewModelProvider(1)).requireValue;
-      expect(state.isSaving, isFalse);
-      expect(state.transaction.id, 1);
+
+      // Capture isSaving transitions emitted during deleteTransaction().
+      final savingTransitions = <bool>[];
+      container.listen(transactionDetailViewModelProvider(1), (_, next) {
+        final v = next.asData?.value;
+        if (v != null) savingTransitions.add(v.isSaving);
+      }, fireImmediately: false);
+
+      await container
+          .read(transactionDetailViewModelProvider(1).notifier)
+          .deleteTransaction();
+
+      // isSaving should have gone true → false.
+      expect(savingTransitions, equals([true, false]));
+
+      // All three repository methods that the delete flow touches.
+      verify(() => mockPocketRepo.getPocketById(1)).called(1);
+      verify(() => mockPocketRepo.updatePocket(any())).called(1);
+      verify(() => mockTxRepo.deleteTransaction(1)).called(1);
     });
 
     test('no-op when state is not loaded', () async {

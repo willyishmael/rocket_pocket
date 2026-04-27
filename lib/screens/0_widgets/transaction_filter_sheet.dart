@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 
-enum TransactionSortOrder { newest, oldest }
+export 'package:rocket_pocket/data/model/enums.dart' show TransactionSortOrder;
+import 'package:rocket_pocket/data/model/enums.dart' show TransactionSortOrder;
 
 /// Shows a modal bottom sheet for filtering transactions by type.
 ///

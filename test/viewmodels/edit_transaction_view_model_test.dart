@@ -339,13 +339,13 @@ void main() {
 
       final newDate = DateTime(2026, 6, 1);
       notifier.setDescription('Updated');
-      notifier.setAmount(999);
+      notifier.setAmount(999.0);
       notifier.setDate(newDate);
 
       final state =
           container.read(editTransactionViewModelProvider(1)).requireValue;
       expect(state.description, 'Updated');
-      expect(state.amount, 999);
+      expect(state.amount, 999.0);
       expect(state.date, newDate);
     });
 

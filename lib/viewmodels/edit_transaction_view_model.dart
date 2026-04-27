@@ -12,6 +12,7 @@ import 'package:rocket_pocket/repositories/transaction_categories_repository.dar
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
+import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 import 'package:rocket_pocket/viewmodels/viewmodel_utils.dart';
 
 class EditTransactionState {
@@ -306,6 +307,7 @@ class EditTransactionViewModel extends AsyncNotifier<EditTransactionState> {
       // Refresh dependent providers
       ref.invalidate(pocketViewModelProvider);
       ref.invalidate(budgetViewModelProvider);
+      ref.invalidate(transactionViewModelProvider);
 
       // Reset state to reflect success
       state = AsyncData(current.copyWith(isSaving: false, original: updated));

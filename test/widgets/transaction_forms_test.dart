@@ -45,7 +45,7 @@ void main() {
       receiverPocket: type == TransactionType.transfer ? receiver : null,
       selectedCategory: type == TransactionType.transfer ? null : category,
       description: 'Test transaction',
-      amount: 25,
+      amount: 25.0,
       date: fixedDate(),
     );
   }
