@@ -306,16 +306,20 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   }
 
   Future<void> _creditPocket(Pocket? pocket, double amount) async {
-    if (pocket == null) return;
+    if (pocket == null || pocket.id == null) return;
+    final fresh = await _pocketRepository.getPocketById(pocket.id!);
+    if (fresh == null) return;
     await _pocketRepository.updatePocket(
-      pocket.copyWith(balance: pocket.balance + amount),
+      fresh.copyWith(balance: fresh.balance + amount),
     );
   }
 
   Future<void> _debitPocket(Pocket? pocket, double amount) async {
-    if (pocket == null) return;
+    if (pocket == null || pocket.id == null) return;
+    final fresh = await _pocketRepository.getPocketById(pocket.id!);
+    if (fresh == null) return;
     await _pocketRepository.updatePocket(
-      pocket.copyWith(balance: pocket.balance - amount),
+      fresh.copyWith(balance: fresh.balance - amount),
     );
   }
 
@@ -407,10 +411,20 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   }
 
   Future<void> _resetAfterSubmit(AddTransactionState current) async {
-    await ref.read(pocketViewModelProvider.notifier).refreshPockets();
+    final freshPockets = await _pocketRepository.getAllPockets();
+    ref.invalidate(pocketViewModelProvider);
     ref.invalidate(budgetViewModelProvider);
+
+    Pocket? refreshed(Pocket? old) =>
+        old == null
+            ? null
+            : freshPockets.where((p) => p.id == old.id).firstOrNull;
+
     state = AsyncData(
       current.copyWith(
+        pockets: freshPockets,
+        senderPocket: refreshed(current.senderPocket),
+        receiverPocket: refreshed(current.receiverPocket),
         description: '',
         amount: 0,
         tipAmount: 0,
