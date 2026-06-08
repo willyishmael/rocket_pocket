@@ -6,10 +6,9 @@ import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 class Pocket {
   int? id;
   String name;
-  String purpose;
   String currency;
   double balance;
-  String emoticon;
+  String icon;
   ColorGradient colorGradient;
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -17,10 +16,9 @@ class Pocket {
   Pocket({
     this.id,
     required this.name,
-    required this.purpose,
     required this.currency,
     required this.balance,
-    required this.emoticon,
+    required this.icon,
     required this.colorGradient,
     this.createdAt,
     this.updatedAt,
@@ -32,10 +30,9 @@ class Pocket {
   Pocket copyWith({
     int? id,
     String? name,
-    String? purpose,
     String? currency,
     double? balance,
-    String? emoticon,
+    String? icon,
     ColorGradient? colorGradient,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -43,10 +40,9 @@ class Pocket {
     return Pocket(
       id: id ?? this.id,
       name: name ?? this.name,
-      purpose: purpose ?? this.purpose,
       currency: currency ?? this.currency,
       balance: balance ?? this.balance,
-      emoticon: emoticon ?? this.emoticon,
+      icon: icon ?? this.icon,
       colorGradient: colorGradient ?? this.colorGradient,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -63,10 +59,9 @@ class Pocket {
     return Pocket(
       id: dbRow.id,
       name: dbRow.name,
-      purpose: dbRow.purpose,
       currency: dbRow.currency,
       balance: dbRow.balance,
-      emoticon: dbRow.emoticon,
+      icon: dbRow.icon,
       colorGradient: gradient,
       createdAt: dbRow.createdAt,
       updatedAt: dbRow.updatedAt,
@@ -88,10 +83,9 @@ class Pocket {
     }
     return db_provider.PocketsCompanion.insert(
       name: name,
-      purpose: purpose,
+      icon: icon,
       currency: currency,
       balance: balance,
-      emoticon: emoticon,
       colorGradientId: gradientId,
       updatedAt: DateTime.now(),
     );
@@ -116,10 +110,9 @@ class Pocket {
     return db_provider.Pocket(
       id: id!,
       name: name,
-      purpose: purpose,
+      icon: icon,
       currency: currency,
       balance: balance,
-      emoticon: emoticon,
       colorGradientId: gradientId,
       createdAt: createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
