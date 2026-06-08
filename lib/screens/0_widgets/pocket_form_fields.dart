@@ -8,11 +8,10 @@ import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
 
 /// Shared form fields for create and edit pocket screens.
-/// Covers: name, purpose, emoticon, gradient picker, currency picker.
+/// Covers: name, icon, gradient picker, currency picker.
 class PocketFormFields extends StatelessWidget {
   final TextEditingController nameController;
-  final TextEditingController purposeController;
-  final TextEditingController emoticonController;
+  final TextEditingController iconController;
   final List<ColorGradient> gradients;
   final ColorGradient selectedGradient;
   final ValueChanged<ColorGradient> onGradientSelected;
@@ -22,8 +21,7 @@ class PocketFormFields extends StatelessWidget {
   const PocketFormFields({
     super.key,
     required this.nameController,
-    required this.purposeController,
-    required this.emoticonController,
+    required this.iconController,
     required this.gradients,
     required this.selectedGradient,
     required this.onGradientSelected,
@@ -39,7 +37,7 @@ class PocketFormFields extends StatelessWidget {
       builder: (ctx) {
         return EmojiPicker(
           onEmojiSelected: (_, emoji) {
-            emoticonController.text = emoji.emoji;
+            iconController.text = emoji.emoji;
             Navigator.of(ctx).pop();
           },
           config: Config(
@@ -99,20 +97,11 @@ class PocketFormFields extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         TextField(
-          controller: purposeController,
-          decoration: const InputDecoration(
-            labelText: 'Purpose',
-            border: OutlineInputBorder(),
-            icon: Icon(Icons.account_balance_wallet),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: emoticonController,
+          controller: iconController,
           readOnly: true,
           onTap: () => _openEmojiPicker(context),
           decoration: const InputDecoration(
-            labelText: 'Emoticon',
+            labelText: 'Icon',
             border: OutlineInputBorder(),
             icon: Icon(Icons.emoji_emotions),
             hintText: 'Tap to pick an emoji',

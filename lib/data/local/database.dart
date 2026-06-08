@@ -41,7 +41,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,53 +55,13 @@ class AppDatabase extends _$AppDatabase {
       await into(pockets).insert(
         PocketsCompanion.insert(
           name: 'Default Pocket',
-          purpose: 'General Savings',
+          icon: '💰',
           colorGradientId: 1,
-          emoticon: '💰',
           currency: 'IDR',
           balance: 0,
           updatedAt: DateTime.now(),
         ),
       );
-    },
-
-    onUpgrade: (Migrator m, int from, int to) async {
-      if (from < 2) {
-        await m.addColumn(transactions, transactions.date);
-      }
-      if (from < 3) {
-        await m.createTable(budgets);
-        await m.addColumn(transactions, transactions.budgetId);
-      }
-      if (from < 4) {
-        await m.addColumn(
-          transactionCategories,
-          transactionCategories.isSystem,
-        );
-        final now = DateTime.now();
-        await batch((b) {
-          b.insertAll(transactionCategories, [
-            TransactionCategoriesCompanion.insert(
-              name: 'Tax',
-              type: const Value(TransactionType.expense),
-              isSystem: const Value(true),
-              updatedAt: now,
-            ),
-            TransactionCategoriesCompanion.insert(
-              name: 'Tip',
-              type: const Value(TransactionType.expense),
-              isSystem: const Value(true),
-              updatedAt: now,
-            ),
-            TransactionCategoriesCompanion.insert(
-              name: 'Admin Fee',
-              type: const Value(TransactionType.expense),
-              isSystem: const Value(true),
-              updatedAt: now,
-            ),
-          ]);
-        });
-      }
     },
   );
 }

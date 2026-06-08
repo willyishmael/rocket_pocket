@@ -44,12 +44,6 @@ class PocketCard extends StatelessWidget {
                       color: Colors.white,
                     ),
                   ),
-                  Text(
-                    pocket.purpose,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14.0, color: Colors.white),
-                  ),
                   const SizedBox(height: 16.0),
                   FittedBox(
                     fit: BoxFit.scaleDown,
@@ -68,10 +62,7 @@ class PocketCard extends StatelessWidget {
                     children: [
                       const Text(
                         '💳',
-                        style: TextStyle(
-                          fontSize: 28.0,
-                          color: Colors.white,
-                        ),
+                        style: TextStyle(fontSize: 28.0, color: Colors.white),
                       ),
                       const SizedBox(width: 8.0),
                       Text(
@@ -88,7 +79,7 @@ class PocketCard extends StatelessWidget {
             ),
             const SizedBox(width: 16.0),
             Text(
-              pocket.emoticon,
+              pocket.icon,
               style: const TextStyle(fontSize: 80.0, color: Colors.white),
             ),
           ],
