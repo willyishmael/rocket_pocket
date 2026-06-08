@@ -10,12 +10,13 @@ class PocketHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top + kToolbarHeight + 8;
-    final gradientColors = pocket.colorGradient.colors.isNotEmpty
-        ? pocket.colorGradient.colors
-        : <Color>[
-            Theme.of(context).primaryColor,
-            Theme.of(context).colorScheme.secondary,
-          ];
+    final gradientColors =
+        pocket.colorGradient.colors.isNotEmpty
+            ? pocket.colorGradient.colors
+            : <Color>[
+              Theme.of(context).primaryColor,
+              Theme.of(context).colorScheme.secondary,
+            ];
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -48,13 +49,6 @@ class PocketHeader extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  pocket.purpose,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, color: Colors.white70),
-                ),
                 const SizedBox(height: 8),
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -82,7 +76,7 @@ class PocketHeader extends StatelessWidget {
               ],
             ),
           ),
-          Text(pocket.emoticon, style: const TextStyle(fontSize: 64)),
+          Text(pocket.icon, style: const TextStyle(fontSize: 64)),
         ],
       ),
     );
