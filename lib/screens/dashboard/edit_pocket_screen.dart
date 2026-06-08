@@ -19,8 +19,7 @@ class EditPocketScreen extends ConsumerStatefulWidget {
 
 class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
   late TextEditingController _nameController;
-  late TextEditingController _purposeController;
-  late TextEditingController _emoticonController;
+  late TextEditingController _iconController;
   late ColorGradient _selectedGradient;
   late String _currency;
   List<ColorGradient> _gradients = [];
@@ -31,15 +30,13 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.pocket.name);
-    _purposeController = TextEditingController(text: widget.pocket.purpose);
-    _emoticonController = TextEditingController(text: widget.pocket.emoticon);
+    _iconController = TextEditingController(text: widget.pocket.icon);
     _selectedGradient = widget.pocket.colorGradient;
     _currency = widget.pocket.currency;
     _previewPocket = widget.pocket;
 
     _nameController.addListener(() => setState(_updatePreview));
-    _purposeController.addListener(() => setState(_updatePreview));
-    _emoticonController.addListener(() => setState(_updatePreview));
+    _iconController.addListener(() => setState(_updatePreview));
 
     _loadGradients();
   }
@@ -47,8 +44,7 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
   void _updatePreview() {
     _previewPocket = widget.pocket.copyWith(
       name: _nameController.text,
-      purpose: _purposeController.text,
-      emoticon: _emoticonController.text,
+      icon: _iconController.text,
       colorGradient: _selectedGradient,
       currency: _currency,
     );
@@ -63,8 +59,7 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _purposeController.dispose();
-    _emoticonController.dispose();
+    _iconController.dispose();
     super.dispose();
   }
 
@@ -72,8 +67,7 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
     setState(() => _saving = true);
     final updated = widget.pocket.copyWith(
       name: _nameController.text,
-      purpose: _purposeController.text,
-      emoticon: _emoticonController.text,
+      icon: _iconController.text,
       colorGradient: _selectedGradient,
       currency: _currency,
       updatedAt: DateTime.now(),
@@ -124,8 +118,7 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
                 children: [
                   PocketFormFields(
                     nameController: _nameController,
-                    purposeController: _purposeController,
-                    emoticonController: _emoticonController,
+                    iconController: _iconController,
                     gradients: _gradients,
                     selectedGradient: _selectedGradient,
                     onGradientSelected: (gradient) {

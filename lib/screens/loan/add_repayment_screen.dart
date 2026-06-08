@@ -144,7 +144,7 @@ class _AddRepaymentForm extends ConsumerWidget {
                             value: p,
                             child: Row(
                               children: [
-                                Text(p.emoticon),
+                                Text(p.icon),
                                 const SizedBox(width: 8),
                                 Text(p.name),
                                 const SizedBox(width: 4),

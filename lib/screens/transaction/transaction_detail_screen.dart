@@ -144,9 +144,9 @@ class _TransactionDetailContent extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   if (sender != null)
-                    Text('From: ${sender.emoticon} ${sender.name}'),
+                    Text('From: ${sender.icon} ${sender.name}'),
                   if (receiver != null)
-                    Text('To: ${receiver.emoticon} ${receiver.name}'),
+                    Text('To: ${receiver.icon} ${receiver.name}'),
                 ],
               ),
             ),

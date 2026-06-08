@@ -148,19 +148,17 @@ ColorGradient buildGradientModel({
 Pocket buildPocketModel({
   int? id = 1,
   String name = 'Main Pocket',
-  String purpose = 'General',
   String currency = 'USD',
   double balance = 100,
-  String emoticon = ':moneybag:',
+  String icon = ':moneybag:',
   ColorGradient? colorGradient,
 }) {
   return Pocket(
     id: id,
     name: name,
-    purpose: purpose,
     currency: currency,
     balance: balance,
-    emoticon: emoticon,
+    icon: icon,
     colorGradient: colorGradient ?? buildGradientModel(),
     createdAt: fixedDate(1),
     updatedAt: fixedDate(2),

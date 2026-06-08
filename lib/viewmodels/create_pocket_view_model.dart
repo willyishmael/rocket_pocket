@@ -44,8 +44,7 @@ class CreatePocketViewModel extends AsyncNotifier<CreatePocketState> {
 
     final pocket = Pocket(
       name: '',
-      purpose: '',
-      emoticon: '💰',
+      icon: '💰',
       colorGradient: defaultGradient,
       currency: 'IDR',
       balance: 0,
@@ -84,19 +83,11 @@ class CreatePocketViewModel extends AsyncNotifier<CreatePocketState> {
     );
   }
 
-  void setPurpose(String purpose) {
+  void setIcon(String icon) {
     final current = state.value;
     if (current == null) return;
     state = AsyncData(
-      current.copyWith(pocket: current.pocket.copyWith(purpose: purpose)),
-    );
-  }
-
-  void setEmoticon(String emoticon) {
-    final current = state.value;
-    if (current == null) return;
-    state = AsyncData(
-      current.copyWith(pocket: current.pocket.copyWith(emoticon: emoticon)),
+      current.copyWith(pocket: current.pocket.copyWith(icon: icon)),
     );
   }
 

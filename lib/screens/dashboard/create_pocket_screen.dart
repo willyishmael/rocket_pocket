@@ -14,8 +14,7 @@ class CreatePocketScreen extends ConsumerStatefulWidget {
 
 class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
   final _nameController = TextEditingController();
-  final _purposeController = TextEditingController();
-  final _emoticonController = TextEditingController(text: '💰');
+  final _iconController = TextEditingController(text: '💰');
 
   @override
   void initState() {
@@ -25,23 +24,17 @@ class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
           .read(createPocketViewModelProvider.notifier)
           .setName(_nameController.text),
     );
-    _purposeController.addListener(
+    _iconController.addListener(
       () => ref
           .read(createPocketViewModelProvider.notifier)
-          .setPurpose(_purposeController.text),
-    );
-    _emoticonController.addListener(
-      () => ref
-          .read(createPocketViewModelProvider.notifier)
-          .setEmoticon(_emoticonController.text),
+          .setIcon(_iconController.text),
     );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _purposeController.dispose();
-    _emoticonController.dispose();
+    _iconController.dispose();
     super.dispose();
   }
 
@@ -80,8 +73,7 @@ class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
                     children: [
                       PocketFormFields(
                         nameController: _nameController,
-                        purposeController: _purposeController,
-                        emoticonController: _emoticonController,
+                        iconController: _iconController,
                         gradients: gradients,
                         selectedGradient: pocket.colorGradient,
                         onGradientSelected:

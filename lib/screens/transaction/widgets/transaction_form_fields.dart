@@ -163,7 +163,7 @@ class TransactionPocketDropdown extends StatelessWidget {
                 (p) => DropdownMenuItem<Pocket>(
                   value: p,
                   child: Text(
-                    '${p.emoticon}  ${p.name} (${CurrencyUtils.format(p.balance, p.currency)})',
+                    '${p.icon}  ${p.name} (${CurrencyUtils.format(p.balance, p.currency)})',
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
