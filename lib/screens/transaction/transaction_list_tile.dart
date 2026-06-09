@@ -57,9 +57,8 @@ class TransactionListTile extends StatelessWidget {
     final isTransfer = type == TransactionType.transfer;
     final isPositive = type.isPositive;
     final sign = isTransfer ? '' : (isPositive ? '+' : '-');
-    final symbol = CurrencyUtils.symbolFor(currency);
-    final amountText =
-        '${sign.isEmpty ? '' : '$sign '}$symbol ${transaction.amount.toStringAsFixed(2)}';
+    final formatted = CurrencyUtils.format(transaction.amount.abs(), currency);
+    final amountText = sign.isEmpty ? formatted : '$sign $formatted';
     final (iconData, iconColor) = switch (type) {
       TransactionType.expense => (Icons.arrow_upward, Colors.red),
       TransactionType.income => (Icons.arrow_downward, Colors.green),
