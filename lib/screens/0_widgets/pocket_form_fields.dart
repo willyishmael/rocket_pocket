@@ -13,6 +13,7 @@ class PocketFormFields extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController iconController;
   final String? nameErrorText;
+  final bool showGradientPicker;
   final List<ColorGradient> gradients;
   final ColorGradient selectedGradient;
   final ValueChanged<ColorGradient> onGradientSelected;
@@ -24,6 +25,7 @@ class PocketFormFields extends StatelessWidget {
     required this.nameController,
     required this.iconController,
     this.nameErrorText,
+    this.showGradientPicker = true,
     required this.gradients,
     required this.selectedGradient,
     required this.onGradientSelected,
@@ -111,7 +113,7 @@ class PocketFormFields extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        if (gradients.isNotEmpty)
+        if (showGradientPicker && gradients.isNotEmpty)
           GradientPicker(
             gradients: gradients,
             selectedColor: selectedGradient,

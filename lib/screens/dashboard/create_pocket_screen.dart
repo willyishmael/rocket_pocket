@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rocket_pocket/screens/0_widgets/pocket_card/pocket_card.dart';
+import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
 import 'package:rocket_pocket/screens/0_widgets/pocket_form_fields.dart';
+import 'package:rocket_pocket/screens/0_widgets/pocket_header.dart';
 import 'package:rocket_pocket/viewmodels/create_pocket_view_model.dart';
 
 class CreatePocketScreen extends ConsumerStatefulWidget {
@@ -16,6 +17,7 @@ class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
   final _nameController = TextEditingController();
   final _iconController = TextEditingController(text: '💰');
   bool _showNameError = false;
+  static const double _expandedHeight = 250.0;
 
   @override
   void initState() {
@@ -59,28 +61,40 @@ class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
             slivers: [
               SliverAppBar(
                 pinned: true,
-                floating: true,
+                expandedHeight: _expandedHeight,
+                backgroundColor: pocket.colorGradient.colors.first,
+                foregroundColor: Colors.white,
+                title: const Text('Create Pocket'),
                 leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => context.pop(),
                 ),
-                expandedHeight: 150.0,
-                flexibleSpace: const FlexibleSpaceBar(
-                  title: Text('Create Pocket'),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: PocketHeader(pocket: pocket),
                 ),
               ),
-              SliverToBoxAdapter(child: PocketCard(pocket: pocket)),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (gradients.isNotEmpty)
+                        GradientPicker(
+                          gradients: gradients,
+                          selectedColor: pocket.colorGradient,
+                          onSelected:
+                              (g) => ref
+                                  .read(createPocketViewModelProvider.notifier)
+                                  .setColorGradient(g),
+                        ),
+                      if (gradients.isNotEmpty) const SizedBox(height: 16),
                       PocketFormFields(
                         nameController: _nameController,
                         iconController: _iconController,
                         nameErrorText:
                             _showNameError ? 'Pocket name is required' : null,
+                        showGradientPicker: false,
                         gradients: gradients,
                         selectedGradient: pocket.colorGradient,
                         onGradientSelected:
