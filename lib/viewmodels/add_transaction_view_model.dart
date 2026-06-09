@@ -121,8 +121,14 @@ class AddTransactionState {
     );
   }
 
+  String get effectiveDescription {
+    if (description.trim().isNotEmpty) return description.trim();
+    if (selectedCategory != null) return selectedCategory!.name;
+    final t = selectedType.name;
+    return t[0].toUpperCase() + t.substring(1);
+  }
+
   bool get isValid {
-    if (description.trim().isEmpty) return false;
     if (amount <= 0) return false;
     if (selectedType == TransactionType.transfer) {
       return senderPocket != null &&
@@ -284,7 +290,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
           current.selectedType == TransactionType.expense
               ? current.selectedBudget?.id
               : null,
-      description: current.description.trim(),
+      description: current.effectiveDescription,
       amount: current.amount,
       date: current.date,
       originalTransactionId: current.originalTransactionId,
@@ -338,7 +344,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
       type: TransactionType.expense,
       senderPocketId: current.senderPocket?.id,
       categoryId: category.id,
-      description: '$descriptionPrefix: ${current.description.trim()}',
+      description: '$descriptionPrefix: ${current.effectiveDescription}',
       amount: amount,
       date: current.date,
     );

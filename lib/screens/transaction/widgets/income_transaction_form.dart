@@ -37,7 +37,7 @@ class IncomeTransactionForm extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         TransactionTextField(
-          label: 'Description',
+          label: 'Description (optional)',
           icon: Icons.notes,
           onChanged:
               (value) => ref
