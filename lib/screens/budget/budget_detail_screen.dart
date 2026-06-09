@@ -5,6 +5,7 @@ import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/transaction.dart' as model;
 import 'package:rocket_pocket/repositories/budget_repository.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/budget/budget_status_chip.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
@@ -527,6 +528,8 @@ class _TransactionsSection extends ConsumerWidget {
                   final tx = model.Transaction.fromDb(dbTx);
                   final currency = pocketCurrency[dbTx.senderPocketId] ?? 'IDR';
                   final pocket = pocketName[dbTx.senderPocketId];
+                  final categoryNames =
+                      ref.watch(categoryNamesProvider).asData?.value ?? {};
                   return TransactionListTile(
                     transaction: tx,
                     currency: currency,
@@ -538,6 +541,10 @@ class _TransactionsSection extends ConsumerWidget {
                               extra: tx,
                             ),
                     pocketName: pocket,
+                    categoryName:
+                        tx.categoryId != null
+                            ? categoryNames[tx.categoryId]
+                            : null,
                   );
                 },
               ),

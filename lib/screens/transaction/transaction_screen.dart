@@ -6,6 +6,7 @@ import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/0_widgets/month_selector_delegate.dart';
 import 'package:rocket_pocket/screens/0_widgets/transaction_filter_sheet.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
@@ -17,6 +18,7 @@ class TransactionScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(transactionViewModelProvider);
     final filterState = ref.watch(transactionFilterProvider);
     final pockets = ref.watch(pocketViewModelProvider).value ?? [];
+    final categoryNames = ref.watch(categoryNamesProvider).asData?.value ?? {};
 
     final pocketCurrency = {
       for (final p in pockets)
@@ -173,6 +175,10 @@ class TransactionScreen extends ConsumerWidget {
                     transaction: t,
                     currency: currency,
                     pocketName: resolvedPocketName,
+                    categoryName:
+                        t.categoryId != null
+                            ? categoryNames[t.categoryId]
+                            : null,
                     onTap:
                         t.id == null
                             ? null

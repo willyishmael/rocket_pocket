@@ -10,6 +10,14 @@ final transactionCategoryRepositoryProvider =
       return TransactionCategoriesRepository(db);
     });
 
+/// A convenience provider that returns a Map<categoryId, categoryName>
+/// for use in UI widgets that need to resolve category names by ID.
+final categoryNamesProvider = FutureProvider<Map<int, String>>((ref) async {
+  final repo = ref.watch(transactionCategoryRepositoryProvider);
+  final categories = await repo.getAllTransactionCategories();
+  return {for (final c in categories) c.id: c.name};
+});
+
 class TransactionCategoriesRepository {
   final AppDatabase db;
   TransactionCategoriesRepository(this.db);

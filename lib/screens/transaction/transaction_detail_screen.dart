@@ -137,6 +137,14 @@ class _TransactionDetailContent extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text('Type: ${tx.type.toReadableString()}'),
                   const SizedBox(height: 4),
+                  if (tx.categoryId != null &&
+                      current.categories[tx.categoryId] != null)
+                    Text(
+                      'Category: ${current.categories[tx.categoryId]!.name}',
+                    ),
+                  if (tx.categoryId != null &&
+                      current.categories[tx.categoryId] != null)
+                    const SizedBox(height: 4),
                   Text('Amount: $amountText'),
                   const SizedBox(height: 4),
                   Text(
