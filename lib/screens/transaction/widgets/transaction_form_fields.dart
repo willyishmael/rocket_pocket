@@ -140,6 +140,7 @@ class TransactionPocketDropdown extends StatelessWidget {
     required this.pockets,
     required this.value,
     required this.onChanged,
+    this.errorText,
     super.key,
   });
 
@@ -147,24 +148,42 @@ class TransactionPocketDropdown extends StatelessWidget {
   final List<Pocket> pockets;
   final Pocket? value;
   final ValueChanged<Pocket?> onChanged;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<Pocket>(
       value: value,
+      isExpanded: true,
+      isDense: false,
+      itemHeight: null,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
         icon: const Icon(Icons.account_balance_wallet),
+        errorText: errorText,
       ),
       items:
           pockets
               .map(
                 (p) => DropdownMenuItem<Pocket>(
                   value: p,
-                  child: Text(
-                    '${p.icon}  ${p.name} (${CurrencyUtils.format(p.balance, p.currency)})',
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${p.icon}  ${p.name}',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      Text(
+                        '${p.currency}  ${CurrencyUtils.format(p.balance, p.currency)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               )

@@ -12,6 +12,9 @@ class TransactionFilterState {
   /// Empty set means "show all types"; non-empty set filters to those types.
   final Set<TransactionType> activeTypeFilters;
 
+  /// Empty set means "show all pockets"; non-empty set filters to those pocket IDs.
+  final Set<int> activePocketFilters;
+
   /// `null` means "auto-select the most recent month that has transactions".
   final DateTime? selectedMonth;
 
@@ -19,17 +22,20 @@ class TransactionFilterState {
 
   const TransactionFilterState({
     this.activeTypeFilters = const {},
+    this.activePocketFilters = const {},
     this.selectedMonth,
     this.sortOrder = TransactionSortOrder.newest,
   });
 
   TransactionFilterState copyWith({
     Set<TransactionType>? activeTypeFilters,
+    Set<int>? activePocketFilters,
     Object? selectedMonth = absent,
     TransactionSortOrder? sortOrder,
   }) {
     return TransactionFilterState(
       activeTypeFilters: activeTypeFilters ?? this.activeTypeFilters,
+      activePocketFilters: activePocketFilters ?? this.activePocketFilters,
       selectedMonth:
           selectedMonth == absent
               ? this.selectedMonth
@@ -45,6 +51,10 @@ class TransactionFilterViewModel extends Notifier<TransactionFilterState> {
 
   void setTypeFilters(Set<TransactionType> filters) {
     state = state.copyWith(activeTypeFilters: Set.unmodifiable(filters));
+  }
+
+  void setPocketFilters(Set<int> filters) {
+    state = state.copyWith(activePocketFilters: Set.unmodifiable(filters));
   }
 
   void setSelectedMonth(DateTime? month) {

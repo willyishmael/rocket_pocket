@@ -7,6 +7,7 @@ import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/screens/loan/loan_detail_header.dart';
 import 'package:rocket_pocket/screens/loan/loan_detail_info_card.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
@@ -268,10 +269,16 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
                       tx.senderPocketId != null
                           ? pocketName[tx.senderPocketId]
                           : null;
+                  final categoryNames =
+                      ref.watch(categoryNamesProvider).asData?.value ?? {};
                   return TransactionListTile(
                     transaction: tx,
                     currency: currency,
                     pocketName: pocket,
+                    categoryName:
+                        tx.categoryId != null
+                            ? categoryNames[tx.categoryId]
+                            : null,
                     onTap:
                         tx.id == null
                             ? null

@@ -121,13 +121,17 @@ class AddTransactionState {
     );
   }
 
+  String get effectiveDescription {
+    if (description.trim().isNotEmpty) return description.trim();
+    if (selectedCategory != null) return selectedCategory!.name;
+    final t = selectedType.name;
+    return t[0].toUpperCase() + t.substring(1);
+  }
+
   bool get isValid {
-    if (description.trim().isEmpty) return false;
     if (amount <= 0) return false;
     if (selectedType == TransactionType.transfer) {
-      return senderPocket != null &&
-          receiverPocket != null &&
-          senderPocket != receiverPocket;
+      return senderPocket != null && receiverPocket != null;
     }
     if (selectedType == TransactionType.refund) {
       return senderPocket != null && originalTransactionId != null;
@@ -154,7 +158,11 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
     _categoryRepository = ref.watch(transactionCategoryRepositoryProvider);
     _budgetRepository = ref.watch(budgetRepositoryProvider);
 
-    final pockets = await _pocketRepository.getAllPockets();
+    // Watch pocketViewModelProvider so this rebuilds whenever pockets change
+    // (e.g. a new pocket is added from the dashboard).
+    final pocketsAsync = ref.watch(pocketViewModelProvider);
+    final pockets =
+        pocketsAsync.asData?.value ?? await _pocketRepository.getAllPockets();
     final categories = await _categoryRepository.getAllTransactionCategories();
     final transactions = await _transactionRepository.getAllTransactions();
     final dbBudgets = await _budgetRepository.getAllBudgets();
@@ -284,7 +292,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
           current.selectedType == TransactionType.expense
               ? current.selectedBudget?.id
               : null,
-      description: current.description.trim(),
+      description: current.effectiveDescription,
       amount: current.amount,
       date: current.date,
       originalTransactionId: current.originalTransactionId,
@@ -306,16 +314,20 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   }
 
   Future<void> _creditPocket(Pocket? pocket, double amount) async {
-    if (pocket == null) return;
+    if (pocket == null || pocket.id == null) return;
+    final fresh = await _pocketRepository.getPocketById(pocket.id!);
+    if (fresh == null) return;
     await _pocketRepository.updatePocket(
-      pocket.copyWith(balance: pocket.balance + amount),
+      fresh.copyWith(balance: fresh.balance + amount),
     );
   }
 
   Future<void> _debitPocket(Pocket? pocket, double amount) async {
-    if (pocket == null) return;
+    if (pocket == null || pocket.id == null) return;
+    final fresh = await _pocketRepository.getPocketById(pocket.id!);
+    if (fresh == null) return;
     await _pocketRepository.updatePocket(
-      pocket.copyWith(balance: pocket.balance - amount),
+      fresh.copyWith(balance: fresh.balance - amount),
     );
   }
 
@@ -334,7 +346,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
       type: TransactionType.expense,
       senderPocketId: current.senderPocket?.id,
       categoryId: category.id,
-      description: '$descriptionPrefix: ${current.description.trim()}',
+      description: '$descriptionPrefix: ${current.effectiveDescription}',
       amount: amount,
       date: current.date,
     );
@@ -407,10 +419,20 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
   }
 
   Future<void> _resetAfterSubmit(AddTransactionState current) async {
-    await ref.read(pocketViewModelProvider.notifier).refreshPockets();
+    final freshPockets = await _pocketRepository.getAllPockets();
+    ref.invalidate(pocketViewModelProvider);
     ref.invalidate(budgetViewModelProvider);
+
+    Pocket? refreshed(Pocket? old) =>
+        old == null
+            ? null
+            : freshPockets.where((p) => p.id == old.id).firstOrNull;
+
     state = AsyncData(
       current.copyWith(
+        pockets: freshPockets,
+        senderPocket: refreshed(current.senderPocket),
+        receiverPocket: refreshed(current.receiverPocket),
         description: '',
         amount: 0,
         tipAmount: 0,

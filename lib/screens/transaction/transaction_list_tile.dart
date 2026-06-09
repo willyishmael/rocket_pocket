@@ -7,6 +7,7 @@ class TransactionListTile extends StatelessWidget {
   final Transaction transaction;
   final String currency;
   final String? pocketName;
+  final String? categoryName;
   final VoidCallback? onTap;
 
   const TransactionListTile({
@@ -14,6 +15,7 @@ class TransactionListTile extends StatelessWidget {
     required this.transaction,
     this.currency = 'IDR',
     this.pocketName,
+    this.categoryName,
     this.onTap,
   });
 
@@ -74,9 +76,11 @@ class TransactionListTile extends StatelessWidget {
       onTap: onTap,
       title: Text(transaction.description),
       subtitle: Text(
-        pocketName != null
-            ? '$pocketName  •  ${_formatDateTime(transaction.date ?? transaction.createdAt)}'
-            : _formatDateTime(transaction.date ?? transaction.createdAt),
+        [
+          if (categoryName != null) categoryName!,
+          if (pocketName != null) pocketName!,
+          _formatDateTime(transaction.date ?? transaction.createdAt),
+        ].join('  •  '),
       ),
       leading: Icon(iconData, size: 24, color: iconColor),
       trailing: Column(

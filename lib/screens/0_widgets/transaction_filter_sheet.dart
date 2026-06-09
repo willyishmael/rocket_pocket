@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 
 export 'package:rocket_pocket/data/model/enums.dart' show TransactionSortOrder;
 import 'package:rocket_pocket/data/model/enums.dart' show TransactionSortOrder;
 
-/// Shows a modal bottom sheet for filtering transactions by type.
-///
-/// [activeFilters] is the current set of active type filters.
-/// [onChanged] is called (from inside the sheet) whenever the set changes,
-/// so the caller can rebuild via setState.
 void showTransactionFilterSheet({
   required BuildContext context,
   required Set<TransactionType> activeFilters,
   required TransactionSortOrder sortOrder,
+  required List<Pocket> pockets,
+  required Set<int> activePocketFilters,
   required void Function(Set<TransactionType>) onChanged,
   required void Function(TransactionSortOrder) onSortChanged,
+  required void Function(Set<int>) onPocketFilterChanged,
 }) {
   showModalBottomSheet(
     context: context,
@@ -25,6 +24,7 @@ void showTransactionFilterSheet({
     builder: (ctx) {
       var selectedSortOrder = sortOrder;
       var selectedFilters = Set<TransactionType>.from(activeFilters);
+      var selectedPocketFilters = Set<int>.from(activePocketFilters);
 
       return StatefulBuilder(
         builder: (ctx, setSheetState) {
@@ -68,9 +68,11 @@ void showTransactionFilterSheet({
                           TextButton(
                             onPressed: () {
                               selectedFilters = <TransactionType>{};
+                              selectedPocketFilters = <int>{};
                               selectedSortOrder = TransactionSortOrder.newest;
                               onChanged(selectedFilters);
                               onSortChanged(selectedSortOrder);
+                              onPocketFilterChanged(selectedPocketFilters);
                               setSheetState(() {});
                             },
                             child: const Text('Clear all'),
@@ -131,6 +133,40 @@ void showTransactionFilterSheet({
                               );
                             }).toList(),
                       ),
+                      if (pockets.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          'Pocket',
+                          style: Theme.of(ctx).textTheme.labelLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children:
+                              pockets.map((p) {
+                                final selected =
+                                    p.id != null &&
+                                    selectedPocketFilters.contains(p.id);
+                                return FilterChip(
+                                  avatar: Text(p.icon),
+                                  label: Text(p.name),
+                                  selected: selected,
+                                  onSelected: (on) {
+                                    if (p.id == null) return;
+                                    final updated = Set<int>.from(
+                                      selectedPocketFilters,
+                                    );
+                                    on
+                                        ? updated.add(p.id!)
+                                        : updated.remove(p.id!);
+                                    selectedPocketFilters = updated;
+                                    onPocketFilterChanged(updated);
+                                    setSheetState(() {});
+                                  },
+                                );
+                              }).toList(),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                     ],
                   ),

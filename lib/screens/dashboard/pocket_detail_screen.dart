@@ -8,6 +8,7 @@ import 'package:rocket_pocket/screens/0_widgets/month_selector_delegate.dart';
 import 'package:rocket_pocket/screens/0_widgets/pocket_header.dart';
 import 'package:rocket_pocket/screens/0_widgets/transaction_filter_sheet.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
@@ -52,6 +53,8 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
       context: context,
       activeFilters: _activeTypeFilters,
       sortOrder: _sortOrder,
+      pockets: const [],
+      activePocketFilters: const {},
       onChanged:
           (updated) => setState(() {
             _activeTypeFilters
@@ -59,6 +62,7 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
               ..addAll(updated);
           }),
       onSortChanged: (updated) => setState(() => _sortOrder = updated),
+      onPocketFilterChanged: (_) {},
     );
   }
 
@@ -278,6 +282,8 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final t = filtered[index];
                   final currency = pocket?.currency ?? 'IDR';
+                  final categoryNames =
+                      ref.watch(categoryNamesProvider).asData?.value ?? {};
                   // For transfers, show "From → To"; otherwise omit pocket
                   // name since we're already on this pocket's screen.
                   final String? resolvedPocketName =
@@ -288,6 +294,10 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
                     transaction: t,
                     currency: currency,
                     pocketName: resolvedPocketName,
+                    categoryName:
+                        t.categoryId != null
+                            ? categoryNames[t.categoryId]
+                            : null,
                     onTap:
                         t.id == null
                             ? null

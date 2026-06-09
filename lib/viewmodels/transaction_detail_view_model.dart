@@ -3,6 +3,7 @@ import 'package:rocket_pocket/data/local/database.dart' as db;
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/utils/pocket_balance_utils.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
@@ -12,39 +13,44 @@ import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 class TransactionDetailState {
   final Transaction transaction;
   final Map<int, Pocket> pockets;
+  final Map<int, db.TransactionCategory> categories;
   final bool isSaving;
 
   const TransactionDetailState({
     required this.transaction,
     this.pockets = const {},
+    this.categories = const {},
     this.isSaving = false,
   });
 
   TransactionDetailState copyWith({
     Transaction? transaction,
     Map<int, Pocket>? pockets,
+    Map<int, db.TransactionCategory>? categories,
     bool? isSaving,
   }) {
     return TransactionDetailState(
       transaction: transaction ?? this.transaction,
       pockets: pockets ?? this.pockets,
+      categories: categories ?? this.categories,
       isSaving: isSaving ?? this.isSaving,
     );
   }
 }
 
-class TransactionDetailViewModel
-    extends AsyncNotifier<TransactionDetailState> {
+class TransactionDetailViewModel extends AsyncNotifier<TransactionDetailState> {
   TransactionDetailViewModel(this._transactionId);
 
   final int _transactionId;
   late PocketRepository _pocketRepository;
   late TransactionRepository _transactionRepository;
+  late TransactionCategoriesRepository _categoryRepository;
 
   @override
   Future<TransactionDetailState> build() async {
     _pocketRepository = ref.read(pocketRepositoryProvider);
     _transactionRepository = ref.read(transactionRepositoryProvider);
+    _categoryRepository = ref.read(transactionCategoryRepositoryProvider);
     return _load(_transactionId);
   }
 
@@ -59,7 +65,14 @@ class TransactionDetailViewModel
       for (final p in pocketList)
         if (p.id != null) p.id!: p,
     };
-    return TransactionDetailState(transaction: transaction, pockets: pockets);
+    final categoryList =
+        await _categoryRepository.getAllTransactionCategories();
+    final categories = {for (final c in categoryList) c.id: c};
+    return TransactionDetailState(
+      transaction: transaction,
+      pockets: pockets,
+      categories: categories,
+    );
   }
 
   /// Re-fetches the current transaction and pocket map from the repository.
@@ -83,9 +96,7 @@ class TransactionDetailViewModel
           revert: true,
           pocketRepository: _pocketRepository,
         );
-        await _transactionRepository.deleteTransaction(
-          current.transaction.id!,
-        );
+        await _transactionRepository.deleteTransaction(current.transaction.id!);
       });
 
       ref.invalidate(transactionViewModelProvider);
