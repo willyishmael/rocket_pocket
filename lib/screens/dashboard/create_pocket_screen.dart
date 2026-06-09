@@ -15,15 +15,19 @@ class CreatePocketScreen extends ConsumerStatefulWidget {
 class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
   final _nameController = TextEditingController();
   final _iconController = TextEditingController(text: '💰');
+  bool _showNameError = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController.addListener(
-      () => ref
+    _nameController.addListener(() {
+      ref
           .read(createPocketViewModelProvider.notifier)
-          .setName(_nameController.text),
-    );
+          .setName(_nameController.text);
+      if (_showNameError && _nameController.text.trim().isNotEmpty) {
+        setState(() => _showNameError = false);
+      }
+    });
     _iconController.addListener(
       () => ref
           .read(createPocketViewModelProvider.notifier)
@@ -49,6 +53,7 @@ class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
         data: (state) {
           final pocket = state.pocket;
           final gradients = state.gradients;
+          final canCreate = pocket.name.trim().isNotEmpty;
 
           return CustomScrollView(
             slivers: [
@@ -74,6 +79,8 @@ class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
                       PocketFormFields(
                         nameController: _nameController,
                         iconController: _iconController,
+                        nameErrorText:
+                            _showNameError ? 'Pocket name is required' : null,
                         gradients: gradients,
                         selectedGradient: pocket.colorGradient,
                         onGradientSelected:
@@ -112,12 +119,19 @@ class _CreatePocketScreenState extends ConsumerState<CreatePocketScreen> {
                           minimumSize: const Size.fromHeight(50),
                         ),
                         icon: const Icon(Icons.add),
-                        onPressed: () async {
-                          await ref
-                              .read(createPocketViewModelProvider.notifier)
-                              .createPocket(pocket);
-                          if (context.mounted) context.pop();
-                        },
+                        onPressed:
+                            canCreate
+                                ? () async {
+                                  await ref
+                                      .read(
+                                        createPocketViewModelProvider.notifier,
+                                      )
+                                      .createPocket(pocket);
+                                  if (context.mounted) context.pop();
+                                }
+                                : () {
+                                  setState(() => _showNameError = true);
+                                },
                         label: const Text('Create'),
                       ),
                     ],
