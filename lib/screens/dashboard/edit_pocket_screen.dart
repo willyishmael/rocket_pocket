@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/repositories/color_gradient_repository.dart';
-import 'package:rocket_pocket/screens/0_widgets/pocket_card/pocket_card.dart';
+import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
 import 'package:rocket_pocket/screens/0_widgets/pocket_form_fields.dart';
+import 'package:rocket_pocket/screens/0_widgets/pocket_header.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
 class EditPocketScreen extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class EditPocketScreen extends ConsumerStatefulWidget {
 }
 
 class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
+  static const double _expandedHeight = 250.0;
   late TextEditingController _nameController;
   late TextEditingController _iconController;
   late ColorGradient _selectedGradient;
@@ -73,9 +75,7 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
       updatedAt: DateTime.now(),
     );
     try {
-      await ref
-          .read(pocketViewModelProvider.notifier)
-          .updatePocket(updated);
+      await ref.read(pocketViewModelProvider.notifier).updatePocket(updated);
       if (mounted) {
         context.pop();
       }
@@ -101,24 +101,40 @@ class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {
         slivers: [
           SliverAppBar(
             pinned: true,
-            floating: true,
+            expandedHeight: _expandedHeight,
+            backgroundColor: _previewPocket.colorGradient.colors.first,
+            foregroundColor: Colors.white,
+            title: const Text('Edit Pocket'),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => context.pop(),
             ),
-            expandedHeight: 150.0,
-            flexibleSpace: const FlexibleSpaceBar(title: Text('Edit Pocket')),
+            flexibleSpace: FlexibleSpaceBar(
+              background: PocketHeader(pocket: _previewPocket),
+            ),
           ),
-          SliverToBoxAdapter(child: PocketCard(pocket: _previewPocket)),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (_gradients.isNotEmpty)
+                    GradientPicker(
+                      gradients: _gradients,
+                      selectedColor: _selectedGradient,
+                      onSelected: (gradient) {
+                        setState(() {
+                          _selectedGradient = gradient;
+                          _updatePreview();
+                        });
+                      },
+                    ),
+                  if (_gradients.isNotEmpty) const SizedBox(height: 16),
                   PocketFormFields(
                     nameController: _nameController,
                     iconController: _iconController,
+                    showGradientPicker: false,
                     gradients: _gradients,
                     selectedGradient: _selectedGradient,
                     onGradientSelected: (gradient) {
