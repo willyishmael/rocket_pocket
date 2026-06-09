@@ -12,6 +12,8 @@ import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.
 class PocketFormFields extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController iconController;
+  final String? nameErrorText;
+  final bool showGradientPicker;
   final List<ColorGradient> gradients;
   final ColorGradient selectedGradient;
   final ValueChanged<ColorGradient> onGradientSelected;
@@ -22,6 +24,8 @@ class PocketFormFields extends StatelessWidget {
     super.key,
     required this.nameController,
     required this.iconController,
+    this.nameErrorText,
+    this.showGradientPicker = true,
     required this.gradients,
     required this.selectedGradient,
     required this.onGradientSelected,
@@ -89,10 +93,11 @@ class PocketFormFields extends StatelessWidget {
         const SizedBox(height: 16),
         TextField(
           controller: nameController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Pocket Name',
             border: OutlineInputBorder(),
-            icon: Icon(Icons.add_card),
+            icon: const Icon(Icons.add_card),
+            errorText: nameErrorText,
           ),
         ),
         const SizedBox(height: 16),
@@ -108,7 +113,7 @@ class PocketFormFields extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        if (gradients.isNotEmpty)
+        if (showGradientPicker && gradients.isNotEmpty)
           GradientPicker(
             gradients: gradients,
             selectedColor: selectedGradient,

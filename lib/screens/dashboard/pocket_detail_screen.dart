@@ -148,7 +148,6 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
                   onPressed:
                       () => showAdjustBalanceSheet(
                         context: context,
-                        ref: ref,
                         pocket: pocket,
                       ),
                 ),

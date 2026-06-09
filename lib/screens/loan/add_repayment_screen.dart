@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/utils/currency_utils.dart';
 import 'package:rocket_pocket/viewmodels/add_repayment_view_model.dart';
 
 class AddRepaymentScreen extends ConsumerWidget {
@@ -41,7 +42,6 @@ class _AddRepaymentForm extends ConsumerWidget {
     final isCollection = loan.type == LoanType.given;
     final title = isCollection ? 'Record Collection' : 'Record Repayment';
     final remaining = loan.amount - loan.repaidAmount;
-    final currencyFormat = NumberFormat('#,##0.##');
 
     return CustomScrollView(
       slivers: [
@@ -100,8 +100,8 @@ class _AddRepaymentForm extends ConsumerWidget {
                               const SizedBox(height: 2),
                               Text(
                                 isCollection
-                                    ? 'Outstanding: ${currencyFormat.format(remaining)}'
-                                    : 'Remaining: ${currencyFormat.format(remaining)}',
+                                    ? 'Outstanding: ${CurrencyUtils.formatAmount(remaining)}'
+                                    : 'Remaining: ${CurrencyUtils.formatAmount(remaining)}',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSecondaryContainer,
                                 ),
@@ -149,7 +149,7 @@ class _AddRepaymentForm extends ConsumerWidget {
                                 Text(p.name),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '(${p.currency} ${currencyFormat.format(p.balance)})',
+                                  '(${p.currency}  ${CurrencyUtils.format(p.balance, p.currency)})',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                   ),
@@ -169,12 +169,12 @@ class _AddRepaymentForm extends ConsumerWidget {
                 TextFormField(
                   decoration: InputDecoration(
                     labelText: 'Amount',
-                    hintText: 'Max: ${currencyFormat.format(remaining)}',
+                    hintText: 'Max: ${CurrencyUtils.formatAmount(remaining)}',
                     border: const OutlineInputBorder(),
                     icon: const Icon(Icons.payments_outlined),
                     errorText:
                         state.amount > remaining
-                            ? 'Amount cannot exceed remaining (${currencyFormat.format(remaining)})'
+                            ? 'Amount cannot exceed remaining (${CurrencyUtils.formatAmount(remaining)})'
                             : null,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(

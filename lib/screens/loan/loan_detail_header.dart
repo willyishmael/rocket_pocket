@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
+import 'package:rocket_pocket/utils/currency_utils.dart';
 
 class LoanDetailHeader extends StatelessWidget {
   final Loan loan;
@@ -75,7 +76,7 @@ class LoanDetailHeader extends StatelessWidget {
         // Total amount
         Text('Total Amount', style: subtleStyle.copyWith(fontSize: 12)),
         Text(
-          loan.amount.toStringAsFixed(2),
+          CurrencyUtils.formatAmount(loan.amount),
           style: textStyle.copyWith(fontSize: 28, fontWeight: FontWeight.bold),
         ),
 
@@ -97,11 +98,11 @@ class LoanDetailHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Repaid: ${loan.repaidAmount.toStringAsFixed(2)}',
+              'Repaid: ${CurrencyUtils.formatAmount(loan.repaidAmount)}',
               style: subtleStyle.copyWith(fontSize: 12),
             ),
             Text(
-              'Remaining: ${remaining.toStringAsFixed(2)}',
+              'Remaining: ${CurrencyUtils.formatAmount(remaining)}',
               style: textStyle.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,

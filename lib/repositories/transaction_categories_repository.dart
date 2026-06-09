@@ -10,7 +10,7 @@ final transactionCategoryRepositoryProvider =
       return TransactionCategoriesRepository(db);
     });
 
-/// A convenience provider that returns a Map<categoryId, categoryName>
+/// A convenience provider that returns a map from category ID to category name
 /// for use in UI widgets that need to resolve category names by ID.
 final categoryNamesProvider = FutureProvider<Map<int, String>>((ref) async {
   final repo = ref.watch(transactionCategoryRepositoryProvider);
@@ -124,6 +124,53 @@ class TransactionCategoriesRepository {
       if (e is SystemCategoryError) rethrow;
       DatabaseError(
         'Failed to update transaction category name',
+        stack,
+      ).throwError();
+    }
+  }
+
+  Future<TransactionCategory> getOrCreateSystemCategory({
+    required String name,
+    required TransactionType type,
+  }) async {
+    try {
+      final existing =
+          await (db.select(db.transactionCategories)..where(
+            (tbl) => tbl.name.equals(name) & tbl.type.equalsValue(type),
+          )).getSingleOrNull();
+
+      if (existing != null) {
+        if (!existing.isSystem) {
+          await (db.update(db.transactionCategories)
+            ..where((tbl) => tbl.id.equals(existing.id))).write(
+            TransactionCategoriesCompanion(
+              isSystem: const Value(true),
+              updatedAt: Value(DateTime.now()),
+            ),
+          );
+          final updated = await getTransactionCategoryById(existing.id);
+          if (updated != null) return updated;
+        }
+        return existing;
+      }
+
+      final id = await insertTransactionCategory(
+        TransactionCategoriesCompanion.insert(
+          name: name,
+          type: Value(type),
+          isSystem: const Value(true),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      final created = await getTransactionCategoryById(id);
+      if (created == null) {
+        throw StateError('Failed to create system category "$name".');
+      }
+      return created;
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to get or create system category',
         stack,
       ).throwError();
     }

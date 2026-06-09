@@ -1,7 +1,12 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/data/model/transaction.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
+import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
 final pocketViewModelProvider =
     AsyncNotifierProvider<PocketViewModel, List<Pocket>>(PocketViewModel.new);
@@ -62,6 +67,50 @@ class PocketViewModel extends AsyncNotifier<List<Pocket>> {
     try {
       await _pocketRepository.deletePocket(id);
       await refreshPockets();
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
+  }
+
+  Future<void> adjustBalance({
+    required Pocket pocket,
+    required double newBalance,
+    required bool recordAsTransaction,
+  }) async {
+    final delta = newBalance - pocket.balance;
+
+    try {
+      await _pocketRepository.updatePocket(
+        pocket.copyWith(balance: newBalance, updatedAt: DateTime.now()),
+      );
+      await refreshPockets();
+
+      if (recordAsTransaction && delta != 0 && pocket.id != null) {
+        final categoryRepo = ref.read(transactionCategoryRepositoryProvider);
+        final transactionRepo = ref.read(transactionRepositoryProvider);
+
+        final category = await categoryRepo.getOrCreateSystemCategory(
+          name: 'Adjustment',
+          type: TransactionType.adjustment,
+        );
+
+        final transaction = Transaction(
+          senderPocketId: pocket.id,
+          type: TransactionType.adjustment,
+          categoryId: category.id,
+          description: 'Balance Adjustment',
+          amount: delta,
+          date: DateTime.now(),
+        );
+
+        await transactionRepo.insertTransaction(
+          transaction.toInsertCompanion(),
+        );
+        await ref
+            .read(transactionViewModelProvider.notifier)
+            .refreshTransactions();
+      }
     } catch (e) {
       state = AsyncError(e, StackTrace.current);
       rethrow;
