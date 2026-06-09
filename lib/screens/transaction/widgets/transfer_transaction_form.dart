@@ -11,12 +11,29 @@ class TransferTransactionForm extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final samePocket =
+        state.senderPocket != null &&
+        state.receiverPocket != null &&
+        state.senderPocket == state.receiverPocket;
+    final totalDebit = state.amount + state.adminFeeAmount;
+    final insufficientBalance =
+        state.senderPocket != null &&
+        totalDebit > 0 &&
+        totalDebit > state.senderPocket!.balance;
+    final canSubmit = state.isValid && !samePocket && !insufficientBalance;
+
     return Column(
       children: [
         TransactionPocketDropdown(
           label: 'From Pocket',
           pockets: state.pockets,
           value: state.senderPocket,
+          errorText:
+              samePocket
+                  ? 'From and To pocket cannot be the same'
+                  : insufficientBalance
+                  ? 'Insufficient balance'
+                  : null,
           onChanged: (p) {
             if (p != null) {
               ref
@@ -28,8 +45,10 @@ class TransferTransactionForm extends ConsumerWidget {
         const SizedBox(height: 16),
         TransactionPocketDropdown(
           label: 'To Pocket',
-          pockets: state.pockets.where((p) => p != state.senderPocket).toList(),
+          pockets: state.pockets,
           value: state.receiverPocket,
+          errorText:
+              samePocket ? 'From and To pocket cannot be the same' : null,
           onChanged: (p) {
             if (p != null) {
               ref
@@ -76,7 +95,7 @@ class TransferTransactionForm extends ConsumerWidget {
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
           icon: const Icon(Icons.check),
           onPressed:
-              state.isValid
+              canSubmit
                   ? () async {
                     await ref
                         .read(addTransactionViewModelProvider.notifier)

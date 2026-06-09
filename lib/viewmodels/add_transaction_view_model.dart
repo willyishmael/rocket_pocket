@@ -131,9 +131,7 @@ class AddTransactionState {
   bool get isValid {
     if (amount <= 0) return false;
     if (selectedType == TransactionType.transfer) {
-      return senderPocket != null &&
-          receiverPocket != null &&
-          senderPocket != receiverPocket;
+      return senderPocket != null && receiverPocket != null;
     }
     if (selectedType == TransactionType.refund) {
       return senderPocket != null && originalTransactionId != null;
@@ -160,7 +158,11 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
     _categoryRepository = ref.watch(transactionCategoryRepositoryProvider);
     _budgetRepository = ref.watch(budgetRepositoryProvider);
 
-    final pockets = await _pocketRepository.getAllPockets();
+    // Watch pocketViewModelProvider so this rebuilds whenever pockets change
+    // (e.g. a new pocket is added from the dashboard).
+    final pocketsAsync = ref.watch(pocketViewModelProvider);
+    final pockets =
+        pocketsAsync.asData?.value ?? await _pocketRepository.getAllPockets();
     final categories = await _categoryRepository.getAllTransactionCategories();
     final transactions = await _transactionRepository.getAllTransactions();
     final dbBudgets = await _budgetRepository.getAllBudgets();

@@ -140,6 +140,7 @@ class TransactionPocketDropdown extends StatelessWidget {
     required this.pockets,
     required this.value,
     required this.onChanged,
+    this.errorText,
     super.key,
   });
 
@@ -147,6 +148,7 @@ class TransactionPocketDropdown extends StatelessWidget {
   final List<Pocket> pockets;
   final Pocket? value;
   final ValueChanged<Pocket?> onChanged;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +161,7 @@ class TransactionPocketDropdown extends StatelessWidget {
         labelText: label,
         border: const OutlineInputBorder(),
         icon: const Icon(Icons.account_balance_wallet),
+        errorText: errorText,
       ),
       items:
           pockets
