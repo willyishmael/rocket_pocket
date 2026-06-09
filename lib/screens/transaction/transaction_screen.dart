@@ -29,7 +29,12 @@ class TransactionScreen extends ConsumerWidget {
         if (p.id != null) p.id!: p.name,
     };
 
-    final hasActiveFilters = filterState.activeTypeFilters.isNotEmpty;
+    final hasActiveFilters =
+        filterState.activeTypeFilters.isNotEmpty ||
+        filterState.activePocketFilters.isNotEmpty;
+    final activeFilterCount =
+        filterState.activeTypeFilters.length +
+        filterState.activePocketFilters.length;
 
     // Derive unique months (newest first) from all loaded transactions,
     // independent of any filter so the selector is always stable.
@@ -62,6 +67,8 @@ class TransactionScreen extends ConsumerWidget {
         context: context,
         activeFilters: filterState.activeTypeFilters,
         sortOrder: filterState.sortOrder,
+        pockets: pockets,
+        activePocketFilters: filterState.activePocketFilters,
         onChanged:
             (updated) => ref
                 .read(transactionFilterProvider.notifier)
@@ -70,6 +77,10 @@ class TransactionScreen extends ConsumerWidget {
             (updated) => ref
                 .read(transactionFilterProvider.notifier)
                 .setSortOrder(updated),
+        onPocketFilterChanged:
+            (updated) => ref
+                .read(transactionFilterProvider.notifier)
+                .setPocketFilters(updated),
       );
     }
 
@@ -92,7 +103,7 @@ class TransactionScreen extends ConsumerWidget {
               IconButton(
                 icon: Badge(
                   isLabelVisible: hasActiveFilters,
-                  label: Text('${filterState.activeTypeFilters.length}'),
+                  label: Text('$activeFilterCount'),
                   child: const Icon(Icons.filter_list),
                 ),
                 tooltip: 'Filter',
@@ -138,15 +149,31 @@ class TransactionScreen extends ConsumerWidget {
                       }).toList();
 
               // Apply type filter.
-              final filtered =
-                  hasActiveFilters
+              final typeFiltered =
+                  filterState.activeTypeFilters.isEmpty
                       ? monthFiltered
+                      : monthFiltered
                           .where(
                             (t) =>
                                 filterState.activeTypeFilters.contains(t.type),
                           )
-                          .toList()
-                      : monthFiltered;
+                          .toList();
+
+              // Apply pocket filter.
+              final filtered =
+                  filterState.activePocketFilters.isEmpty
+                      ? typeFiltered
+                      : typeFiltered
+                          .where(
+                            (t) =>
+                                filterState.activePocketFilters.contains(
+                                  t.senderPocketId,
+                                ) ||
+                                filterState.activePocketFilters.contains(
+                                  t.receiverPocketId,
+                                ),
+                          )
+                          .toList();
 
               if (filtered.isEmpty) {
                 return SliverFillRemaining(

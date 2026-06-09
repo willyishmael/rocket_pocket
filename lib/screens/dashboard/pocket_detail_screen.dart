@@ -53,6 +53,8 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
       context: context,
       activeFilters: _activeTypeFilters,
       sortOrder: _sortOrder,
+      pockets: const [],
+      activePocketFilters: const {},
       onChanged:
           (updated) => setState(() {
             _activeTypeFilters
@@ -60,6 +62,7 @@ class _PocketDetailScreenState extends ConsumerState<PocketDetailScreen> {
               ..addAll(updated);
           }),
       onSortChanged: (updated) => setState(() => _sortOrder = updated),
+      onPocketFilterChanged: (_) {},
     );
   }
 
