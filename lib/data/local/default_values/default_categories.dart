@@ -42,5 +42,7 @@ List<TransactionCategoriesCompanion> get defaultCategories {
     cat('Investment', TransactionType.income),
     cat('Gift', TransactionType.income),
     cat('Other', TransactionType.income),
+    // System adjustment category
+    cat('Adjustment', TransactionType.adjustment, isSystem: true),
   ];
 }

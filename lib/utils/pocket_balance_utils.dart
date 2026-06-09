@@ -11,6 +11,13 @@ Future<void> applyPocketImpact(
   required bool revert,
   required PocketRepository pocketRepository,
 }) async {
+  // Balance adjustments are applied directly to pocket balances at creation
+  // time; their transaction records are informational and should not mutate
+  // balances again during edit/delete flows.
+  if (tx.type == TransactionType.adjustment) {
+    return;
+  }
+
   final multiplier = revert ? -1.0 : 1.0;
 
   if (tx.type.isPositive) {

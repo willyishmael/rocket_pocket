@@ -55,7 +55,8 @@ class TransactionListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = transaction.type;
     final isTransfer = type == TransactionType.transfer;
-    final isPositive = type.isPositive;
+    final isAdjustment = type == TransactionType.adjustment;
+    final isPositive = isAdjustment ? transaction.amount >= 0 : type.isPositive;
     final sign = isTransfer ? '' : (isPositive ? '+' : '-');
     final formatted = CurrencyUtils.format(transaction.amount.abs(), currency);
     final amountText = sign.isEmpty ? formatted : '$sign $formatted';
