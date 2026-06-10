@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
+import 'package:rocket_pocket/screens/transaction/widgets/transaction_form_fields.dart';
 import 'package:rocket_pocket/viewmodels/add_loan_view_model.dart';
 
 class AddLoanScreen extends ConsumerWidget {
@@ -30,6 +31,10 @@ class _AddLoanForm extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(addLoanViewModelProvider.notifier);
     final theme = Theme.of(context);
+    final hasInsufficientPocketBalance =
+        state.selectedType == LoanType.given &&
+        state.selectedPocket != null &&
+        state.amount > state.selectedPocket!.balance;
 
     return CustomScrollView(
       slivers: [
@@ -93,6 +98,30 @@ class _AddLoanForm extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
+                // ── Associated Pocket (optional) ────────────────────────
+                if (state.pockets.isNotEmpty)
+                  TransactionPocketDropdown(
+                    label: 'Associated Pocket (optional)',
+                    pockets: state.pockets,
+                    value: state.selectedPocket,
+                    includeNoPocketOption: true,
+                    noPocketLabel: 'No pocket',
+                    errorText:
+                        hasInsufficientPocketBalance
+                            ? 'Insufficient pocket balance for loan given'
+                            : null,
+                    onChanged: notifier.setSelectedPocket,
+                  )
+                else
+                  Text(
+                    'No pockets available.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+
+                const SizedBox(height: 16),
+
                 // ── Amount ─────────────────────────────────────────────
                 TextFormField(
                   decoration: const InputDecoration(
@@ -105,6 +134,17 @@ class _AddLoanForm extends ConsumerWidget {
                   ),
                   onChanged: (v) => notifier.setAmount(double.tryParse(v) ?? 0),
                 ),
+
+                if (hasInsufficientPocketBalance)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 40, top: 8),
+                    child: Text(
+                      'Amount exceeds selected pocket balance.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
 
                 const SizedBox(height: 16),
 
@@ -162,7 +202,7 @@ class _AddLoanForm extends ConsumerWidget {
                   icon: const Icon(Icons.check),
                   label: const Text('Save Loan'),
                   onPressed:
-                      state.isValid
+                      state.isValid && !hasInsufficientPocketBalance
                           ? () async {
                             await ref
                                 .read(addLoanViewModelProvider.notifier)

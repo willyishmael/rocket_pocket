@@ -2,8 +2,15 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
+import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/data/model/transaction.dart';
+import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/loan_repository.dart';
+import 'package:rocket_pocket/repositories/pocket_repository.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
+import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
+import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
 class AddLoanState {
   final LoanType selectedType;
@@ -12,6 +19,8 @@ class AddLoanState {
   final String description;
   final DateTime startDate;
   final DateTime dueDate;
+  final List<Pocket> pockets;
+  final Pocket? selectedPocket;
 
   AddLoanState({
     this.selectedType = LoanType.given,
@@ -20,6 +29,8 @@ class AddLoanState {
     this.description = '',
     DateTime? startDate,
     DateTime? dueDate,
+    this.pockets = const [],
+    this.selectedPocket,
   }) : startDate = startDate ?? DateTime.now(),
        dueDate = dueDate ?? DateTime.now().add(const Duration(days: 30));
 
@@ -32,6 +43,8 @@ class AddLoanState {
     String? description,
     DateTime? startDate,
     DateTime? dueDate,
+    List<Pocket>? pockets,
+    Pocket? selectedPocket,
   }) {
     return AddLoanState(
       selectedType: selectedType ?? this.selectedType,
@@ -40,6 +53,8 @@ class AddLoanState {
       description: description ?? this.description,
       startDate: startDate ?? this.startDate,
       dueDate: dueDate ?? this.dueDate,
+      pockets: pockets ?? this.pockets,
+      selectedPocket: selectedPocket ?? this.selectedPocket,
     );
   }
 }
@@ -49,11 +64,14 @@ final addLoanViewModelProvider =
 
 class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
   late LoanRepository _loanRepository;
+  late PocketRepository _pocketRepository;
 
   @override
-  FutureOr<AddLoanState> build() {
+  FutureOr<AddLoanState> build() async {
     _loanRepository = ref.watch(loanRepositoryProvider);
-    return AddLoanState();
+    _pocketRepository = ref.watch(pocketRepositoryProvider);
+    final pockets = await _pocketRepository.getAllPockets();
+    return AddLoanState(pockets: pockets);
   }
 
   void setType(LoanType type) {
@@ -86,10 +104,7 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
     final adjustedDueDate =
         current.dueDate.isBefore(date) ? date : current.dueDate;
     state = AsyncData(
-      current.copyWith(
-        startDate: date,
-        dueDate: adjustedDueDate,
-      ),
+      current.copyWith(startDate: date, dueDate: adjustedDueDate),
     );
   }
 
@@ -99,12 +114,26 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
     state = AsyncData(current.copyWith(dueDate: date));
   }
 
+  void setSelectedPocket(Pocket? pocket) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(selectedPocket: pocket));
+  }
+
   Future<void> submit() async {
     final current = state.value;
     if (current == null || !current.isValid) return;
 
     state = const AsyncLoading();
     try {
+      // Loan given moves money out; require enough balance when a pocket is selected.
+      if (current.selectedType == LoanType.given &&
+          current.selectedPocket != null &&
+          current.amount > current.selectedPocket!.balance) {
+        state = AsyncData(current);
+        return;
+      }
+
       final loan = Loan(
         type: current.selectedType,
         counterpartyName: current.counterpartyName.trim(),
@@ -118,9 +147,66 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
       );
 
       await _loanRepository.insertLoan(loan.toInsertCompanion());
+
+      // Record transaction if pocket is selected
+      if (current.selectedPocket != null &&
+          current.selectedPocket!.id != null) {
+        final pocket = current.selectedPocket!;
+        final categoryName =
+            current.selectedType == LoanType.given
+                ? 'Loan Given'
+                : 'Loan Taken';
+        final transactionType =
+            current.selectedType == LoanType.given
+                ? TransactionType.loanGiven
+                : TransactionType.loanTaken;
+
+        final categoryRepo = ref.read(transactionCategoryRepositoryProvider);
+        final transactionRepo = ref.read(transactionRepositoryProvider);
+
+        final category = await categoryRepo.getOrCreateSystemCategory(
+          name: categoryName,
+          type: transactionType,
+        );
+
+        // For loan given: debit pocket (negative amount)
+        // For loan taken: credit pocket (positive amount)
+        final amount =
+            current.selectedType == LoanType.given
+                ? -current.amount
+                : current.amount;
+
+        final transaction = Transaction(
+          senderPocketId: pocket.id,
+          type: transactionType,
+          categoryId: category.id,
+          description: 'Loan: ${current.counterpartyName}',
+          amount: amount,
+          date: current.startDate,
+        );
+
+        await transactionRepo.insertTransaction(
+          transaction.toInsertCompanion(),
+        );
+
+        // Update pocket balance
+        await _pocketRepository.updatePocket(
+          pocket.copyWith(
+            balance: pocket.balance + amount,
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+        // Refresh transaction list
+        await ref
+            .read(transactionViewModelProvider.notifier)
+            .refreshTransactions();
+      }
+
       ref.invalidate(loanViewModelProvider);
-      // Reset form state directly instead of self-invalidating
-      state = AsyncData(AddLoanState());
+      // Reload pockets after transaction is recorded
+      final pockets = await _pocketRepository.getAllPockets();
+      state = AsyncData(AddLoanState(pockets: pockets));
     } catch (e, stack) {
       state = AsyncError(e, stack);
       rethrow;

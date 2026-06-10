@@ -44,5 +44,8 @@ List<TransactionCategoriesCompanion> get defaultCategories {
     cat('Other', TransactionType.income),
     // System adjustment category
     cat('Adjustment', TransactionType.adjustment, isSystem: true),
+    // System loan categories (protected — cannot be renamed or deleted)
+    cat('Loan Given', TransactionType.loanGiven, isSystem: true),
+    cat('Loan Taken', TransactionType.loanTaken, isSystem: true),
   ];
 }

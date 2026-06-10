@@ -58,76 +58,92 @@ class TransactionTypeDateSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: date,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked == null) return;
+        TransactionDateTimeSection(dateTime: date, onPicked: onDateChanged),
+      ],
+    );
+  }
+}
 
-                  onDateChanged(
-                    DateTime(
-                      picked.year,
-                      picked.month,
-                      picked.day,
-                      date.hour,
-                      date.minute,
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(4),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Date',
-                    border: OutlineInputBorder(),
-                    icon: Icon(Icons.calendar_today),
-                  ),
-                  child: Text(
-                    '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                  ),
+class TransactionDateTimeSection extends StatelessWidget {
+  const TransactionDateTimeSection({
+    required this.dateTime,
+    required this.onPicked,
+    super.key,
+  });
+
+  final DateTime dateTime;
+  final ValueChanged<DateTime> onPicked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: dateTime,
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (picked == null) return;
+
+              onPicked(
+                DateTime(
+                  picked.year,
+                  picked.month,
+                  picked.day,
+                  dateTime.hour,
+                  dateTime.minute,
                 ),
+              );
+            },
+            borderRadius: BorderRadius.circular(4),
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Date',
+                border: OutlineInputBorder(),
+                icon: Icon(Icons.calendar_today),
+              ),
+              child: Text(
+                '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}',
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: InkWell(
-                onTap: () async {
-                  final picked = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.fromDateTime(date),
-                  );
-                  if (picked == null) return;
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: InkWell(
+            onTap: () async {
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.fromDateTime(dateTime),
+              );
+              if (picked == null) return;
 
-                  onDateChanged(
-                    DateTime(
-                      date.year,
-                      date.month,
-                      date.day,
-                      picked.hour,
-                      picked.minute,
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(4),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Time',
-                    border: OutlineInputBorder(),
-                    icon: Icon(Icons.access_time),
-                  ),
-                  child: Text(
-                    '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}',
-                  ),
+              onPicked(
+                DateTime(
+                  dateTime.year,
+                  dateTime.month,
+                  dateTime.day,
+                  picked.hour,
+                  picked.minute,
                 ),
+              );
+            },
+            borderRadius: BorderRadius.circular(4),
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Time',
+                border: OutlineInputBorder(),
+                icon: Icon(Icons.access_time),
+              ),
+              child: Text(
+                '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}',
               ),
             ),
-          ],
+          ),
         ),
       ],
     );
@@ -141,6 +157,8 @@ class TransactionPocketDropdown extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.errorText,
+    this.includeNoPocketOption = false,
+    this.noPocketLabel = 'No pocket',
     super.key,
   });
 
@@ -149,10 +167,12 @@ class TransactionPocketDropdown extends StatelessWidget {
   final Pocket? value;
   final ValueChanged<Pocket?> onChanged;
   final String? errorText;
+  final bool includeNoPocketOption;
+  final String noPocketLabel;
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<Pocket>(
+    return DropdownButtonFormField<Pocket?>(
       value: value,
       isExpanded: true,
       isDense: false,
@@ -163,31 +183,35 @@ class TransactionPocketDropdown extends StatelessWidget {
         icon: const Icon(Icons.account_balance_wallet),
         errorText: errorText,
       ),
-      items:
-          pockets
-              .map(
-                (p) => DropdownMenuItem<Pocket>(
-                  value: p,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${p.icon}  ${p.name}',
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      Text(
-                        '${p.currency}  ${CurrencyUtils.format(p.balance, p.currency)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+      items: [
+        if (includeNoPocketOption)
+          DropdownMenuItem<Pocket?>(
+            value: null,
+            child: Text(noPocketLabel),
+          ),
+        ...pockets.map(
+          (p) => DropdownMenuItem<Pocket?>(
+            value: p,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${p.icon}  ${p.name}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  '${p.currency}  ${CurrencyUtils.format(p.balance, p.currency)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-              )
-              .toList(),
+              ],
+            ),
+          ),
+        ),
+      ],
       onChanged: onChanged,
     );
   }
