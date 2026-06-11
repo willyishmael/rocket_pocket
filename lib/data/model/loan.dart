@@ -6,6 +6,7 @@ class Loan {
   int? id;
   final LoanType type;
   final String counterpartyName;
+  final String currency;
   final double amount;
   final String description;
   final DateTime startDate;
@@ -18,6 +19,7 @@ class Loan {
     this.id,
     required this.type,
     required this.counterpartyName,
+    required this.currency,
     required this.amount,
     required this.description,
     required this.startDate,
@@ -31,6 +33,7 @@ class Loan {
     int? id,
     LoanType? type,
     String? counterpartyName,
+    String? currency,
     double? amount,
     String? description,
     DateTime? startDate,
@@ -43,6 +46,7 @@ class Loan {
       id: id ?? this.id,
       type: type ?? this.type,
       counterpartyName: counterpartyName ?? this.counterpartyName,
+      currency: currency ?? this.currency,
       amount: amount ?? this.amount,
       description: description ?? this.description,
       startDate: startDate ?? this.startDate,
@@ -58,6 +62,7 @@ class Loan {
       id: row.id,
       type: row.type,
       counterpartyName: row.counterpartyName,
+      currency: row.currency,
       amount: row.amount,
       description: row.description,
       startDate: row.startDate,
@@ -74,6 +79,7 @@ class Loan {
     return db.LoansCompanion.insert(
       type: type,
       counterpartyName: counterpartyName,
+      currency: Value(currency),
       amount: amount,
       description: description,
       startDate: startDate,
@@ -89,14 +95,12 @@ class Loan {
   /// Requires a non-null id. Only writes fields explicitly set as Value(...)
   /// (createdAt is omitted so the original value is preserved).
   db.LoansCompanion toUpdateCompanion() {
-    assert(
-      id != null,
-      'toUpdateCompanion() requires a non-null id.',
-    );
+    assert(id != null, 'toUpdateCompanion() requires a non-null id.');
     return db.LoansCompanion(
       id: Value(id!),
       type: Value(type),
       counterpartyName: Value(counterpartyName),
+      currency: Value(currency),
       amount: Value(amount),
       description: Value(description),
       startDate: Value(startDate),
@@ -118,6 +122,7 @@ class Loan {
       id: id!,
       type: type,
       counterpartyName: counterpartyName,
+      currency: currency,
       amount: amount,
       description: description,
       startDate: startDate,

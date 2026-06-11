@@ -11,10 +11,12 @@ import 'package:rocket_pocket/repositories/transaction_categories_repository.dar
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
+import 'package:rocket_pocket/viewmodels/viewmodel_utils.dart';
 
 class AddLoanState {
   final LoanType selectedType;
   final String counterpartyName;
+  final String currency;
   final double amount;
   final String description;
   final DateTime startDate;
@@ -25,6 +27,7 @@ class AddLoanState {
   AddLoanState({
     this.selectedType = LoanType.given,
     this.counterpartyName = '',
+    this.currency = 'IDR',
     this.amount = 0,
     this.description = '',
     DateTime? startDate,
@@ -39,22 +42,27 @@ class AddLoanState {
   AddLoanState copyWith({
     LoanType? selectedType,
     String? counterpartyName,
+    String? currency,
     double? amount,
     String? description,
     DateTime? startDate,
     DateTime? dueDate,
     List<Pocket>? pockets,
-    Pocket? selectedPocket,
+    Object? selectedPocket = absent,
   }) {
     return AddLoanState(
       selectedType: selectedType ?? this.selectedType,
       counterpartyName: counterpartyName ?? this.counterpartyName,
+      currency: currency ?? this.currency,
       amount: amount ?? this.amount,
       description: description ?? this.description,
       startDate: startDate ?? this.startDate,
       dueDate: dueDate ?? this.dueDate,
       pockets: pockets ?? this.pockets,
-      selectedPocket: selectedPocket ?? this.selectedPocket,
+      selectedPocket:
+          selectedPocket == absent
+              ? this.selectedPocket
+              : selectedPocket as Pocket?,
     );
   }
 }
@@ -92,6 +100,12 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
     state = AsyncData(current.copyWith(amount: amount));
   }
 
+  void setCurrency(String currency) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(currency: currency));
+  }
+
   void setDescription(String description) {
     final current = state.value;
     if (current == null) return;
@@ -126,6 +140,12 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
 
     state = const AsyncLoading();
     try {
+      if (current.selectedPocket != null &&
+          current.selectedPocket!.currency != current.currency) {
+        state = AsyncData(current);
+        return;
+      }
+
       // Loan given moves money out; require enough balance when a pocket is selected.
       if (current.selectedType == LoanType.given &&
           current.selectedPocket != null &&
@@ -137,6 +157,7 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
       final loan = Loan(
         type: current.selectedType,
         counterpartyName: current.counterpartyName.trim(),
+        currency: current.currency,
         amount: current.amount,
         description: current.description.trim(),
         startDate: current.startDate,

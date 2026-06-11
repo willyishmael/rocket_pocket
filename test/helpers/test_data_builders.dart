@@ -127,7 +127,7 @@ db.TransactionCategory buildCategoryRow({
     type: type,
     isSystem: isSystem ?? false,
     createdAt: createdAt ?? fixedDate(1),
-    updatedAt: updatedAt ?? fixedDate(2)
+    updatedAt: updatedAt ?? fixedDate(2),
   );
 }
 
@@ -169,6 +169,7 @@ loan_model.Loan buildLoanModel({
   int? id = 1,
   LoanType type = LoanType.given,
   String counterpartyName = 'Alex',
+  String currency = 'IDR',
   double amount = 500,
   String description = 'Bridge loan',
   DateTime? startDate,
@@ -181,6 +182,7 @@ loan_model.Loan buildLoanModel({
     id: id,
     type: type,
     counterpartyName: counterpartyName,
+    currency: currency,
     amount: amount,
     description: description,
     startDate: startDate ?? fixedDate(1),
@@ -195,6 +197,7 @@ db.Loan buildLoanRow({
   int id = 1,
   LoanType type = LoanType.given,
   String counterpartyName = 'Alex',
+  String currency = 'IDR',
   double amount = 500,
   String description = 'Bridge loan',
   DateTime? startDate,
@@ -208,6 +211,7 @@ db.Loan buildLoanRow({
     id: id,
     type: type,
     counterpartyName: counterpartyName,
+    currency: currency,
     amount: amount,
     description: description,
     startDate: startDate ?? fixedDate(1),

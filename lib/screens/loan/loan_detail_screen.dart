@@ -263,8 +263,8 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
                   final tx = repaymentTransactions[i];
                   final currency =
                       tx.senderPocketId != null
-                          ? (pocketCurrency[tx.senderPocketId] ?? 'IDR')
-                          : 'IDR';
+                          ? (pocketCurrency[tx.senderPocketId] ?? loan.currency)
+                          : loan.currency;
                   final pocket =
                       tx.senderPocketId != null
                           ? pocketName[tx.senderPocketId]

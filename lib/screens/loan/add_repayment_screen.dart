@@ -41,11 +41,15 @@ class _AddRepaymentForm extends ConsumerWidget {
     final isCollection = loan.type == LoanType.given;
     final title = isCollection ? 'Record Collection' : 'Record Repayment';
     final remaining = loan.amount - loan.repaidAmount;
-    final displayCurrency = state.selectedPocket?.currency ?? 'IDR';
+    final hasMismatchedPocketCurrency =
+        state.selectedPocket != null &&
+        state.selectedPocket!.currency != loan.currency;
+    final displayCurrency = loan.currency;
     final hasInsufficientPocketBalance =
-      !isCollection &&
-      state.selectedPocket != null &&
-      state.amount > state.selectedPocket!.balance;
+        !isCollection &&
+        state.selectedPocket != null &&
+        !hasMismatchedPocketCurrency &&
+        state.amount > state.selectedPocket!.balance;
 
     return CustomScrollView(
       slivers: [
@@ -59,7 +63,7 @@ class _AddRepaymentForm extends ConsumerWidget {
           ),
           flexibleSpace: FlexibleSpaceBar(
             title: Text(title),
-            titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
+            titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
           ),
         ),
         SliverToBoxAdapter(
@@ -121,6 +125,15 @@ class _AddRepaymentForm extends ConsumerWidget {
                   onPicked: notifier.setDate,
                 ),
                 const SizedBox(height: 24),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Currency',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.currency_exchange),
+                  ),
+                  child: Text(loan.currency),
+                ),
+                const SizedBox(height: 24),
                 if (state.pockets.isEmpty)
                   Text(
                     'No pockets available.',
@@ -136,7 +149,9 @@ class _AddRepaymentForm extends ConsumerWidget {
                     includeNoPocketOption: true,
                     noPocketLabel: 'No pocket',
                     errorText:
-                        hasInsufficientPocketBalance
+                        hasMismatchedPocketCurrency
+                            ? 'Pocket currency must match loan currency'
+                            : hasInsufficientPocketBalance
                             ? 'Insufficient pocket balance'
                             : null,
                     onChanged: notifier.setSelectedPocket,
@@ -145,14 +160,17 @@ class _AddRepaymentForm extends ConsumerWidget {
                 TextFormField(
                   decoration: InputDecoration(
                     labelText: 'Amount',
-                    hintText: 'Max: ${CurrencyUtils.format(remaining, displayCurrency)}',
+                    hintText:
+                        'Max: ${CurrencyUtils.format(remaining, displayCurrency)}',
                     border: const OutlineInputBorder(),
                     icon: const Icon(Icons.payments_outlined),
                     errorText:
                         state.amount > remaining
                             ? 'Amount cannot exceed remaining (${CurrencyUtils.format(remaining, displayCurrency)})'
-                        : hasInsufficientPocketBalance
-                        ? 'Amount exceeds selected pocket balance'
+                            : hasMismatchedPocketCurrency
+                            ? 'Selected pocket currency does not match the loan currency'
+                            : hasInsufficientPocketBalance
+                            ? 'Amount exceeds selected pocket balance'
                             : null,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
@@ -186,7 +204,9 @@ class _AddRepaymentForm extends ConsumerWidget {
                   icon: const Icon(Icons.check),
                   label: Text(title),
                   onPressed:
-                      state.isValid && !hasInsufficientPocketBalance
+                      state.isValid &&
+                              !hasMismatchedPocketCurrency &&
+                              !hasInsufficientPocketBalance
                           ? () async {
                             await ref
                                 .read(addRepaymentViewModelProvider.notifier)

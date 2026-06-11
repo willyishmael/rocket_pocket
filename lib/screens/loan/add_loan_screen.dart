@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:country_currency_pickers/country.dart';
+import 'package:country_currency_pickers/currency_picker_dropdown.dart';
+import 'package:country_currency_pickers/utils/utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
@@ -31,9 +34,13 @@ class _AddLoanForm extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(addLoanViewModelProvider.notifier);
     final theme = Theme.of(context);
+    final hasMismatchedPocketCurrency =
+        state.selectedPocket != null &&
+        state.selectedPocket!.currency != state.currency;
     final hasInsufficientPocketBalance =
         state.selectedType == LoanType.given &&
         state.selectedPocket != null &&
+        !hasMismatchedPocketCurrency &&
         state.amount > state.selectedPocket!.balance;
 
     return CustomScrollView(
@@ -48,7 +55,7 @@ class _AddLoanForm extends ConsumerWidget {
           ),
           flexibleSpace: const FlexibleSpaceBar(
             title: Text('Add Loan'),
-            titlePadding: EdgeInsets.only(left: 56, bottom: 16),
+            titlePadding: EdgeInsets.only(left: 16, bottom: 16),
           ),
         ),
         SliverToBoxAdapter(
@@ -98,6 +105,20 @@ class _AddLoanForm extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
+                CurrencyPickerDropdown(
+                  initialValue: state.currency,
+                  itemBuilder: _buildCurrencyItem,
+                  onValuePicked: (Country? country) {
+                    if (country != null) {
+                      notifier.setCurrency(
+                        country.currencyCode ?? state.currency,
+                      );
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
                 // ── Associated Pocket (optional) ────────────────────────
                 if (state.pockets.isNotEmpty)
                   TransactionPocketDropdown(
@@ -107,7 +128,9 @@ class _AddLoanForm extends ConsumerWidget {
                     includeNoPocketOption: true,
                     noPocketLabel: 'No pocket',
                     errorText:
-                        hasInsufficientPocketBalance
+                        hasMismatchedPocketCurrency
+                            ? 'Pocket currency must match loan currency'
+                            : hasInsufficientPocketBalance
                             ? 'Insufficient pocket balance for loan given'
                             : null,
                     onChanged: notifier.setSelectedPocket,
@@ -135,7 +158,17 @@ class _AddLoanForm extends ConsumerWidget {
                   onChanged: (v) => notifier.setAmount(double.tryParse(v) ?? 0),
                 ),
 
-                if (hasInsufficientPocketBalance)
+                if (hasMismatchedPocketCurrency)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 40, top: 8),
+                    child: Text(
+                      'Selected pocket currency does not match the loan currency.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  )
+                else if (hasInsufficientPocketBalance)
                   Padding(
                     padding: const EdgeInsets.only(left: 40, top: 8),
                     child: Text(
@@ -202,7 +235,9 @@ class _AddLoanForm extends ConsumerWidget {
                   icon: const Icon(Icons.check),
                   label: const Text('Save Loan'),
                   onPressed:
-                      state.isValid && !hasInsufficientPocketBalance
+                      state.isValid &&
+                              !hasMismatchedPocketCurrency &&
+                              !hasInsufficientPocketBalance
                           ? () async {
                             await ref
                                 .read(addLoanViewModelProvider.notifier)
@@ -218,6 +253,14 @@ class _AddLoanForm extends ConsumerWidget {
       ],
     );
   }
+
+  Widget _buildCurrencyItem(Country country) => Row(
+    children: [
+      CountryPickerUtils.getDefaultFlagImage(country),
+      const SizedBox(width: 16),
+      Text('${country.currencyCode}'),
+    ],
+  );
 }
 
 class _DateField extends StatelessWidget {

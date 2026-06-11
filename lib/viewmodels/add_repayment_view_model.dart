@@ -109,6 +109,12 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
               ? TransactionType.loanCollection
               : TransactionType.loanRepayment;
 
+      if (current.selectedPocket != null &&
+          current.selectedPocket!.currency != loan.currency) {
+        state = AsyncData(current);
+        return;
+      }
+
       // Repayment (money out) requires enough balance when a pocket is selected.
       if (transactionType == TransactionType.loanRepayment &&
           current.selectedPocket != null &&

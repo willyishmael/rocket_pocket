@@ -4,8 +4,6 @@ import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/utils/currency_utils.dart';
 
 class LoanDetailHeader extends StatelessWidget {
-  static const _defaultLoanCurrency = 'IDR';
-
   final Loan loan;
   final double progress;
   final double remaining;
@@ -78,7 +76,7 @@ class LoanDetailHeader extends StatelessWidget {
         // Total amount
         Text('Total Amount', style: subtleStyle.copyWith(fontSize: 12)),
         Text(
-          CurrencyUtils.format(loan.amount, _defaultLoanCurrency),
+          CurrencyUtils.format(loan.amount, loan.currency),
           style: textStyle.copyWith(fontSize: 28, fontWeight: FontWeight.bold),
         ),
 
@@ -100,11 +98,11 @@ class LoanDetailHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Repaid: ${CurrencyUtils.format(loan.repaidAmount, _defaultLoanCurrency)}',
+              'Repaid: ${CurrencyUtils.format(loan.repaidAmount, loan.currency)}',
               style: subtleStyle.copyWith(fontSize: 12),
             ),
             Text(
-              'Remaining: ${CurrencyUtils.format(remaining, _defaultLoanCurrency)}',
+              'Remaining: ${CurrencyUtils.format(remaining, loan.currency)}',
               style: textStyle.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,

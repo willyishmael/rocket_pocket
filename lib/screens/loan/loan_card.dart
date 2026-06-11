@@ -4,8 +4,6 @@ import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/utils/currency_utils.dart';
 
 class LoanCard extends StatelessWidget {
-  static const _defaultLoanCurrency = 'IDR';
-
   final Loan loan;
   final VoidCallback? onTap;
 
@@ -103,7 +101,7 @@ class LoanCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        CurrencyUtils.format(loan.amount, _defaultLoanCurrency),
+                        CurrencyUtils.format(loan.amount, loan.currency),
                         style: theme.textTheme.titleSmall,
                       ),
                     ],
@@ -118,10 +116,7 @@ class LoanCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        CurrencyUtils.format(
-                          loan.repaidAmount,
-                          _defaultLoanCurrency,
-                        ),
+                        CurrencyUtils.format(loan.repaidAmount, loan.currency),
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: colorScheme.primary,
                         ),
@@ -138,7 +133,7 @@ class LoanCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        CurrencyUtils.format(remaining, _defaultLoanCurrency),
+                        CurrencyUtils.format(remaining, loan.currency),
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: isOverdue ? colorScheme.error : null,
                           fontWeight: FontWeight.bold,
