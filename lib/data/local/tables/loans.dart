@@ -6,6 +6,7 @@ class Loans extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get type => text().map(const LoanTypeConverter())();
   TextColumn get counterpartyName => text()();
+  TextColumn get currency => text().withDefault(const Constant('IDR'))();
   RealColumn get amount => real()();
   TextColumn get description => text()();
   DateTimeColumn get startDate => dateTime()();

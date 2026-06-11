@@ -101,7 +101,7 @@ class LoanCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        CurrencyUtils.formatAmount(loan.amount),
+                        CurrencyUtils.format(loan.amount, loan.currency),
                         style: theme.textTheme.titleSmall,
                       ),
                     ],
@@ -116,7 +116,7 @@ class LoanCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        CurrencyUtils.formatAmount(loan.repaidAmount),
+                        CurrencyUtils.format(loan.repaidAmount, loan.currency),
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: colorScheme.primary,
                         ),
@@ -133,7 +133,7 @@ class LoanCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        CurrencyUtils.formatAmount(remaining),
+                        CurrencyUtils.format(remaining, loan.currency),
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: isOverdue ? colorScheme.error : null,
                           fontWeight: FontWeight.bold,

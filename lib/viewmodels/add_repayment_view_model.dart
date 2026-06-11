@@ -29,7 +29,7 @@ class AddRepaymentState {
     DateTime? date,
   }) : date = date ?? DateTime.now();
 
-  bool get isValid => selectedPocket != null && amount > 0;
+  bool get isValid => amount > 0;
 
   AddRepaymentState copyWith({
     List<Pocket>? pockets,
@@ -74,7 +74,7 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
     );
   }
 
-  void setSelectedPocket(Pocket pocket) {
+  void setSelectedPocket(Pocket? pocket) {
     final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(selectedPocket: pocket));
@@ -109,15 +109,37 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
               ? TransactionType.loanCollection
               : TransactionType.loanRepayment;
 
+      if (current.selectedPocket != null &&
+          current.selectedPocket!.currency != loan.currency) {
+        state = AsyncData(current);
+        return;
+      }
+
+      // Repayment (money out) requires enough balance when a pocket is selected.
+      if (transactionType == TransactionType.loanRepayment &&
+          current.selectedPocket != null &&
+          current.amount > current.selectedPocket!.balance) {
+        state = AsyncData(current);
+        return;
+      }
+
       // Guard against overpayment: clamp to the remaining balance.
       final remaining = loan.amount - loan.repaidAmount;
       final amount = current.amount.clamp(0.0, remaining);
+      final trimmedDescription = current.description.trim();
+      final defaultDescription =
+          transactionType == TransactionType.loanCollection
+              ? 'Loan collection from ${loan.counterpartyName}'
+              : 'Loan repayment to ${loan.counterpartyName}';
 
       final transaction = Transaction(
         type: transactionType,
-        senderPocketId: current.selectedPocket!.id,
+        senderPocketId: current.selectedPocket?.id,
         loanId: loan.id,
-        description: current.description.trim(),
+        description:
+            trimmedDescription.isEmpty
+                ? defaultDescription
+                : trimmedDescription,
         amount: amount,
         date: current.date,
       );
@@ -128,18 +150,20 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
           transaction.toInsertCompanion(),
         );
 
-        // Update pocket balance
-        final pocket = current.selectedPocket!;
-        if (transactionType.isPositive) {
-          // loanCollection — money coming in, credit pocket
-          await _pocketRepository.updatePocket(
-            pocket.copyWith(balance: pocket.balance + amount),
-          );
-        } else {
-          // loanRepayment — money going out, debit pocket
-          await _pocketRepository.updatePocket(
-            pocket.copyWith(balance: pocket.balance - amount),
-          );
+        // Update pocket balance only when transaction is linked to a pocket.
+        final pocket = current.selectedPocket;
+        if (pocket != null) {
+          if (transactionType.isPositive) {
+            // loanCollection — money coming in, credit pocket
+            await _pocketRepository.updatePocket(
+              pocket.copyWith(balance: pocket.balance + amount),
+            );
+          } else {
+            // loanRepayment — money going out, debit pocket
+            await _pocketRepository.updatePocket(
+              pocket.copyWith(balance: pocket.balance - amount),
+            );
+          }
         }
 
         // Update loan's repaid amount.
@@ -161,12 +185,7 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
       ref.invalidate(loanViewModelProvider);
       // Reset form state directly instead of self-invalidating
       final pockets = await _pocketRepository.getAllPockets();
-      state = AsyncData(
-        AddRepaymentState(
-          pockets: pockets,
-          selectedPocket: pockets.isNotEmpty ? pockets.first : null,
-        ),
-      );
+      state = AsyncData(AddRepaymentState(pockets: pockets));
     } catch (e, stack) {
       state = AsyncError(e, stack);
       rethrow;

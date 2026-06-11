@@ -76,7 +76,7 @@ class LoanDetailHeader extends StatelessWidget {
         // Total amount
         Text('Total Amount', style: subtleStyle.copyWith(fontSize: 12)),
         Text(
-          CurrencyUtils.formatAmount(loan.amount),
+          CurrencyUtils.format(loan.amount, loan.currency),
           style: textStyle.copyWith(fontSize: 28, fontWeight: FontWeight.bold),
         ),
 
@@ -98,11 +98,11 @@ class LoanDetailHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Repaid: ${CurrencyUtils.formatAmount(loan.repaidAmount)}',
+              'Repaid: ${CurrencyUtils.format(loan.repaidAmount, loan.currency)}',
               style: subtleStyle.copyWith(fontSize: 12),
             ),
             Text(
-              'Remaining: ${CurrencyUtils.formatAmount(remaining)}',
+              'Remaining: ${CurrencyUtils.format(remaining, loan.currency)}',
               style: textStyle.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,

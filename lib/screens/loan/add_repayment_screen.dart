@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
-import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/screens/transaction/widgets/transaction_form_fields.dart';
 import 'package:rocket_pocket/utils/currency_utils.dart';
 import 'package:rocket_pocket/viewmodels/add_repayment_view_model.dart';
 
@@ -42,6 +41,15 @@ class _AddRepaymentForm extends ConsumerWidget {
     final isCollection = loan.type == LoanType.given;
     final title = isCollection ? 'Record Collection' : 'Record Repayment';
     final remaining = loan.amount - loan.repaidAmount;
+    final hasMismatchedPocketCurrency =
+        state.selectedPocket != null &&
+        state.selectedPocket!.currency != loan.currency;
+    final displayCurrency = loan.currency;
+    final hasInsufficientPocketBalance =
+        !isCollection &&
+        state.selectedPocket != null &&
+        !hasMismatchedPocketCurrency &&
+        state.amount > state.selectedPocket!.balance;
 
     return CustomScrollView(
       slivers: [
@@ -55,17 +63,15 @@ class _AddRepaymentForm extends ConsumerWidget {
           ),
           flexibleSpace: FlexibleSpaceBar(
             title: Text(title),
-            titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
+            titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
           ),
         ),
-
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Loan summary card ───────────────────────────────────
                 Card(
                   color: colorScheme.secondaryContainer,
                   child: Padding(
@@ -100,8 +106,8 @@ class _AddRepaymentForm extends ConsumerWidget {
                               const SizedBox(height: 2),
                               Text(
                                 isCollection
-                                    ? 'Outstanding: ${CurrencyUtils.formatAmount(remaining)}'
-                                    : 'Remaining: ${CurrencyUtils.formatAmount(remaining)}',
+                                    ? 'Outstanding: ${CurrencyUtils.format(remaining, displayCurrency)}'
+                                    : 'Remaining: ${CurrencyUtils.format(remaining, displayCurrency)}',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSecondaryContainer,
                                 ),
@@ -113,12 +119,21 @@ class _AddRepaymentForm extends ConsumerWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // ── Pocket selector ─────────────────────────────────────
-                Text('Pocket', style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
+                TransactionDateTimeSection(
+                  dateTime: state.date,
+                  onPicked: notifier.setDate,
+                ),
+                const SizedBox(height: 24),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Currency',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.currency_exchange),
+                  ),
+                  child: Text(loan.currency),
+                ),
+                const SizedBox(height: 24),
                 if (state.pockets.isEmpty)
                   Text(
                     'No pockets available.',
@@ -127,54 +142,35 @@ class _AddRepaymentForm extends ConsumerWidget {
                     ),
                   )
                 else
-                  DropdownButtonFormField<Pocket>(
-                    initialValue: state.selectedPocket,
-                    decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      icon: Icon(
-                        isCollection
-                            ? Icons.account_balance_wallet_outlined
-                            : Icons.account_balance_wallet_outlined,
-                      ),
-                      hintText: 'Select pocket',
-                    ),
-                    items:
-                        state.pockets.map((p) {
-                          return DropdownMenuItem(
-                            value: p,
-                            child: Row(
-                              children: [
-                                Text(p.icon),
-                                const SizedBox(width: 8),
-                                Text(p.name),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '(${p.currency}  ${CurrencyUtils.format(p.balance, p.currency)})',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                    onChanged: (p) {
-                      if (p != null) notifier.setSelectedPocket(p);
-                    },
+                  TransactionPocketDropdown(
+                    label: 'Pocket',
+                    pockets: state.pockets,
+                    value: state.selectedPocket,
+                    includeNoPocketOption: true,
+                    noPocketLabel: 'No pocket',
+                    errorText:
+                        hasMismatchedPocketCurrency
+                            ? 'Pocket currency must match loan currency'
+                            : hasInsufficientPocketBalance
+                            ? 'Insufficient pocket balance'
+                            : null,
+                    onChanged: notifier.setSelectedPocket,
                   ),
-
                 const SizedBox(height: 16),
-
-                // ── Amount ──────────────────────────────────────────────
                 TextFormField(
                   decoration: InputDecoration(
                     labelText: 'Amount',
-                    hintText: 'Max: ${CurrencyUtils.formatAmount(remaining)}',
+                    hintText:
+                        'Max: ${CurrencyUtils.format(remaining, displayCurrency)}',
                     border: const OutlineInputBorder(),
                     icon: const Icon(Icons.payments_outlined),
                     errorText:
                         state.amount > remaining
-                            ? 'Amount cannot exceed remaining (${CurrencyUtils.formatAmount(remaining)})'
+                            ? 'Amount cannot exceed remaining (${CurrencyUtils.format(remaining, displayCurrency)})'
+                            : hasMismatchedPocketCurrency
+                            ? 'Selected pocket currency does not match the loan currency'
+                            : hasInsufficientPocketBalance
+                            ? 'Amount exceeds selected pocket balance'
                             : null,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
@@ -182,20 +178,17 @@ class _AddRepaymentForm extends ConsumerWidget {
                   ),
                   onChanged: (v) {
                     final parsed = double.tryParse(v) ?? 0;
-                    double clamped =
+                    final double clamped =
                         parsed < 0
                             ? 0
                             : (parsed > remaining ? remaining : parsed);
                     notifier.setAmount(clamped);
                   },
                 ),
-
                 const SizedBox(height: 16),
-
-                // ── Description ─────────────────────────────────────────
                 TextFormField(
                   decoration: const InputDecoration(
-                    labelText: 'Notes (optional)',
+                    labelText: 'Description (optional)',
                     border: OutlineInputBorder(),
                     icon: Icon(Icons.notes_outlined),
                   ),
@@ -203,19 +196,7 @@ class _AddRepaymentForm extends ConsumerWidget {
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: notifier.setDescription,
                 ),
-
-                const SizedBox(height: 16),
-
-                // ── Date picker ─────────────────────────────────────────
-                _DateTimeField(
-                  label: 'Date',
-                  dateTime: state.date,
-                  onPicked: notifier.setDate,
-                ),
-
                 const SizedBox(height: 32),
-
-                // ── Submit ──────────────────────────────────────────────
                 FilledButton.icon(
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(50),
@@ -223,7 +204,9 @@ class _AddRepaymentForm extends ConsumerWidget {
                   icon: const Icon(Icons.check),
                   label: Text(title),
                   onPressed:
-                      state.isValid
+                      state.isValid &&
+                              !hasMismatchedPocketCurrency &&
+                              !hasInsufficientPocketBalance
                           ? () async {
                             await ref
                                 .read(addRepaymentViewModelProvider.notifier)
@@ -237,59 +220,6 @@ class _AddRepaymentForm extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _DateTimeField extends StatelessWidget {
-  final String label;
-  final DateTime dateTime;
-  final ValueChanged<DateTime> onPicked;
-
-  const _DateTimeField({
-    required this.label,
-    required this.dateTime,
-    required this.onPicked,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final formatter = DateFormat('yyyy-MM-dd HH:mm');
-    return InkWell(
-      onTap: () async {
-        final pickedDate = await showDatePicker(
-          context: context,
-          initialDate: dateTime,
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
-        );
-        if (pickedDate == null || !context.mounted) return;
-
-        final pickedTime = await showTimePicker(
-          context: context,
-          initialTime: TimeOfDay.fromDateTime(dateTime),
-        );
-        if (pickedTime == null) return;
-
-        onPicked(
-          DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(4),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          icon: const Icon(Icons.calendar_today_outlined),
-        ),
-        child: Text(formatter.format(dateTime)),
-      ),
     );
   }
 }
