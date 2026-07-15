@@ -111,6 +111,9 @@ class BudgetRepository {
   (DateTime, DateTime) _periodRange(BudgetPeriod period, DateTime startDate) {
     final now = DateTime.now();
     switch (period) {
+      case BudgetPeriod.daily:
+        final periodStart = DateTime(now.year, now.month, now.day);
+        return (periodStart, periodStart.add(const Duration(days: 1)));
       case BudgetPeriod.weekly:
         // Find the most recent occurrence of the start weekday
         final daysSinceStart = (now.weekday - startDate.weekday + 7) % 7;
