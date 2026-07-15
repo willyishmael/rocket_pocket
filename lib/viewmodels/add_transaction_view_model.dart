@@ -50,19 +50,21 @@ class AddTransactionState {
     this.originalTransactionId,
   }) : date = date ?? DateTime.now();
 
-  /// Categories filtered to match the selected type.
-  /// Only expense and income have categories; refund borrows expense categories.
-  /// All other types (transfer, loan*, adjustment) return empty.
-  List<db.TransactionCategory> get filteredCategories {
+  List<db.TransactionCategory> categoriesForType(TransactionType type) {
     final lookup =
-        selectedType == TransactionType.refund
-            ? TransactionType.expense
-            : selectedType;
+        type == TransactionType.refund ? TransactionType.expense : type;
     if (lookup != TransactionType.expense && lookup != TransactionType.income) {
       return [];
     }
-    return allCategories.where((c) => c.type == lookup).toList();
+
+    return allCategories.where((c) => c.type == lookup && !c.isSystem).toList();
   }
+
+  /// Categories filtered to match the selected type.
+  /// Only expense and income have categories; refund borrows expense categories.
+  /// All other types (transfer, loan*, adjustment) return empty.
+  List<db.TransactionCategory> get filteredCategories =>
+      categoriesForType(selectedType);
 
   /// Expense transactions available to link as originals for a refund.
   List<Transaction> get refundableTransactions =>
@@ -169,8 +171,13 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
     final budgets = dbBudgets.map(budget_model.Budget.fromDb).toList();
 
     final initialType = TransactionType.expense;
-    final filteredCategories =
-        categories.where((c) => c.type == initialType).toList();
+    final filteredCategories = AddTransactionState(
+      pockets: pockets,
+      allCategories: categories,
+      allTransactions: transactions,
+      allBudgets: budgets,
+      selectedType: initialType,
+    ).categoriesForType(initialType);
 
     return AddTransactionState(
       pockets: pockets,
@@ -188,12 +195,7 @@ class AddTransactionViewModel extends AsyncNotifier<AddTransactionState> {
     final current = state.value;
     if (current == null) return;
 
-    final categoryLookup =
-        type == TransactionType.refund ? TransactionType.expense : type;
-    final newCategory =
-        current.allCategories
-            .where((c) => c.type == categoryLookup)
-            .firstOrNull;
+    final newCategory = current.categoriesForType(type).firstOrNull;
 
     state = AsyncData(
       current.copyWith(

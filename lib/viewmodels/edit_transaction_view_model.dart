@@ -47,18 +47,20 @@ class EditTransactionState {
   }) : selectedType = selectedType ?? TransactionType.expense,
        date = date ?? DateTime.now();
 
-  /// Categories filtered to match the selected type.
-  /// Refund borrows expense categories.
-  List<db.TransactionCategory> get filteredCategories {
+  List<db.TransactionCategory> categoriesForType(TransactionType type) {
     final lookup =
-        selectedType == TransactionType.refund
-            ? TransactionType.expense
-            : selectedType;
+        type == TransactionType.refund ? TransactionType.expense : type;
     if (lookup != TransactionType.expense && lookup != TransactionType.income) {
       return [];
     }
-    return allCategories.where((c) => c.type == lookup).toList();
+
+    return allCategories.where((c) => c.type == lookup && !c.isSystem).toList();
   }
+
+  /// Categories filtered to match the selected type.
+  /// Refund borrows expense categories.
+  List<db.TransactionCategory> get filteredCategories =>
+      categoriesForType(selectedType);
 
   /// Whether all required fields are valid for saving.
   bool get isValid {
@@ -142,16 +144,33 @@ class EditTransactionViewModel extends AsyncNotifier<EditTransactionState> {
     final categories = await _categoryRepository.getAllTransactionCategories();
     final budgetRows = await _budgetRepository.getAllBudgets();
     final budgets = budgetRows.map(budget_model.Budget.fromDb).toList();
+    final initialType = transaction.type;
+    final allowedCategories = EditTransactionState(
+      original: transaction,
+      pockets: pockets,
+      allCategories: categories,
+      allBudgets: budgets,
+      selectedType: initialType,
+    ).categoriesForType(initialType);
+    final originalCategory = _findCategoryById(
+      transaction.categoryId,
+      categories,
+    );
+    final selectedCategory =
+        originalCategory != null &&
+                allowedCategories.any((c) => c.id == originalCategory.id)
+            ? originalCategory
+            : allowedCategories.firstOrNull;
 
     return EditTransactionState(
       original: transaction,
       pockets: pockets,
       allCategories: categories,
       allBudgets: budgets,
-      selectedType: transaction.type,
+      selectedType: initialType,
       senderPocket: _findPocketById(transaction.senderPocketId, pockets),
       receiverPocket: _findPocketById(transaction.receiverPocketId, pockets),
-      selectedCategory: _findCategoryById(transaction.categoryId, categories),
+      selectedCategory: selectedCategory,
       selectedBudget: _findBudgetById(transaction.budgetId, budgets),
       description: transaction.description,
       amount: transaction.amount,
@@ -192,8 +211,7 @@ class EditTransactionViewModel extends AsyncNotifier<EditTransactionState> {
   void setType(TransactionType type) {
     final current = state.value;
     if (current == null) return;
-    final newCategory =
-        current.allCategories.where((c) => c.type == type).firstOrNull;
+    final newCategory = current.categoriesForType(type).firstOrNull;
     state = AsyncData(
       current.copyWith(
         selectedType: type,
