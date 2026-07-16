@@ -34,6 +34,7 @@ class LoanRepository {
                       dueDate: line.dueDate,
                       principalDue: Value(line.principalDue),
                       interestDue: Value(line.interestDue),
+                      feeDue: Value(line.feeDue),
                       totalDue: line.totalDue,
                       status: Value(InstallmentStatus.unpaid.name),
                     ),
@@ -123,6 +124,68 @@ class LoanRepository {
           .get();
     } catch (e, stack) {
       DatabaseError('Failed to fetch due installments', stack).throwError();
+    }
+  }
+
+  Future<double> applyRepaymentToInstallments({
+    required int loanId,
+    required double amount,
+    DateTime? paidAt,
+  }) async {
+    try {
+      final normalizedAmount = amount < 0 ? 0.0 : amount;
+      if (normalizedAmount == 0) return 0.0;
+
+      final installments = await getInstallmentsByLoanId(loanId);
+      if (installments.isEmpty) return 0.0;
+
+      var remainingAmount = normalizedAmount;
+      var appliedAmount = 0.0;
+
+      for (final installment in installments) {
+        if (remainingAmount <= 0) break;
+        if (installment.status == InstallmentStatus.paid.name) continue;
+
+        final remainingForLine = installment.totalDue - installment.paidAmount;
+        if (remainingForLine <= 0) continue;
+
+        final allocation =
+            remainingAmount > remainingForLine
+                ? remainingForLine
+                : remainingAmount;
+        final nextPaidAmount = installment.paidAmount + allocation;
+        final nextStatus = _statusForInstallment(
+          totalDue: installment.totalDue,
+          paidAmount: nextPaidAmount,
+          dueDate: installment.dueDate,
+        );
+
+        await (db.update(db.loanInstallments)
+          ..where((tbl) => tbl.id.equals(installment.id))).write(
+          LoanInstallmentsCompanion(
+            paidAmount: Value(nextPaidAmount),
+            paidAt: Value(
+              nextPaidAmount > 0 ? (paidAt ?? DateTime.now()) : null,
+            ),
+            status: Value(nextStatus.name),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+
+        remainingAmount -= allocation;
+        appliedAmount += allocation;
+      }
+
+      if (appliedAmount > 0) {
+        await _syncLoanAggregate(loanId);
+      }
+
+      return appliedAmount;
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to apply repayment to installments',
+        stack,
+      ).throwError();
     }
   }
 

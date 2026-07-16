@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,7 +34,7 @@ void main() {
       notifier.setCounterpartyName('Installment Bank');
       notifier.setAmount(1200);
       notifier.setInstallmentCount(3);
-      notifier.setAnnualInterestRatePercent(12);
+      notifier.setMonthlyInterestRatePercent(1);
       notifier.setStartDate(fixedDate(1));
       notifier.setDueDate(fixedDate(15));
 
@@ -68,7 +69,7 @@ void main() {
     notifier.setCounterpartyName('Cash Lender');
     notifier.setAmount(600);
     notifier.setInstallmentCount(2);
-    notifier.setAnnualInterestRatePercent(10);
+    notifier.setMonthlyInterestRatePercent(1);
     notifier.setStartDate(fixedDate(1));
     notifier.setDueDate(fixedDate(15));
 
@@ -83,5 +84,45 @@ void main() {
     expect(transactions.single.type, TransactionType.loanTaken);
     expect(transactions.single.amount, 600);
     expect(updatedPocket.balance, 600);
+  });
+
+  test('purchase installment records down payment expense only', () async {
+    final initialState = await container.read(addLoanViewModelProvider.future);
+    final notifier = container.read(addLoanViewModelProvider.notifier);
+    final pocket = initialState.pockets.first;
+
+    await (db.update(db.pockets)..where(
+      (tbl) => tbl.id.equals(pocket.id!),
+    )).write(PocketsCompanion(balance: const Value(1000)));
+    final fundedPocket = pocket.copyWith(balance: 1000);
+
+    notifier.setFinancingKind(LoanFinancingKind.purchaseInstallment);
+    notifier.setSelectedPocket(fundedPocket);
+    notifier.setCounterpartyName('Phone Store');
+    notifier.setAmount(1500);
+    notifier.setDownPaymentAmount(300);
+    notifier.setInstallmentCount(4);
+    notifier.setMonthlyInterestRatePercent(1);
+    notifier.setStartDate(fixedDate(1));
+    notifier.setDueDate(fixedDate(15));
+
+    await notifier.submit();
+
+    final loans = await db.select(db.loans).get();
+    final transactions = await db.select(db.transactions).get();
+    final updatedPocket =
+        await (db.select(db.pockets)
+          ..where((tbl) => tbl.id.equals(pocket.id!))).getSingle();
+
+    expect(
+      loans.single.financingKind,
+      LoanFinancingKind.purchaseInstallment.name,
+    );
+    expect(loans.single.downPaymentAmount, 300);
+    expect(loans.single.principalAmount, 1200);
+    expect(transactions, hasLength(1));
+    expect(transactions.single.type, TransactionType.expense);
+    expect(transactions.single.amount, 300);
+    expect(updatedPocket.balance, 700);
   });
 }
