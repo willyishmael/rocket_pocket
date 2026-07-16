@@ -8,7 +8,7 @@ void main() {
       final plan = LoanInstallmentSchedule.buildFlatMonthlyPlan(
         LoanInstallmentPlanInput(
           principalAmount: 1200,
-          annualInterestRatePercent: 12,
+          monthlyInterestRatePercent: 1,
           installmentCount: 12,
           firstDueDate: DateTime(2026, 1, 31),
           installmentMode: InstallmentMode.fixed,
@@ -43,7 +43,7 @@ void main() {
       final plan = LoanInstallmentSchedule.buildFlatMonthlyPlan(
         LoanInstallmentPlanInput(
           principalAmount: 1000,
-          annualInterestRatePercent: 12,
+          monthlyInterestRatePercent: 1,
           installmentCount: 4,
           firstDueDate: DateTime(2026, 3, 15),
           installmentMode: InstallmentMode.variable,
@@ -67,7 +67,7 @@ void main() {
         () => LoanInstallmentSchedule.buildFlatMonthlyPlan(
           LoanInstallmentPlanInput(
             principalAmount: 1000,
-            annualInterestRatePercent: 12,
+            monthlyInterestRatePercent: 1,
             installmentCount: 4,
             firstDueDate: DateTime(2026, 3, 15),
             installmentMode: InstallmentMode.variable,

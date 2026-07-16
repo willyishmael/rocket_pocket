@@ -125,7 +125,7 @@ void main() {
       final plan = LoanInstallmentSchedule.buildFlatMonthlyPlan(
         LoanInstallmentPlanInput(
           principalAmount: 1200,
-          annualInterestRatePercent: 12,
+          monthlyInterestRatePercent: 1,
           installmentCount: 3,
           firstDueDate: fixedDate(15),
           installmentMode: InstallmentMode.fixed,
@@ -139,7 +139,7 @@ void main() {
           amount: 1236,
           principalAmount: const Value(1200),
           financedAmount: const Value(1200),
-          annualInterestRatePercent: const Value(12),
+          monthlyInterestRatePercent: const Value(12),
           installmentCount: const Value(3),
           firstInstallmentDate: Value(fixedDate(15)),
           dueDate: fixedDate(15),
@@ -185,6 +185,7 @@ void main() {
             dueDate: DateTime(2026, 4, 5, 10),
             principalDue: 250,
             interestDue: 0,
+            feeDue: 0,
             totalDue: 250,
           ),
           LoanInstallmentLine(
@@ -192,6 +193,7 @@ void main() {
             dueDate: DateTime(2026, 4, 20, 10),
             principalDue: 250,
             interestDue: 0,
+            feeDue: 0,
             totalDue: 250,
           ),
         ],
@@ -238,6 +240,7 @@ void main() {
               dueDate: DateTime(2026, 4, 15, 10),
               principalDue: 150,
               interestDue: 0,
+              feeDue: 0,
               totalDue: 150,
             ),
             LoanInstallmentLine(
@@ -245,6 +248,7 @@ void main() {
               dueDate: DateTime(2026, 5, 15, 10),
               principalDue: 150,
               interestDue: 0,
+              feeDue: 0,
               totalDue: 150,
             ),
           ],

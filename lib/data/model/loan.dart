@@ -13,7 +13,7 @@ class Loan {
   final double downPaymentAmount;
   final double financedAmount;
   final LoanInterestModel interestModel;
-  final double annualInterestRatePercent;
+  final double monthlyInterestRatePercent;
   final InstallmentMode installmentMode;
   final int installmentCount;
   final int? paymentDayOfMonth;
@@ -38,7 +38,7 @@ class Loan {
     this.downPaymentAmount = 0,
     double? financedAmount,
     this.interestModel = LoanInterestModel.flat,
-    this.annualInterestRatePercent = 0,
+    this.monthlyInterestRatePercent = 0,
     this.installmentMode = InstallmentMode.fixed,
     this.installmentCount = 1,
     this.paymentDayOfMonth,
@@ -65,7 +65,7 @@ class Loan {
     double? downPaymentAmount,
     double? financedAmount,
     LoanInterestModel? interestModel,
-    double? annualInterestRatePercent,
+    double? monthlyInterestRatePercent,
     InstallmentMode? installmentMode,
     int? installmentCount,
     Object? paymentDayOfMonth = _sentinel,
@@ -90,8 +90,8 @@ class Loan {
       downPaymentAmount: downPaymentAmount ?? this.downPaymentAmount,
       financedAmount: financedAmount ?? this.financedAmount,
       interestModel: interestModel ?? this.interestModel,
-      annualInterestRatePercent:
-          annualInterestRatePercent ?? this.annualInterestRatePercent,
+      monthlyInterestRatePercent:
+          monthlyInterestRatePercent ?? this.monthlyInterestRatePercent,
       installmentMode: installmentMode ?? this.installmentMode,
       installmentCount: installmentCount ?? this.installmentCount,
       paymentDayOfMonth:
@@ -125,7 +125,7 @@ class Loan {
       downPaymentAmount: row.downPaymentAmount,
       financedAmount: row.financedAmount,
       interestModel: LoanInterestModel.values.byName(row.interestModel),
-      annualInterestRatePercent: row.annualInterestRatePercent,
+      monthlyInterestRatePercent: row.monthlyInterestRatePercent,
       installmentMode: InstallmentMode.values.byName(row.installmentMode),
       installmentCount: row.installmentCount,
       paymentDayOfMonth: row.paymentDayOfMonth,
@@ -154,7 +154,7 @@ class Loan {
       downPaymentAmount: Value(downPaymentAmount),
       financedAmount: Value(financedAmount),
       interestModel: Value(interestModel.name),
-      annualInterestRatePercent: Value(annualInterestRatePercent),
+      monthlyInterestRatePercent: Value(monthlyInterestRatePercent),
       installmentMode: Value(installmentMode.name),
       installmentCount: Value(installmentCount),
       paymentDayOfMonth: Value(paymentDayOfMonth),
@@ -187,7 +187,7 @@ class Loan {
       downPaymentAmount: Value(downPaymentAmount),
       financedAmount: Value(financedAmount),
       interestModel: Value(interestModel.name),
-      annualInterestRatePercent: Value(annualInterestRatePercent),
+      monthlyInterestRatePercent: Value(monthlyInterestRatePercent),
       installmentMode: Value(installmentMode.name),
       installmentCount: Value(installmentCount),
       paymentDayOfMonth: Value(paymentDayOfMonth),
@@ -221,7 +221,7 @@ class Loan {
       downPaymentAmount: downPaymentAmount,
       financedAmount: financedAmount,
       interestModel: interestModel.name,
-      annualInterestRatePercent: annualInterestRatePercent,
+      monthlyInterestRatePercent: monthlyInterestRatePercent,
       installmentMode: installmentMode.name,
       installmentCount: installmentCount,
       paymentDayOfMonth: paymentDayOfMonth,

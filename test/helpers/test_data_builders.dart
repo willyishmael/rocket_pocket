@@ -218,7 +218,7 @@ db.Loan buildLoanRow({
     downPaymentAmount: 0,
     financedAmount: amount,
     interestModel: LoanInterestModel.flat.name,
-    annualInterestRatePercent: 0,
+    monthlyInterestRatePercent: 0,
     installmentMode: InstallmentMode.fixed.name,
     installmentCount: 1,
     paymentDayOfMonth: (dueDate ?? fixedDate(30)).day,

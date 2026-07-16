@@ -14,7 +14,7 @@ class Loans extends Table {
   RealColumn get downPaymentAmount => real().withDefault(const Constant(0))();
   RealColumn get financedAmount => real().withDefault(const Constant(0))();
   TextColumn get interestModel => text().withDefault(const Constant('flat'))();
-  RealColumn get annualInterestRatePercent =>
+  RealColumn get monthlyInterestRatePercent =>
       real().withDefault(const Constant(0))();
   TextColumn get installmentMode =>
       text().withDefault(const Constant('fixed'))();

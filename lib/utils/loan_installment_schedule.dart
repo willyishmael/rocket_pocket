@@ -5,6 +5,7 @@ class LoanInstallmentLine {
   final DateTime dueDate;
   final double principalDue;
   final double interestDue;
+  final double feeDue;
   final double totalDue;
 
   const LoanInstallmentLine({
@@ -12,13 +13,15 @@ class LoanInstallmentLine {
     required this.dueDate,
     required this.principalDue,
     required this.interestDue,
+    required this.feeDue,
     required this.totalDue,
   });
 }
 
 class LoanInstallmentPlanInput {
   final double principalAmount;
-  final double annualInterestRatePercent;
+  final double monthlyInterestRatePercent;
+  final double additionalFeeAmount;
   final int installmentCount;
   final DateTime firstDueDate;
   final InstallmentMode installmentMode;
@@ -26,7 +29,8 @@ class LoanInstallmentPlanInput {
 
   const LoanInstallmentPlanInput({
     required this.principalAmount,
-    required this.annualInterestRatePercent,
+    required this.monthlyInterestRatePercent,
+    this.additionalFeeAmount = 0,
     required this.installmentCount,
     required this.firstDueDate,
     required this.installmentMode,
@@ -38,12 +42,14 @@ class LoanInstallmentPlan {
   final List<LoanInstallmentLine> lines;
   final double totalPrincipal;
   final double totalInterest;
+  final double totalFee;
   final double totalPayable;
 
   const LoanInstallmentPlan({
     required this.lines,
     required this.totalPrincipal,
     required this.totalInterest,
+    required this.totalFee,
     required this.totalPayable,
   });
 }
@@ -56,10 +62,15 @@ class LoanInstallmentSchedule {
 
     final principal = _round2(input.principalAmount);
     final monthlyInterest = _round2(
-      (principal * input.annualInterestRatePercent / 100) / 12,
+      principal * input.monthlyInterestRatePercent / 100,
     );
     final interestTotal = _round2(monthlyInterest * input.installmentCount);
-    final totalPayable = _round2(principal + interestTotal);
+    final feeTotal = _round2(input.additionalFeeAmount);
+    final feePerInstallment = _distributeAcrossInstallments(
+      total: feeTotal,
+      count: input.installmentCount,
+    );
+    final totalPayable = _round2(principal + interestTotal + feeTotal);
 
     final lines =
         input.installmentMode == InstallmentMode.fixed
@@ -68,12 +79,14 @@ class LoanInstallmentSchedule {
               installmentCount: input.installmentCount,
               principal: principal,
               monthlyInterest: monthlyInterest,
+              feePerInstallment: feePerInstallment,
             )
             : _buildVariableLines(
               firstDueDate: input.firstDueDate,
               installmentCount: input.installmentCount,
               principal: principal,
               monthlyInterest: monthlyInterest,
+              feePerInstallment: feePerInstallment,
               expectedTotalPayable: totalPayable,
               totals: input.variableInstallmentTotals!,
             );
@@ -82,6 +95,7 @@ class LoanInstallmentSchedule {
       lines: lines,
       totalPrincipal: principal,
       totalInterest: interestTotal,
+      totalFee: feeTotal,
       totalPayable: totalPayable,
     );
   }
@@ -91,6 +105,7 @@ class LoanInstallmentSchedule {
     required int installmentCount,
     required double principal,
     required double monthlyInterest,
+    required List<double> feePerInstallment,
   }) {
     final principalBase = _round2(principal / installmentCount);
     final lines = <LoanInstallmentLine>[];
@@ -103,13 +118,15 @@ class LoanInstallmentSchedule {
           isLast ? _round2(principal - principalAccumulated) : principalBase;
       principalAccumulated = _round2(principalAccumulated + principalDue);
 
-      final totalDue = _round2(principalDue + monthlyInterest);
+      final feeDue = feePerInstallment[i];
+      final totalDue = _round2(principalDue + monthlyInterest + feeDue);
       lines.add(
         LoanInstallmentLine(
           sequence: sequence,
           dueDate: _dueDateAt(firstDueDate, i),
           principalDue: principalDue,
           interestDue: monthlyInterest,
+          feeDue: feeDue,
           totalDue: totalDue,
         ),
       );
@@ -123,6 +140,7 @@ class LoanInstallmentSchedule {
     required int installmentCount,
     required double principal,
     required double monthlyInterest,
+    required List<double> feePerInstallment,
     required double expectedTotalPayable,
     required List<double> totals,
   }) {
@@ -151,15 +169,16 @@ class LoanInstallmentSchedule {
       final sequence = i + 1;
       final isLast = sequence == installmentCount;
       final totalDue = normalizedTotals[i];
+      final feeDue = feePerInstallment[i];
 
       final principalDue =
           isLast
               ? _round2(principal - principalAccumulated)
-              : _round2(totalDue - monthlyInterest);
+              : _round2(totalDue - monthlyInterest - feeDue);
 
       if (principalDue < 0) {
         throw ArgumentError(
-          'Installment #$sequence is lower than monthly interest.',
+          'Installment #$sequence is lower than monthly interest and fee.',
         );
       }
 
@@ -171,7 +190,8 @@ class LoanInstallmentSchedule {
           dueDate: _dueDateAt(firstDueDate, i),
           principalDue: principalDue,
           interestDue: monthlyInterest,
-          totalDue: _round2(principalDue + monthlyInterest),
+          feeDue: feeDue,
+          totalDue: _round2(principalDue + monthlyInterest + feeDue),
         ),
       );
     }
@@ -207,6 +227,18 @@ class LoanInstallmentSchedule {
 
   static double _round2(double value) => (value * 100).roundToDouble() / 100;
 
+  static List<double> _distributeAcrossInstallments({
+    required double total,
+    required int count,
+  }) {
+    if (count <= 0) return const [];
+    final base = _round2(total / count);
+    final values = List<double>.filled(count, base, growable: false);
+    final baseTotal = _round2(base * count);
+    values[count - 1] = _round2(values.last + _round2(total - baseTotal));
+    return values;
+  }
+
   static void _validate(LoanInstallmentPlanInput input) {
     if (input.principalAmount <= 0) {
       throw ArgumentError('principalAmount must be greater than 0.');
@@ -214,8 +246,11 @@ class LoanInstallmentSchedule {
     if (input.installmentCount <= 0) {
       throw ArgumentError('installmentCount must be greater than 0.');
     }
-    if (input.annualInterestRatePercent < 0) {
-      throw ArgumentError('annualInterestRatePercent cannot be negative.');
+    if (input.monthlyInterestRatePercent < 0) {
+      throw ArgumentError('monthlyInterestRatePercent cannot be negative.');
+    }
+    if (input.additionalFeeAmount < 0) {
+      throw ArgumentError('additionalFeeAmount cannot be negative.');
     }
     if (input.installmentMode == InstallmentMode.variable &&
         input.variableInstallmentTotals == null) {
