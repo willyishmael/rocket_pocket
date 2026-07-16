@@ -61,10 +61,12 @@ class LoanDetailHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    loan.type == LoanType.given ? 'Loan Given' : 'Loan Taken',
-                    style: subtleStyle.copyWith(fontSize: 13),
-                  ),
+                  Text(_subtitle, style: subtleStyle.copyWith(fontSize: 13)),
+                  if (loan.installmentCount > 1)
+                    Text(
+                      '${loan.installmentCount} installments • ${loan.monthlyInterestRatePercent.toStringAsFixed(2)}% monthly interest',
+                      style: subtleStyle.copyWith(fontSize: 12),
+                    ),
                 ],
               ),
             ),
@@ -112,5 +114,12 @@ class LoanDetailHeader extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String get _subtitle {
+    if (loan.financingKind == LoanFinancingKind.purchaseInstallment) {
+      return 'Purchase Installment';
+    }
+    return loan.type == LoanType.given ? 'Loan Given' : 'Loan Taken';
   }
 }

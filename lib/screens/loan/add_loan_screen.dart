@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/screens/transaction/widgets/transaction_form_fields.dart';
 import 'package:rocket_pocket/viewmodels/add_loan_view_model.dart';
+import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
 class AddLoanScreen extends ConsumerWidget {
   const AddLoanScreen({super.key});
@@ -34,14 +35,28 @@ class _AddLoanForm extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(addLoanViewModelProvider.notifier);
     final theme = Theme.of(context);
+    final livePockets =
+        ref.watch(pocketViewModelProvider).value ?? state.pockets;
+    final selectedPocketId = state.selectedPocket?.id;
+    final liveSelectedPocket =
+        selectedPocketId == null
+            ? state.selectedPocket
+            : livePockets.where((p) => p.id == selectedPocketId).firstOrNull;
     final hasMismatchedPocketCurrency =
-        state.selectedPocket != null &&
-        state.selectedPocket!.currency != state.currency;
-    final hasInsufficientPocketBalance =
-        state.selectedType == LoanType.given &&
-        state.selectedPocket != null &&
+        liveSelectedPocket != null &&
+        liveSelectedPocket.currency != state.currency;
+    final hasInsufficientDownPaymentBalance =
+        state.isPurchaseInstallment &&
+        liveSelectedPocket != null &&
         !hasMismatchedPocketCurrency &&
-        state.amount > state.selectedPocket!.balance;
+        state.downPaymentAmount > liveSelectedPocket.balance;
+    final hasInsufficientPocketBalance =
+        state.financingKind == LoanFinancingKind.cashLoan &&
+        state.selectedType == LoanType.given &&
+        liveSelectedPocket != null &&
+        !hasMismatchedPocketCurrency &&
+        state.financedPrincipal > liveSelectedPocket.balance;
+    final previewPlan = state.previewPlan;
 
     return CustomScrollView(
       slivers: [
@@ -64,31 +79,77 @@ class _AddLoanForm extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Loan type ──────────────────────────────────────────
-                Text('Type', style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
+                _SectionHeader(
+                  title: 'Financing',
+                  subtitle: 'Choose the obligation type and cashflow behavior.',
+                ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  child: SegmentedButton<LoanType>(
+                  child: SegmentedButton<LoanFinancingKind>(
                     showSelectedIcon: false,
                     segments: const [
                       ButtonSegment(
-                        value: LoanType.given,
-                        label: Text('Loan Given'),
-                        icon: Icon(Icons.call_made),
+                        value: LoanFinancingKind.cashLoan,
+                        label: Text('Cash Loan'),
+                        icon: Icon(Icons.account_balance_outlined),
                       ),
                       ButtonSegment(
-                        value: LoanType.taken,
-                        label: Text('Loan Taken'),
-                        icon: Icon(Icons.call_received),
+                        value: LoanFinancingKind.purchaseInstallment,
+                        label: Text('Purchase Installment'),
+                        icon: Icon(Icons.shopping_bag_outlined),
                       ),
                     ],
-                    selected: {state.selectedType},
-                    onSelectionChanged: (v) => notifier.setType(v.first),
+                    selected: {state.financingKind},
+                    onSelectionChanged:
+                        (v) => notifier.setFinancingKind(v.first),
                   ),
                 ),
 
                 const SizedBox(height: 24),
+
+                // ── Loan type ──────────────────────────────────────────
+                if (!state.isPurchaseInstallment) ...[
+                  Text('Type', style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<LoanType>(
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(
+                          value: LoanType.given,
+                          label: Text('Loan Given'),
+                          icon: Icon(Icons.call_made),
+                        ),
+                        ButtonSegment(
+                          value: LoanType.taken,
+                          label: Text('Loan Taken'),
+                          icon: Icon(Icons.call_received),
+                        ),
+                      ],
+                      selected: {state.selectedType},
+                      onSelectionChanged: (v) => notifier.setType(v.first),
+                    ),
+                  ),
+                ] else ...[
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.call_received),
+                    title: const Text('Purchase Installment'),
+                    subtitle: const Text(
+                      'Creates a payable schedule. No loan-in cashflow is posted to your pocket.',
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                _SectionHeader(
+                  title: 'Core Info',
+                  subtitle: 'Identify who you owe or who owes you.',
+                ),
+                const SizedBox(height: 12),
 
                 // ── Counterparty name ──────────────────────────────────
                 TextFormField(
@@ -130,6 +191,8 @@ class _AddLoanForm extends ConsumerWidget {
                     errorText:
                         hasMismatchedPocketCurrency
                             ? 'Pocket currency must match loan currency'
+                            : hasInsufficientDownPaymentBalance
+                            ? 'Insufficient pocket balance for down payment'
                             : hasInsufficientPocketBalance
                             ? 'Insufficient pocket balance for loan given'
                             : null,
@@ -147,10 +210,13 @@ class _AddLoanForm extends ConsumerWidget {
 
                 // ── Amount ─────────────────────────────────────────────
                 TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Principal Amount',
+                  decoration: InputDecoration(
+                    labelText:
+                        state.isPurchaseInstallment
+                            ? 'Purchase Price'
+                            : 'Principal Amount',
                     border: OutlineInputBorder(),
-                    icon: Icon(Icons.payments_outlined),
+                    icon: const Icon(Icons.payments_outlined),
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -158,11 +224,45 @@ class _AddLoanForm extends ConsumerWidget {
                   onChanged: (v) => notifier.setAmount(double.tryParse(v) ?? 0),
                 ),
 
+                if (state.isPurchaseInstallment) ...[
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Down Payment',
+                      border: OutlineInputBorder(),
+                      icon: Icon(Icons.south_west),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    onChanged:
+                        (v) => notifier.setDownPaymentAmount(
+                          double.tryParse(v) ?? 0,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  _InlineSummaryRow(
+                    label: 'Financed Principal',
+                    value:
+                        '${state.currency} ${state.financedPrincipal.toStringAsFixed(2)}',
+                  ),
+                ],
+
                 if (hasMismatchedPocketCurrency)
                   Padding(
                     padding: const EdgeInsets.only(left: 40, top: 8),
                     child: Text(
                       'Selected pocket currency does not match the loan currency.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  )
+                else if (hasInsufficientDownPaymentBalance)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 40, top: 8),
+                    child: Text(
+                      'Down payment exceeds selected pocket balance.',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.error,
                       ),
@@ -181,6 +281,12 @@ class _AddLoanForm extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
+                _SectionHeader(
+                  title: 'Installments',
+                  subtitle: 'Define the monthly repayment structure.',
+                ),
+                const SizedBox(height: 12),
+
                 TextFormField(
                   decoration: const InputDecoration(
                     labelText: 'Installments',
@@ -198,18 +304,35 @@ class _AddLoanForm extends ConsumerWidget {
 
                 TextFormField(
                   decoration: const InputDecoration(
-                    labelText: 'Annual Interest %',
+                    labelText: 'Monthly Interest %',
                     border: OutlineInputBorder(),
                     icon: Icon(Icons.percent),
                   ),
-                  initialValue: state.annualInterestRatePercent.toString(),
+                  initialValue: state.monthlyInterestRatePercent.toString(),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   onChanged: (v) {
-                    notifier.setAnnualInterestRatePercent(
+                    notifier.setMonthlyInterestRatePercent(
                       double.tryParse(v) ?? 0,
                     );
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Additional Fee',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.receipt_long_outlined),
+                  ),
+                  initialValue: state.additionalFeeAmount.toString(),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onChanged: (v) {
+                    notifier.setAdditionalFeeAmount(double.tryParse(v) ?? 0);
                   },
                 ),
 
@@ -272,6 +395,16 @@ class _AddLoanForm extends ConsumerWidget {
                     ),
                   ),
 
+                if (previewPlan != null) ...[
+                  const SizedBox(height: 24),
+                  _SectionHeader(
+                    title: 'Schedule Preview',
+                    subtitle: 'Review totals and first upcoming installments.',
+                  ),
+                  const SizedBox(height: 12),
+                  _SchedulePreviewCard(state: state),
+                ],
+
                 const SizedBox(height: 32),
 
                 // ── Submit ─────────────────────────────────────────────
@@ -284,6 +417,7 @@ class _AddLoanForm extends ConsumerWidget {
                   onPressed:
                       state.isValid &&
                               !hasMismatchedPocketCurrency &&
+                              !hasInsufficientDownPaymentBalance &&
                               !hasInsufficientPocketBalance
                           ? () async {
                             await ref
@@ -308,6 +442,136 @@ class _AddLoanForm extends ConsumerWidget {
       Text('${country.currencyCode}'),
     ],
   );
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: theme.textTheme.titleSmall),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InlineSummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InlineSummaryRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        Text(value, style: theme.textTheme.bodyMedium),
+      ],
+    );
+  }
+}
+
+class _SchedulePreviewCard extends StatelessWidget {
+  final AddLoanState state;
+
+  const _SchedulePreviewCard({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final plan = state.previewPlan;
+    if (plan == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final previewLines =
+        plan.lines.length <= 3 ? plan.lines : plan.lines.take(3).toList();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _InlineSummaryRow(
+              label: 'Total Payable',
+              value:
+                  '${state.currency} ${plan.totalPayable.toStringAsFixed(2)}',
+            ),
+            const SizedBox(height: 8),
+            _InlineSummaryRow(
+              label: 'Interest Total',
+              value:
+                  '${state.currency} ${plan.totalInterest.toStringAsFixed(2)}',
+            ),
+            const SizedBox(height: 8),
+            _InlineSummaryRow(
+              label: 'Additional Fee',
+              value: '${state.currency} ${plan.totalFee.toStringAsFixed(2)}',
+            ),
+            const SizedBox(height: 8),
+            _InlineSummaryRow(
+              label: 'Installment Count',
+              value: '${plan.lines.length}',
+            ),
+            const SizedBox(height: 12),
+            Text('Upcoming', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 8),
+            ...previewLines.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '#${line.sequence}  ${_formatDate(line.dueDate)}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    Text(
+                      '${state.currency} ${line.totalDue.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (plan.lines.length > previewLines.length)
+              Text(
+                '+${plan.lines.length - previewLines.length} more installments',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
 
 class _DateField extends StatelessWidget {

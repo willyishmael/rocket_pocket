@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/local/database.dart' as db;
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/screens/loan/loan_detail_header.dart';
 import 'package:rocket_pocket/screens/loan/loan_detail_info_card.dart';
+import 'package:rocket_pocket/screens/loan/loan_installment_section.dart';
+import 'package:rocket_pocket/repositories/loan_repository.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
 import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/router/paths.dart';
@@ -101,6 +104,7 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
         loan.dueDate.isBefore(DateTime.now());
 
     final transactionsAsync = ref.watch(transactionViewModelProvider);
+    final loanRepository = ref.watch(loanRepositoryProvider);
     final pockets = ref.watch(pocketViewModelProvider).value ?? [];
     final pocketCurrency = {
       for (final p in pockets)
@@ -196,6 +200,30 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
             child: Padding(
               padding: const EdgeInsets.only(top: 20, bottom: 8),
               child: LoanDetailInfoCard(loan: loan, isOverdue: isOverdue),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: FutureBuilder<List<db.LoanInstallment>>(
+              key: ValueKey('${loan.id}-${loan.repaidAmount}'),
+              future: loanRepository.getInstallmentsByLoanId(loan.id!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                final installments =
+                    snapshot.data ?? const <db.LoanInstallment>[];
+                if (installments.isEmpty) return const SizedBox.shrink();
+
+                return LoanInstallmentSection(
+                  loan: loan,
+                  installments: installments,
+                );
+              },
             ),
           ),
 

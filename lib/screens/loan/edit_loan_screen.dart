@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rocket_pocket/data/local/database.dart' as db;
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
+import 'package:rocket_pocket/repositories/loan_repository.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 
 class EditLoanScreen extends ConsumerStatefulWidget {
@@ -18,6 +20,7 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _amountController;
   late final TextEditingController _descriptionController;
+  late final Future<List<db.LoanInstallment>> _installmentsFuture;
   late LoanStatus _status;
   late DateTime _startDate;
   late DateTime _dueDate;
@@ -33,6 +36,9 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
     _descriptionController = TextEditingController(
       text: widget.loan.description,
     );
+    _installmentsFuture = ref
+        .read(loanRepositoryProvider)
+        .getInstallmentsByLoanId(widget.loan.id!);
     _status = widget.loan.status;
     _startDate = widget.loan.startDate;
     _dueDate = widget.loan.dueDate;
@@ -50,17 +56,20 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
       _nameController.text.trim().isNotEmpty &&
       (double.tryParse(_amountController.text) ?? 0) > 0;
 
-  Future<void> _save() async {
+  Future<void> _save({required bool lockScheduleFields}) async {
     if (!_isValid) return;
     setState(() => _saving = true);
     try {
       final updated = widget.loan.copyWith(
         counterpartyName: _nameController.text.trim(),
-        amount: double.parse(_amountController.text),
+        amount:
+            lockScheduleFields
+                ? widget.loan.amount
+                : double.parse(_amountController.text),
         description: _descriptionController.text.trim(),
         status: _status,
-        startDate: _startDate,
-        dueDate: _dueDate,
+        startDate: lockScheduleFields ? widget.loan.startDate : _startDate,
+        dueDate: lockScheduleFields ? widget.loan.dueDate : _dueDate,
       );
       await ref
           .read(loanViewModelProvider.notifier)
@@ -98,155 +107,204 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Loan type (read-only) ──────────────────────────
-                  Row(
+            child: FutureBuilder<List<db.LoanInstallment>>(
+              future: _installmentsFuture,
+              builder: (context, snapshot) {
+                final installments =
+                    snapshot.data ?? const <db.LoanInstallment>[];
+                final lockScheduleFields = installments.isNotEmpty;
+
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        widget.loan.type == LoanType.given
-                            ? Icons.call_made
-                            : Icons.call_received,
-                        size: 20,
-                        color: theme.colorScheme.onSurfaceVariant,
+                      // ── Loan type (read-only) ──────────────────────────
+                      Row(
+                        children: [
+                          Icon(
+                            widget.loan.type == LoanType.given
+                                ? Icons.call_made
+                                : Icons.call_received,
+                            size: 20,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.loan.type == LoanType.given
+                                ? 'Loan Given'
+                                : 'Loan Taken',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        widget.loan.type == LoanType.given
-                            ? 'Loan Given'
-                            : 'Loan Taken',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+
+                      const SizedBox(height: 12),
+
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.tune),
+                        title: Text(
+                          widget.loan.financingKind ==
+                                  LoanFinancingKind.purchaseInstallment
+                              ? 'Purchase Installment'
+                              : 'Cash Loan',
+                        ),
+                        subtitle: Text(
+                          '${widget.loan.installmentCount} installments • ${widget.loan.monthlyInterestRatePercent.toStringAsFixed(2)}% monthly interest',
                         ),
                       ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 24),
-
-                  // ── Counterparty name ──────────────────────────────
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Counterparty Name',
-                      hintText: 'Person or organization',
-                      border: OutlineInputBorder(),
-                      icon: Icon(Icons.person_outline),
-                    ),
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: (_) => setState(() {}),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ── Amount ─────────────────────────────────────────
-                  TextField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      border: OutlineInputBorder(),
-                      icon: Icon(Icons.payments_outlined),
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ── Description ────────────────────────────────────
-                  TextField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes (optional)',
-                      border: OutlineInputBorder(),
-                      icon: Icon(Icons.notes_outlined),
-                    ),
-                    maxLines: 2,
-                    textCapitalization: TextCapitalization.sentences,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Status ─────────────────────────────────────────
-                  Text('Status', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<LoanStatus>(
-                    initialValue: _status,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      icon: Icon(Icons.flag_outlined),
-                    ),
-                    items:
-                        LoanStatus.values.map((s) {
-                          return DropdownMenuItem(
-                            value: s,
-                            child: Text(_statusLabel(s)),
-                          );
-                        }).toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => _status = v);
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Dates ──────────────────────────────────────────
-                  Text('Duration', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _DateField(
-                          label: 'Start Date',
-                          icon: Icons.calendar_today_outlined,
-                          date: _startDate,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                          onPicked: (d) => setState(() => _startDate = d),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _DateField(
-                          label: 'Due Date',
-                          icon: Icons.event_outlined,
-                          date: _dueDate,
-                          firstDate: _startDate,
-                          lastDate: DateTime(2100),
-                          onPicked: (d) => setState(() => _dueDate = d),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // ── Save ───────────────────────────────────────────
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    icon:
-                        _saving
-                            ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                      if (lockScheduleFields) ...[
+                        const SizedBox(height: 12),
+                        Card(
+                          color: theme.colorScheme.secondaryContainer,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              'Schedule-sensitive fields are read-only in edit mode. Update counterparty, notes, and status here.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSecondaryContainer,
                               ),
-                            )
-                            : const Icon(Icons.save),
-                    label: const Text('Save Changes'),
-                    onPressed: (_isValid && !_saving) ? _save : null,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 24),
+
+                      // ── Counterparty name ──────────────────────────────
+                      TextField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Counterparty Name',
+                          hintText: 'Person or organization',
+                          border: OutlineInputBorder(),
+                          icon: Icon(Icons.person_outline),
+                        ),
+                        textCapitalization: TextCapitalization.words,
+                        onChanged: (_) => setState(() {}),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // ── Amount ─────────────────────────────────────────
+                      TextField(
+                        controller: _amountController,
+                        decoration: const InputDecoration(
+                          labelText: 'Total Payable',
+                          border: OutlineInputBorder(),
+                          icon: Icon(Icons.payments_outlined),
+                        ),
+                        enabled: !lockScheduleFields,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // ── Description ────────────────────────────────────
+                      TextField(
+                        controller: _descriptionController,
+                        decoration: const InputDecoration(
+                          labelText: 'Notes (optional)',
+                          border: OutlineInputBorder(),
+                          icon: Icon(Icons.notes_outlined),
+                        ),
+                        maxLines: 2,
+                        textCapitalization: TextCapitalization.sentences,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ── Status ─────────────────────────────────────────
+                      Text('Status', style: theme.textTheme.labelLarge),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<LoanStatus>(
+                        initialValue: _status,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          icon: Icon(Icons.flag_outlined),
+                        ),
+                        items:
+                            LoanStatus.values.map((s) {
+                              return DropdownMenuItem(
+                                value: s,
+                                child: Text(_statusLabel(s)),
+                              );
+                            }).toList(),
+                        onChanged: (v) {
+                          if (v != null) setState(() => _status = v);
+                        },
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ── Dates ──────────────────────────────────────────
+                      Text('Duration', style: theme.textTheme.labelLarge),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _DateField(
+                              label: 'Start Date',
+                              icon: Icons.calendar_today_outlined,
+                              date: _startDate,
+                              enabled: !lockScheduleFields,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                              onPicked: (d) => setState(() => _startDate = d),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _DateField(
+                              label: 'Due Date',
+                              icon: Icons.event_outlined,
+                              date: _dueDate,
+                              enabled: !lockScheduleFields,
+                              firstDate: _startDate,
+                              lastDate: DateTime(2100),
+                              onPicked: (d) => setState(() => _dueDate = d),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // ── Save ───────────────────────────────────────────
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                        ),
+                        icon:
+                            _saving
+                                ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Icon(Icons.save),
+                        label: const Text('Save Changes'),
+                        onPressed:
+                            (_isValid && !_saving)
+                                ? () => _save(
+                                  lockScheduleFields: lockScheduleFields,
+                                )
+                                : null,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -266,6 +324,7 @@ class _DateField extends StatelessWidget {
   final String label;
   final IconData icon;
   final DateTime date;
+  final bool enabled;
   final DateTime firstDate;
   final DateTime lastDate;
   final ValueChanged<DateTime> onPicked;
@@ -274,6 +333,7 @@ class _DateField extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.date,
+    this.enabled = true,
     required this.firstDate,
     required this.lastDate,
     required this.onPicked,
@@ -282,15 +342,18 @@ class _DateField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: date,
-          firstDate: firstDate,
-          lastDate: lastDate,
-        );
-        if (picked != null) onPicked(picked);
-      },
+      onTap:
+          !enabled
+              ? null
+              : () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: date,
+                  firstDate: firstDate,
+                  lastDate: lastDate,
+                );
+                if (picked != null) onPicked(picked);
+              },
       borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
         decoration: InputDecoration(
@@ -302,6 +365,10 @@ class _DateField extends StatelessWidget {
           '${date.year}-'
           '${date.month.toString().padLeft(2, '0')}-'
           '${date.day.toString().padLeft(2, '0')}',
+          style:
+              enabled
+                  ? null
+                  : TextStyle(color: Theme.of(context).disabledColor),
         ),
       ),
     );
