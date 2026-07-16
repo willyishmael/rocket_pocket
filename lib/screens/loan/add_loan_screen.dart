@@ -148,7 +148,7 @@ class _AddLoanForm extends ConsumerWidget {
                 // ── Amount ─────────────────────────────────────────────
                 TextFormField(
                   decoration: const InputDecoration(
-                    labelText: 'Amount',
+                    labelText: 'Principal Amount',
                     border: OutlineInputBorder(),
                     icon: Icon(Icons.payments_outlined),
                   ),
@@ -178,6 +178,40 @@ class _AddLoanForm extends ConsumerWidget {
                       ),
                     ),
                   ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Installments',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.format_list_numbered),
+                  ),
+                  initialValue: state.installmentCount.toString(),
+                  keyboardType: TextInputType.number,
+                  onChanged: (v) {
+                    notifier.setInstallmentCount(int.tryParse(v) ?? 1);
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Annual Interest %',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.percent),
+                  ),
+                  initialValue: state.annualInterestRatePercent.toString(),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onChanged: (v) {
+                    notifier.setAnnualInterestRatePercent(
+                      double.tryParse(v) ?? 0,
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 16),
 
@@ -214,7 +248,10 @@ class _AddLoanForm extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _DateField(
-                        label: 'Due Date',
+                        label:
+                            state.usesInstallments
+                                ? 'First Due Date'
+                                : 'Due Date',
                         icon: Icons.event_outlined,
                         date: state.dueDate,
                         onPicked: notifier.setDueDate,
@@ -224,6 +261,16 @@ class _AddLoanForm extends ConsumerWidget {
                     ),
                   ],
                 ),
+                if (state.usesInstallments)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 40, top: 8),
+                    child: Text(
+                      'The final due date will be calculated from the first due date and installment count.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
 
                 const SizedBox(height: 32),
 

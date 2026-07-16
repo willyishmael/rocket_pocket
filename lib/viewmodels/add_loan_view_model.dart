@@ -9,6 +9,7 @@ import 'package:rocket_pocket/repositories/loan_repository.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/utils/loan_installment_schedule.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 import 'package:rocket_pocket/viewmodels/viewmodel_utils.dart';
@@ -18,6 +19,8 @@ class AddLoanState {
   final String counterpartyName;
   final String currency;
   final double amount;
+  final double annualInterestRatePercent;
+  final int installmentCount;
   final String description;
   final DateTime startDate;
   final DateTime dueDate;
@@ -29,6 +32,8 @@ class AddLoanState {
     this.counterpartyName = '',
     this.currency = 'IDR',
     this.amount = 0,
+    this.annualInterestRatePercent = 0,
+    this.installmentCount = 1,
     this.description = '',
     DateTime? startDate,
     DateTime? dueDate,
@@ -37,13 +42,21 @@ class AddLoanState {
   }) : startDate = startDate ?? DateTime.now(),
        dueDate = dueDate ?? DateTime.now().add(const Duration(days: 30));
 
-  bool get isValid => counterpartyName.trim().isNotEmpty && amount > 0;
+  bool get isValid =>
+      counterpartyName.trim().isNotEmpty &&
+      amount > 0 &&
+      annualInterestRatePercent >= 0 &&
+      installmentCount > 0;
+
+  bool get usesInstallments => installmentCount > 1;
 
   AddLoanState copyWith({
     LoanType? selectedType,
     String? counterpartyName,
     String? currency,
     double? amount,
+    double? annualInterestRatePercent,
+    int? installmentCount,
     String? description,
     DateTime? startDate,
     DateTime? dueDate,
@@ -55,6 +68,9 @@ class AddLoanState {
       counterpartyName: counterpartyName ?? this.counterpartyName,
       currency: currency ?? this.currency,
       amount: amount ?? this.amount,
+      annualInterestRatePercent:
+          annualInterestRatePercent ?? this.annualInterestRatePercent,
+      installmentCount: installmentCount ?? this.installmentCount,
       description: description ?? this.description,
       startDate: startDate ?? this.startDate,
       dueDate: dueDate ?? this.dueDate,
@@ -106,6 +122,27 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
     state = AsyncData(current.copyWith(currency: currency));
   }
 
+  void setAnnualInterestRatePercent(double annualInterestRatePercent) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(
+        annualInterestRatePercent:
+            annualInterestRatePercent < 0 ? 0 : annualInterestRatePercent,
+      ),
+    );
+  }
+
+  void setInstallmentCount(int installmentCount) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(
+        installmentCount: installmentCount <= 0 ? 1 : installmentCount,
+      ),
+    );
+  }
+
   void setDescription(String description) {
     final current = state.value;
     if (current == null) return;
@@ -134,6 +171,18 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
     state = AsyncData(current.copyWith(selectedPocket: pocket));
   }
 
+  LoanInstallmentPlan _buildInstallmentPlan(AddLoanState current) {
+    return LoanInstallmentSchedule.buildFlatMonthlyPlan(
+      LoanInstallmentPlanInput(
+        principalAmount: current.amount,
+        annualInterestRatePercent: current.annualInterestRatePercent,
+        installmentCount: current.installmentCount,
+        firstDueDate: current.dueDate,
+        installmentMode: InstallmentMode.fixed,
+      ),
+    );
+  }
+
   Future<void> submit() async {
     final current = state.value;
     if (current == null || !current.isValid) return;
@@ -154,20 +203,31 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
         return;
       }
 
+      final plan = _buildInstallmentPlan(current);
       final loan = Loan(
         type: current.selectedType,
         counterpartyName: current.counterpartyName.trim(),
         currency: current.currency,
-        amount: current.amount,
+        amount: plan.totalPayable,
+        principalAmount: current.amount,
+        financedAmount: current.amount,
+        annualInterestRatePercent: current.annualInterestRatePercent,
+        installmentCount: current.installmentCount,
+        installmentMode: InstallmentMode.fixed,
+        paymentDayOfMonth: current.dueDate.day,
+        firstInstallmentDate: current.dueDate,
         description: current.description.trim(),
         startDate: current.startDate,
-        dueDate: current.dueDate,
+        dueDate: plan.lines.last.dueDate,
         status: LoanStatus.ongoing,
         repaidAmount: 0,
         createdAt: DateTime.now(),
       );
 
-      await _loanRepository.insertLoan(loan.toInsertCompanion());
+      await _loanRepository.createLoanWithSchedule(
+        loan: loan.toInsertCompanion(),
+        scheduleLines: plan.lines,
+      );
 
       // Record transaction if pocket is selected
       if (current.selectedPocket != null &&
