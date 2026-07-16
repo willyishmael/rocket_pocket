@@ -12,12 +12,18 @@ void main() {
         counterpartyName: 'Taylor',
         repaidAmount: 125,
         status: LoanStatus.completed,
+        monthlyInterestRatePercent: 2,
+        isReminderEnabled: false,
+        reminderDaysBefore: 7,
       );
 
       expect(updated.id, original.id);
       expect(updated.counterpartyName, 'Taylor');
       expect(updated.repaidAmount, 125);
       expect(updated.status, LoanStatus.completed);
+      expect(updated.monthlyInterestRatePercent, 2);
+      expect(updated.isReminderEnabled, isFalse);
+      expect(updated.reminderDaysBefore, 7);
       expect(updated.amount, original.amount);
     });
 
@@ -37,6 +43,9 @@ void main() {
       expect(loan.status, LoanStatus.overdue);
       expect(loan.startDate, row.startDate);
       expect(loan.createdAt, row.createdAt);
+      expect(loan.monthlyInterestRatePercent, row.monthlyInterestRatePercent);
+      expect(loan.isReminderEnabled, row.isReminderEnabled);
+      expect(loan.reminderDaysBefore, row.reminderDaysBefore);
     });
   });
 }

@@ -219,9 +219,28 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
                     snapshot.data ?? const <db.LoanInstallment>[];
                 if (installments.isEmpty) return const SizedBox.shrink();
 
-                return LoanInstallmentSection(
-                  loan: loan,
-                  installments: installments,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed:
+                              () => context.push(
+                                Paths.loanInstallmentsRoute(loan.id!),
+                              ),
+                          icon: const Icon(Icons.timeline),
+                          label: const Text('View Full Schedule'),
+                        ),
+                      ),
+                    ),
+                    LoanInstallmentSection(
+                      loan: loan,
+                      installments: installments,
+                    ),
+                  ],
                 );
               },
             ),

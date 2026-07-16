@@ -22,6 +22,11 @@ class LoanCard extends StatelessWidget {
     final isOverdue =
         loan.status == LoanStatus.ongoing &&
         loan.dueDate.isBefore(DateTime.now());
+    final nextDueDate = loan.firstInstallmentDate ?? loan.dueDate;
+    final nextDueLabel =
+        loan.status == LoanStatus.completed
+            ? 'Schedule completed'
+            : 'Next due ${_formatDate(nextDueDate)}';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -192,7 +197,7 @@ class LoanCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Due ${_formatDate(loan.dueDate)}',
+                    nextDueLabel,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color:
                           isOverdue

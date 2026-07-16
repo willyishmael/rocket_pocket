@@ -42,10 +42,13 @@ abstract final class Paths {
   static const String loanDetails = '$loan/:loanId';
   static const String editLoan = '$loan/:loanId/edit';
   static const String addRepayment = '$loan/:loanId/repayment';
+  static const String loanInstallments = '$loan/:loanId/installments';
 
   static String loanDetailsRoute(int loanId) => '$loan/$loanId';
   static String editLoanRoute(int loanId) => '$loan/$loanId/edit';
   static String addRepaymentRoute(int loanId) => '$loan/$loanId/repayment';
+  static String loanInstallmentsRoute(int loanId) =>
+      '$loan/$loanId/installments';
 
   // ── Settings ────────────────────────────────────────────────────────────────
   static const String settings = '/settings';

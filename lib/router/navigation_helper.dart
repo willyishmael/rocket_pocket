@@ -318,6 +318,22 @@ class NavigationHelper {
                   return getPage(child: LoanScreen(), state: state);
                 },
               ),
+              GoRoute(
+                path: Paths.loanInstallments,
+                pageBuilder: (context, state) {
+                  final loanIdParam = state.pathParameters['loanId'];
+                  final loanId =
+                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
+                  if (loanId != null) {
+                    return getPage(
+                      child: LoanInstallmentsScreen(loanId: loanId),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: LoanScreen(), state: state);
+                },
+              ),
             ],
           ),
 

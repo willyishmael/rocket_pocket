@@ -21,3 +21,4 @@ export 'loan/add_loan_screen.dart';
 export 'loan/add_repayment_screen.dart';
 export 'loan/edit_loan_screen.dart';
 export 'loan/loan_detail_screen.dart';
+export 'loan/loan_installments_screen.dart';
