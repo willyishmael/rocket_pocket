@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/local/database.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
+import 'package:rocket_pocket/utils/loan_installment_schedule.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
 
 final loanRepositoryProvider = Provider<LoanRepository>((ref) {
@@ -12,6 +13,42 @@ final loanRepositoryProvider = Provider<LoanRepository>((ref) {
 class LoanRepository {
   final AppDatabase db;
   LoanRepository(this.db);
+
+  Future<int> createLoanWithSchedule({
+    required LoansCompanion loan,
+    required List<LoanInstallmentLine> scheduleLines,
+  }) async {
+    try {
+      return await db.transaction(() async {
+        final loanId = await db.into(db.loans).insert(loan);
+
+        if (scheduleLines.isNotEmpty) {
+          await db.batch((batch) {
+            batch.insertAll(
+              db.loanInstallments,
+              scheduleLines
+                  .map(
+                    (line) => LoanInstallmentsCompanion.insert(
+                      loanId: loanId,
+                      sequenceNo: line.sequence,
+                      dueDate: line.dueDate,
+                      principalDue: Value(line.principalDue),
+                      interestDue: Value(line.interestDue),
+                      totalDue: line.totalDue,
+                      status: Value(InstallmentStatus.unpaid.name),
+                    ),
+                  )
+                  .toList(),
+            );
+          });
+        }
+
+        return loanId;
+      });
+    } catch (e, stack) {
+      DatabaseError('Failed to create loan with schedule', stack).throwError();
+    }
+  }
 
   Future<List<Loan>> getAllLoans() async {
     try {
@@ -26,6 +63,112 @@ class LoanRepository {
       return await db.into(db.loans).insert(loan);
     } catch (e, stack) {
       DatabaseError('Failed to insert loan', stack).throwError();
+    }
+  }
+
+  Future<List<LoanInstallment>> getInstallmentsByLoanId(int loanId) async {
+    try {
+      return await (db.select(db.loanInstallments)
+            ..where((tbl) => tbl.loanId.equals(loanId))
+            ..orderBy([(tbl) => OrderingTerm.asc(tbl.sequenceNo)]))
+          .get();
+    } catch (e, stack) {
+      DatabaseError('Failed to fetch loan installments', stack).throwError();
+    }
+  }
+
+  Future<LoanInstallment?> getNextUnpaidInstallment(int loanId) async {
+    try {
+      return await (db.select(db.loanInstallments)
+            ..where((tbl) => tbl.loanId.equals(loanId))
+            ..where(
+              (tbl) =>
+                  tbl.status.equals(InstallmentStatus.unpaid.name) |
+                  tbl.status.equals(InstallmentStatus.partial.name) |
+                  tbl.status.equals(InstallmentStatus.overdue.name),
+            )
+            ..orderBy([
+              (tbl) => OrderingTerm.asc(tbl.dueDate),
+              (tbl) => OrderingTerm.asc(tbl.sequenceNo),
+            ]))
+          .getSingleOrNull();
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to fetch next unpaid installment',
+        stack,
+      ).throwError();
+    }
+  }
+
+  Future<List<LoanInstallment>> getDueInstallments({
+    DateTime? asOf,
+    DateTime? until,
+  }) async {
+    try {
+      final lowerBound = asOf ?? DateTime.now();
+      final upperBound = until ?? lowerBound;
+
+      return await (db.select(db.loanInstallments)
+            ..where(
+              (tbl) =>
+                  tbl.dueDate.isBetweenValues(lowerBound, upperBound) &
+                  (tbl.status.equals(InstallmentStatus.unpaid.name) |
+                      tbl.status.equals(InstallmentStatus.partial.name) |
+                      tbl.status.equals(InstallmentStatus.overdue.name)),
+            )
+            ..orderBy([
+              (tbl) => OrderingTerm.asc(tbl.dueDate),
+              (tbl) => OrderingTerm.asc(tbl.sequenceNo),
+            ]))
+          .get();
+    } catch (e, stack) {
+      DatabaseError('Failed to fetch due installments', stack).throwError();
+    }
+  }
+
+  Future<int> markInstallmentPaid({
+    required int installmentId,
+    required double paidAmount,
+    DateTime? paidAt,
+  }) async {
+    try {
+      return await db.transaction(() async {
+        final installment =
+            await (db.select(db.loanInstallments)
+              ..where((tbl) => tbl.id.equals(installmentId))).getSingleOrNull();
+
+        if (installment == null) {
+          throw StateError('Installment $installmentId not found.');
+        }
+
+        final normalizedPaidAmount = paidAmount < 0 ? 0.0 : paidAmount;
+        final clampedPaidAmount =
+            normalizedPaidAmount > installment.totalDue
+                ? installment.totalDue
+                : normalizedPaidAmount;
+        final status = _statusForInstallment(
+          totalDue: installment.totalDue,
+          paidAmount: clampedPaidAmount,
+          dueDate: installment.dueDate,
+        );
+        final effectivePaidAt =
+            clampedPaidAmount > 0 ? (paidAt ?? DateTime.now()) : null;
+
+        final affected = await (db.update(db.loanInstallments)
+          ..where((tbl) => tbl.id.equals(installmentId))).write(
+          LoanInstallmentsCompanion(
+            paidAmount: Value(clampedPaidAmount),
+            paidAt: Value(effectivePaidAt),
+            status: Value(status.name),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+
+        await _syncLoanAggregate(installment.loanId);
+        return affected;
+      });
+    } catch (e, stack) {
+      DatabaseError('Failed to mark installment paid', stack).throwError();
     }
   }
 
@@ -108,5 +251,50 @@ class LoanRepository {
     } catch (e, stack) {
       DatabaseError('Failed to update loan status', stack).throwError();
     }
+  }
+
+  Future<void> _syncLoanAggregate(int loanId) async {
+    final loan = await getLoanById(loanId);
+    if (loan == null) return;
+
+    final installments = await getInstallmentsByLoanId(loanId);
+    if (installments.isEmpty) return;
+
+    final repaidAmount = installments.fold<double>(
+      0,
+      (sum, line) => sum + line.paidAmount,
+    );
+    final hasOutstanding = installments.any(
+      (line) => line.status != InstallmentStatus.paid.name,
+    );
+    final hasOverdue = installments.any(
+      (line) => line.status == InstallmentStatus.overdue.name,
+    );
+
+    final nextStatus =
+        !hasOutstanding
+            ? LoanStatus.completed
+            : hasOverdue
+            ? LoanStatus.overdue
+            : LoanStatus.ongoing;
+
+    await (db.update(db.loans)..where((tbl) => tbl.id.equals(loanId))).write(
+      LoansCompanion(
+        repaidAmount: Value(repaidAmount),
+        status: Value(nextStatus),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  InstallmentStatus _statusForInstallment({
+    required double totalDue,
+    required double paidAmount,
+    required DateTime dueDate,
+  }) {
+    if (paidAmount >= totalDue) return InstallmentStatus.paid;
+    if (paidAmount > 0) return InstallmentStatus.partial;
+    if (dueDate.isBefore(DateTime.now())) return InstallmentStatus.overdue;
+    return InstallmentStatus.unpaid;
   }
 }
