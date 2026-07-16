@@ -338,6 +338,39 @@ class _AddLoanForm extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(Icons.notifications_active_outlined),
+                  title: const Text('Installment Reminder'),
+                  subtitle: const Text(
+                    'Enable reminder notifications for this loan.',
+                  ),
+                  value: state.isReminderEnabled,
+                  onChanged: notifier.setReminderEnabled,
+                ),
+
+                Wrap(
+                  spacing: 8,
+                  children:
+                      const [0, 1, 2, 3, 5, 7, 14]
+                          .map(
+                            (days) => ChoiceChip(
+                              label: Text(
+                                days == 0 ? 'On due date' : '$days d',
+                              ),
+                              selected: state.reminderDaysBefore == days,
+                              onSelected:
+                                  state.isReminderEnabled
+                                      ? (_) =>
+                                          notifier.setReminderDaysBefore(days)
+                                      : null,
+                            ),
+                          )
+                          .toList(),
+                ),
+
+                const SizedBox(height: 16),
+
                 // ── Description / notes ────────────────────────────────
                 TextFormField(
                   initialValue: state.description,

@@ -9,6 +9,7 @@ import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/loan_repository.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/services/loan_reminder_service.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
@@ -194,6 +195,8 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
           paidAt: current.date,
         );
       });
+
+      await ref.read(loanReminderServiceProvider).scheduleForLoan(loan.id!);
 
       ref.invalidate(pocketViewModelProvider);
       ref.invalidate(transactionViewModelProvider);

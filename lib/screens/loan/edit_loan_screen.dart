@@ -5,6 +5,7 @@ import 'package:rocket_pocket/data/local/database.dart' as db;
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/repositories/loan_repository.dart';
+import 'package:rocket_pocket/services/loan_reminder_service.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 
 class EditLoanScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,8 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
   late LoanStatus _status;
   late DateTime _startDate;
   late DateTime _dueDate;
+  late bool _isReminderEnabled;
+  late int _reminderDaysBefore;
   bool _saving = false;
 
   @override
@@ -42,6 +45,8 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
     _status = widget.loan.status;
     _startDate = widget.loan.startDate;
     _dueDate = widget.loan.dueDate;
+    _isReminderEnabled = widget.loan.isReminderEnabled;
+    _reminderDaysBefore = widget.loan.reminderDaysBefore;
   }
 
   @override
@@ -70,10 +75,19 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
         status: _status,
         startDate: lockScheduleFields ? widget.loan.startDate : _startDate,
         dueDate: lockScheduleFields ? widget.loan.dueDate : _dueDate,
+        isReminderEnabled: _isReminderEnabled,
+        reminderDaysBefore: _reminderDaysBefore,
       );
       await ref
           .read(loanViewModelProvider.notifier)
           .updateLoan(updated.toUpdateCompanion());
+
+      final reminderService = ref.read(loanReminderServiceProvider);
+      if (_isReminderEnabled) {
+        await reminderService.scheduleForLoan(updated.id!);
+      } else {
+        await reminderService.cancelForLoan(updated.id!);
+      }
       if (mounted) context.pop();
     } catch (_) {
       if (mounted) {
@@ -217,6 +231,43 @@ class _EditLoanScreenState extends ConsumerState<EditLoanScreen> {
                         ),
                         maxLines: 2,
                         textCapitalization: TextCapitalization.sentences,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        secondary: const Icon(
+                          Icons.notifications_active_outlined,
+                        ),
+                        title: const Text('Installment Reminder'),
+                        subtitle: const Text(
+                          'Override reminder for this loan.',
+                        ),
+                        value: _isReminderEnabled,
+                        onChanged: (value) {
+                          setState(() => _isReminderEnabled = value);
+                        },
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        children:
+                            const [0, 1, 2, 3, 5, 7, 14]
+                                .map(
+                                  (days) => ChoiceChip(
+                                    label: Text(
+                                      days == 0 ? 'On due date' : '$days d',
+                                    ),
+                                    selected: _reminderDaysBefore == days,
+                                    onSelected:
+                                        _isReminderEnabled
+                                            ? (_) => setState(
+                                              () => _reminderDaysBefore = days,
+                                            )
+                                            : null,
+                                  ),
+                                )
+                                .toList(),
                       ),
 
                       const SizedBox(height: 24),

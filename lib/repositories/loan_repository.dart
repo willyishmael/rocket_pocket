@@ -78,6 +78,26 @@ class LoanRepository {
     }
   }
 
+  Future<int> setInstallmentReminderScheduledAt(
+    int installmentId,
+    DateTime? scheduledAt,
+  ) async {
+    try {
+      return await (db.update(db.loanInstallments)
+        ..where((tbl) => tbl.id.equals(installmentId))).write(
+        LoanInstallmentsCompanion(
+          reminderScheduledAt: Value(scheduledAt),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    } catch (e, stack) {
+      DatabaseError(
+        'Failed to update installment reminder schedule',
+        stack,
+      ).throwError();
+    }
+  }
+
   Future<LoanInstallment?> getNextUnpaidInstallment(int loanId) async {
     try {
       return await (db.select(db.loanInstallments)
