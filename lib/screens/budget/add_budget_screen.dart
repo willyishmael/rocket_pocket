@@ -177,6 +177,8 @@ class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
 
   String _periodLabel(BudgetPeriod period) {
     switch (period) {
+      case BudgetPeriod.daily:
+        return 'Daily';
       case BudgetPeriod.weekly:
         return 'Weekly';
       case BudgetPeriod.monthly:

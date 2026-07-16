@@ -170,6 +170,8 @@ class _BudgetCard extends ConsumerWidget {
 
   String _periodLabel(BudgetPeriod period) {
     switch (period) {
+      case BudgetPeriod.daily:
+        return 'Daily';
       case BudgetPeriod.weekly:
         return 'Weekly';
       case BudgetPeriod.monthly:
