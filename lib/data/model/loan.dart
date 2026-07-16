@@ -5,9 +5,21 @@ import 'package:rocket_pocket/data/model/enums.dart';
 class Loan {
   int? id;
   final LoanType type;
+  final LoanFinancingKind financingKind;
   final String counterpartyName;
   final String currency;
   final double amount;
+  final double principalAmount;
+  final double downPaymentAmount;
+  final double financedAmount;
+  final LoanInterestModel interestModel;
+  final double annualInterestRatePercent;
+  final InstallmentMode installmentMode;
+  final int installmentCount;
+  final int? paymentDayOfMonth;
+  final DateTime? firstInstallmentDate;
+  final bool isReminderEnabled;
+  final int reminderDaysBefore;
   final String description;
   final DateTime startDate;
   final DateTime dueDate;
@@ -18,23 +30,48 @@ class Loan {
   Loan({
     this.id,
     required this.type,
+    this.financingKind = LoanFinancingKind.cashLoan,
     required this.counterpartyName,
     required this.currency,
     required this.amount,
+    double? principalAmount,
+    this.downPaymentAmount = 0,
+    double? financedAmount,
+    this.interestModel = LoanInterestModel.flat,
+    this.annualInterestRatePercent = 0,
+    this.installmentMode = InstallmentMode.fixed,
+    this.installmentCount = 1,
+    this.paymentDayOfMonth,
+    this.firstInstallmentDate,
+    this.isReminderEnabled = true,
+    this.reminderDaysBefore = 3,
     required this.description,
     required this.startDate,
     required this.dueDate,
     required this.status,
     required this.repaidAmount,
     required this.createdAt,
-  });
+  }) : principalAmount = principalAmount ?? amount,
+       financedAmount = financedAmount ?? amount;
 
   Loan copyWith({
     int? id,
     LoanType? type,
+    LoanFinancingKind? financingKind,
     String? counterpartyName,
     String? currency,
     double? amount,
+    double? principalAmount,
+    double? downPaymentAmount,
+    double? financedAmount,
+    LoanInterestModel? interestModel,
+    double? annualInterestRatePercent,
+    InstallmentMode? installmentMode,
+    int? installmentCount,
+    Object? paymentDayOfMonth = _sentinel,
+    Object? firstInstallmentDate = _sentinel,
+    bool? isReminderEnabled,
+    int? reminderDaysBefore,
     String? description,
     DateTime? startDate,
     DateTime? dueDate,
@@ -45,9 +82,28 @@ class Loan {
     return Loan(
       id: id ?? this.id,
       type: type ?? this.type,
+      financingKind: financingKind ?? this.financingKind,
       counterpartyName: counterpartyName ?? this.counterpartyName,
       currency: currency ?? this.currency,
       amount: amount ?? this.amount,
+      principalAmount: principalAmount ?? this.principalAmount,
+      downPaymentAmount: downPaymentAmount ?? this.downPaymentAmount,
+      financedAmount: financedAmount ?? this.financedAmount,
+      interestModel: interestModel ?? this.interestModel,
+      annualInterestRatePercent:
+          annualInterestRatePercent ?? this.annualInterestRatePercent,
+      installmentMode: installmentMode ?? this.installmentMode,
+      installmentCount: installmentCount ?? this.installmentCount,
+      paymentDayOfMonth:
+          paymentDayOfMonth == _sentinel
+              ? this.paymentDayOfMonth
+              : paymentDayOfMonth as int?,
+      firstInstallmentDate:
+          firstInstallmentDate == _sentinel
+              ? this.firstInstallmentDate
+              : firstInstallmentDate as DateTime?,
+      isReminderEnabled: isReminderEnabled ?? this.isReminderEnabled,
+      reminderDaysBefore: reminderDaysBefore ?? this.reminderDaysBefore,
       description: description ?? this.description,
       startDate: startDate ?? this.startDate,
       dueDate: dueDate ?? this.dueDate,
@@ -61,9 +117,21 @@ class Loan {
     return Loan(
       id: row.id,
       type: row.type,
+      financingKind: LoanFinancingKind.values.byName(row.financingKind),
       counterpartyName: row.counterpartyName,
       currency: row.currency,
       amount: row.amount,
+      principalAmount: row.principalAmount,
+      downPaymentAmount: row.downPaymentAmount,
+      financedAmount: row.financedAmount,
+      interestModel: LoanInterestModel.values.byName(row.interestModel),
+      annualInterestRatePercent: row.annualInterestRatePercent,
+      installmentMode: InstallmentMode.values.byName(row.installmentMode),
+      installmentCount: row.installmentCount,
+      paymentDayOfMonth: row.paymentDayOfMonth,
+      firstInstallmentDate: row.firstInstallmentDate,
+      isReminderEnabled: row.isReminderEnabled,
+      reminderDaysBefore: row.reminderDaysBefore,
       description: row.description,
       startDate: row.startDate,
       dueDate: row.dueDate,
@@ -78,9 +146,21 @@ class Loan {
   db.LoansCompanion toInsertCompanion() {
     return db.LoansCompanion.insert(
       type: type,
+      financingKind: Value(financingKind.name),
       counterpartyName: counterpartyName,
       currency: Value(currency),
       amount: amount,
+      principalAmount: Value(principalAmount),
+      downPaymentAmount: Value(downPaymentAmount),
+      financedAmount: Value(financedAmount),
+      interestModel: Value(interestModel.name),
+      annualInterestRatePercent: Value(annualInterestRatePercent),
+      installmentMode: Value(installmentMode.name),
+      installmentCount: Value(installmentCount),
+      paymentDayOfMonth: Value(paymentDayOfMonth),
+      firstInstallmentDate: Value(firstInstallmentDate),
+      isReminderEnabled: Value(isReminderEnabled),
+      reminderDaysBefore: Value(reminderDaysBefore),
       description: description,
       startDate: startDate,
       dueDate: dueDate,
@@ -99,9 +179,21 @@ class Loan {
     return db.LoansCompanion(
       id: Value(id!),
       type: Value(type),
+      financingKind: Value(financingKind.name),
       counterpartyName: Value(counterpartyName),
       currency: Value(currency),
       amount: Value(amount),
+      principalAmount: Value(principalAmount),
+      downPaymentAmount: Value(downPaymentAmount),
+      financedAmount: Value(financedAmount),
+      interestModel: Value(interestModel.name),
+      annualInterestRatePercent: Value(annualInterestRatePercent),
+      installmentMode: Value(installmentMode.name),
+      installmentCount: Value(installmentCount),
+      paymentDayOfMonth: Value(paymentDayOfMonth),
+      firstInstallmentDate: Value(firstInstallmentDate),
+      isReminderEnabled: Value(isReminderEnabled),
+      reminderDaysBefore: Value(reminderDaysBefore),
       description: Value(description),
       startDate: Value(startDate),
       dueDate: Value(dueDate),
@@ -121,9 +213,21 @@ class Loan {
     return db.Loan(
       id: id!,
       type: type,
+      financingKind: financingKind.name,
       counterpartyName: counterpartyName,
       currency: currency,
       amount: amount,
+      principalAmount: principalAmount,
+      downPaymentAmount: downPaymentAmount,
+      financedAmount: financedAmount,
+      interestModel: interestModel.name,
+      annualInterestRatePercent: annualInterestRatePercent,
+      installmentMode: installmentMode.name,
+      installmentCount: installmentCount,
+      paymentDayOfMonth: paymentDayOfMonth,
+      firstInstallmentDate: firstInstallmentDate,
+      isReminderEnabled: isReminderEnabled,
+      reminderDaysBefore: reminderDaysBefore,
       description: description,
       startDate: startDate,
       dueDate: dueDate,
@@ -134,3 +238,5 @@ class Loan {
     );
   }
 }
+
+const Object _sentinel = Object();

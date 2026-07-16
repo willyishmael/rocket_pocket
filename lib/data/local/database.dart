@@ -8,6 +8,7 @@ import 'package:rocket_pocket/data/local/default_values/default_categories.dart'
 import 'package:rocket_pocket/data/local/default_values/default_gradients.dart';
 import 'package:rocket_pocket/data/local/tables/budgets.dart';
 import 'package:rocket_pocket/data/local/tables/color_gradients.dart';
+import 'package:rocket_pocket/data/local/tables/loan_installments.dart';
 import 'package:rocket_pocket/data/local/tables/loans.dart';
 import 'package:rocket_pocket/data/local/tables/pockets.dart';
 import 'package:rocket_pocket/data/local/tables/transaction_categories.dart';
@@ -32,6 +33,7 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
     Pockets,
     TransactionCategories,
     Loans,
+    LoanInstallments,
     Transactions,
     ColorGradients,
     Budgets,
