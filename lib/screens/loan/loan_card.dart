@@ -22,6 +22,11 @@ class LoanCard extends StatelessWidget {
     final isOverdue =
         loan.status == LoanStatus.ongoing &&
         loan.dueDate.isBefore(DateTime.now());
+    final nextDueDate = loan.firstInstallmentDate ?? loan.dueDate;
+    final nextDueLabel =
+        loan.status == LoanStatus.completed
+            ? 'Schedule completed'
+            : 'Next due ${_formatDate(nextDueDate)}';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -76,6 +81,24 @@ class LoanCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            _MiniMetaChip(
+                              label:
+                                  loan.financingKind ==
+                                          LoanFinancingKind.purchaseInstallment
+                                      ? 'Purchase Installment'
+                                      : 'Cash Loan',
+                            ),
+                            if (loan.installmentCount > 1)
+                              _MiniMetaChip(
+                                label: '${loan.installmentCount} installments',
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -174,7 +197,7 @@ class LoanCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Due ${_formatDate(loan.dueDate)}',
+                    nextDueLabel,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color:
                           isOverdue
@@ -193,6 +216,30 @@ class LoanCard extends StatelessWidget {
 
   String _formatDate(DateTime dt) =>
       '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+}
+
+class _MiniMetaChip extends StatelessWidget {
+  final String label;
+
+  const _MiniMetaChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
 }
 
 class _StatusChip extends StatelessWidget {

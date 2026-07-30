@@ -8,6 +8,7 @@ import 'package:rocket_pocket/data/local/default_values/default_categories.dart'
 import 'package:rocket_pocket/data/local/default_values/default_gradients.dart';
 import 'package:rocket_pocket/data/local/tables/budgets.dart';
 import 'package:rocket_pocket/data/local/tables/color_gradients.dart';
+import 'package:rocket_pocket/data/local/tables/loan_installments.dart';
 import 'package:rocket_pocket/data/local/tables/loans.dart';
 import 'package:rocket_pocket/data/local/tables/pockets.dart';
 import 'package:rocket_pocket/data/local/tables/transaction_categories.dart';
@@ -32,6 +33,7 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
     Pockets,
     TransactionCategories,
     Loans,
+    LoanInstallments,
     Transactions,
     ColorGradients,
     Budgets,
@@ -63,7 +65,61 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
     },
+    beforeOpen: (details) async {
+      await _reconcileLoanLifecycle();
+    },
   );
+
+  Future<void> _reconcileLoanLifecycle() async {
+    final now = DateTime.now();
+
+    await (update(loanInstallments)..where(
+      (tbl) =>
+          tbl.status.equals(InstallmentStatus.unpaid.name) &
+          tbl.dueDate.isSmallerThanValue(now),
+    )).write(
+      LoanInstallmentsCompanion(
+        status: Value(InstallmentStatus.overdue.name),
+        updatedAt: Value(now),
+      ),
+    );
+
+    final allLoans = await select(loans).get();
+    for (final loan in allLoans) {
+      final lines =
+          await (select(loanInstallments)
+            ..where((tbl) => tbl.loanId.equals(loan.id))).get();
+      if (lines.isEmpty) {
+        continue;
+      }
+
+      final repaidAmount = lines.fold<double>(
+        0,
+        (sum, line) => sum + line.paidAmount,
+      );
+      final hasOutstanding = lines.any(
+        (line) => line.status != InstallmentStatus.paid.name,
+      );
+      final hasOverdue = lines.any(
+        (line) => line.status == InstallmentStatus.overdue.name,
+      );
+
+      final nextStatus =
+          !hasOutstanding
+              ? LoanStatus.completed
+              : hasOverdue
+              ? LoanStatus.overdue
+              : LoanStatus.ongoing;
+
+      await (update(loans)..where((tbl) => tbl.id.equals(loan.id))).write(
+        LoansCompanion(
+          repaidAmount: Value(repaidAmount),
+          status: Value(nextStatus),
+          updatedAt: Value(now),
+        ),
+      );
+    }
+  }
 }
 
 LazyDatabase _openConnection() {

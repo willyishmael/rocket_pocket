@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 
 class LoanDetailInfoCard extends StatelessWidget {
@@ -22,9 +23,31 @@ class LoanDetailInfoCard extends StatelessWidget {
         child: Column(
           children: [
             _InfoRow(
+              icon: Icons.category_outlined,
+              label: 'Financing Type',
+              value:
+                  loan.financingKind == LoanFinancingKind.purchaseInstallment
+                      ? 'Purchase Installment'
+                      : 'Cash Loan',
+            ),
+            const Divider(height: 20),
+            _InfoRow(
               icon: Icons.calendar_today_outlined,
               label: 'Start Date',
               value: _formatDate(loan.startDate),
+            ),
+            const Divider(height: 20),
+            _InfoRow(
+              icon: Icons.format_list_numbered,
+              label: 'Installments',
+              value: '${loan.installmentCount}',
+            ),
+            const Divider(height: 20),
+            _InfoRow(
+              icon: Icons.percent,
+              label: 'Interest',
+              value:
+                  '${loan.monthlyInterestRatePercent.toStringAsFixed(2)}% monthly',
             ),
             const Divider(height: 20),
             _InfoRow(
@@ -33,6 +56,22 @@ class LoanDetailInfoCard extends StatelessWidget {
               value: _formatDate(loan.dueDate),
               valueColor: isOverdue ? colorScheme.error : null,
             ),
+            if (loan.firstInstallmentDate != null) ...[
+              const Divider(height: 20),
+              _InfoRow(
+                icon: Icons.schedule,
+                label: 'First Installment',
+                value: _formatDate(loan.firstInstallmentDate!),
+              ),
+            ],
+            if (loan.downPaymentAmount > 0) ...[
+              const Divider(height: 20),
+              _InfoRow(
+                icon: Icons.south_west,
+                label: 'Down Payment',
+                value: loan.downPaymentAmount.toStringAsFixed(2),
+              ),
+            ],
             if (loan.description.isNotEmpty) ...[
               const Divider(height: 20),
               _InfoRow(

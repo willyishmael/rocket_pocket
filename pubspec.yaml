@@ -29,6 +29,9 @@ dependencies:
   emoji_picker_flutter: ^4.4.0
   package_info_plus: ^10.1.0
   shared_preferences: ^2.5.5
+  flutter_local_notifications: ^17.2.2
+  timezone: ^0.9.4
+  flutter_timezone: ^3.0.1
 
 dev_dependencies:
   flutter_test:

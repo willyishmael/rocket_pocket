@@ -10,6 +10,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final reminderDefaults = ref.watch(loanReminderDefaultsProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -92,30 +93,80 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
 
+                _SectionHeader('Loan Reminders'),
+                SwitchListTile.adaptive(
+                  secondary: const Icon(Icons.notifications_active_outlined),
+                  title: const Text('Enable by default'),
+                  subtitle: const Text(
+                    'New loans will inherit this reminder toggle.',
+                  ),
+                  value: reminderDefaults.enabled,
+                  onChanged:
+                      (value) => ref
+                          .read(loanReminderDefaultsProvider.notifier)
+                          .setEnabled(value),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.schedule_outlined),
+                  title: const Text('Default Reminder Offset'),
+                  subtitle: Text(
+                    '${reminderDefaults.daysBefore} days before due date',
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Wrap(
+                    spacing: 8,
+                    children:
+                        const [0, 1, 2, 3, 5, 7, 14]
+                            .map(
+                              (days) => ChoiceChip(
+                                label: Text(
+                                  days == 0 ? 'On due date' : '$days d',
+                                ),
+                                selected: reminderDefaults.daysBefore == days,
+                                onSelected:
+                                    (_) => ref
+                                        .read(
+                                          loanReminderDefaultsProvider.notifier,
+                                        )
+                                        .setDaysBefore(days),
+                              ),
+                            )
+                            .toList(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
                 // ── About ─────────────────────────────────────────────────────
                 _SectionHeader('About'),
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('App Version'),
-                  trailing: ref.watch(appVersionProvider).when(
-                    data: (version) => Text(
-                      version,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                  trailing: ref
+                      .watch(appVersionProvider)
+                      .when(
+                        data:
+                            (version) => Text(
+                              version,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                        loading:
+                            () => const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                        error:
+                            (_, __) => Text(
+                              'Unknown',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                       ),
-                    ),
-                    loading: () => const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    error: (_, __) => Text(
-                      'Unknown',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.article_outlined),

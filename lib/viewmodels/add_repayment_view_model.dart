@@ -9,6 +9,7 @@ import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/loan_repository.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
+import 'package:rocket_pocket/services/loan_reminder_service.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
@@ -109,22 +110,44 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
               ? TransactionType.loanCollection
               : TransactionType.loanRepayment;
 
-      if (current.selectedPocket != null &&
-          current.selectedPocket!.currency != loan.currency) {
+      final selectedPocketId = current.selectedPocket?.id;
+      final latestSelectedPocket =
+          selectedPocketId == null
+              ? null
+              : await _pocketRepository.getPocketById(selectedPocketId);
+
+      if (selectedPocketId != null && latestSelectedPocket == null) {
+        state = AsyncData(current);
+        return;
+      }
+
+      if (latestSelectedPocket != null &&
+          latestSelectedPocket.currency != loan.currency) {
         state = AsyncData(current);
         return;
       }
 
       // Repayment (money out) requires enough balance when a pocket is selected.
       if (transactionType == TransactionType.loanRepayment &&
-          current.selectedPocket != null &&
-          current.amount > current.selectedPocket!.balance) {
+          latestSelectedPocket != null &&
+          current.amount > latestSelectedPocket.balance) {
         state = AsyncData(current);
         return;
       }
 
-      // Guard against overpayment: clamp to the remaining balance.
-      final remaining = loan.amount - loan.repaidAmount;
+      final installments = await _loanRepository.getInstallmentsByLoanId(
+        loan.id!,
+      );
+      final installmentRemaining = installments.fold<double>(0, (sum, line) {
+        final lineRemaining = line.totalDue - line.paidAmount;
+        return sum + (lineRemaining > 0 ? lineRemaining : 0);
+      });
+
+      // Guard against overpayment: clamp to the remaining schedule balance.
+      final remaining =
+          installmentRemaining > 0
+              ? installmentRemaining
+              : (loan.amount - loan.repaidAmount);
       final amount = current.amount.clamp(0.0, remaining);
       final trimmedDescription = current.description.trim();
       final defaultDescription =
@@ -151,7 +174,7 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
         );
 
         // Update pocket balance only when transaction is linked to a pocket.
-        final pocket = current.selectedPocket;
+        final pocket = latestSelectedPocket;
         if (pocket != null) {
           if (transactionType.isPositive) {
             // loanCollection — money coming in, credit pocket
@@ -166,19 +189,14 @@ class AddRepaymentViewModel extends AsyncNotifier<AddRepaymentState> {
           }
         }
 
-        // Update loan's repaid amount.
-        final newRepaidAmount = loan.repaidAmount + amount;
-        await _loanRepository.updateRepaidAmount(loan.id!, newRepaidAmount);
-
-        // Auto-complete the loan when fully repaid.
-        if (newRepaidAmount >= loan.amount &&
-            loan.status != LoanStatus.completed) {
-          await _loanRepository.updateLoanStatus(
-            loan.id!,
-            LoanStatus.completed,
-          );
-        }
+        await _loanRepository.applyRepaymentToInstallments(
+          loanId: loan.id!,
+          amount: amount,
+          paidAt: current.date,
+        );
       });
+
+      await ref.read(loanReminderServiceProvider).scheduleForLoan(loan.id!);
 
       ref.invalidate(pocketViewModelProvider);
       ref.invalidate(transactionViewModelProvider);
