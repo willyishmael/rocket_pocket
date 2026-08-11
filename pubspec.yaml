@@ -22,6 +22,7 @@ dependencies:
   go_router: ^17.1.0
   flutter_adaptive_scaffold: ^0.3.2
   flutter_swiper_view: ^1.1.8
+  fl_chart: ^1.1.1
 
   country_currency_pickers: ^3.0.0
   currency_text_input_formatter: ^2.3.0
