@@ -6,11 +6,17 @@ import 'package:rocket_pocket/viewmodels/dashboard_statistics_view_model.dart';
 class DashboardStatisticsSection extends StatelessWidget {
   final DashboardStatisticsState state;
   final String currency;
+  final VoidCallback? onShowMore;
+  final ValueChanged<DashboardChartSlice>? onCategoryTap;
+  final int maxVisibleCategoryRows;
 
   const DashboardStatisticsSection({
     super.key,
     required this.state,
     required this.currency,
+    this.onShowMore,
+    this.onCategoryTap,
+    this.maxVisibleCategoryRows = 3,
   });
 
   @override
@@ -29,6 +35,8 @@ class DashboardStatisticsSection extends StatelessWidget {
               expenseSlices: state.expenseSlices,
               incomeSlices: state.incomeSlices,
               currency: currency,
+              onCategoryTap: onCategoryTap,
+              maxVisibleCategoryRows: maxVisibleCategoryRows,
             )
           else
             Card(
@@ -41,6 +49,16 @@ class DashboardStatisticsSection extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 12),
+          if (onShowMore != null && state.hasCharts)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: onShowMore,
+                icon: const Icon(Icons.read_more),
+                label: const Text('Show more'),
+              ),
+            ),
+          if (onShowMore != null && state.hasCharts) const SizedBox(height: 12),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -88,28 +106,61 @@ class _SummaryCard extends StatelessWidget {
       color: colorScheme.primaryContainer.withValues(alpha: 0.5),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _AmountColumn(
-                label: 'Income',
-                value: CurrencyUtils.format(state.totals.income, currency),
-                color: colorScheme.primary,
-              ),
+            _AmountColumn(
+              label: 'Total Balance',
+              value: CurrencyUtils.format(state.totalBalance, currency),
+              color: colorScheme.onPrimaryContainer,
             ),
-            Expanded(
-              child: _AmountColumn(
-                label: 'Expense',
-                value: CurrencyUtils.format(state.totals.expense, currency),
-                color: colorScheme.error,
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _AmountColumn(
+                    label: 'Opening',
+                    value: CurrencyUtils.format(state.openingBalance, currency),
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                Expanded(
+                  child: _AmountColumn(
+                    label: 'Ending',
+                    value: CurrencyUtils.format(state.endingBalance, currency),
+                    color:
+                        state.endingBalance >= state.openingBalance
+                            ? colorScheme.primary
+                            : colorScheme.error,
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: _AmountColumn(
-                label: 'Net',
-                value: CurrencyUtils.format(net, currency),
-                color: net >= 0 ? colorScheme.primary : colorScheme.error,
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _AmountColumn(
+                    label: 'Income',
+                    value: CurrencyUtils.format(state.totals.income, currency),
+                    color: colorScheme.primary,
+                  ),
+                ),
+                Expanded(
+                  child: _AmountColumn(
+                    label: 'Expense',
+                    value: CurrencyUtils.format(state.totals.expense, currency),
+                    color: colorScheme.error,
+                  ),
+                ),
+                Expanded(
+                  child: _AmountColumn(
+                    label: 'Net',
+                    value: CurrencyUtils.format(net, currency),
+                    color: net >= 0 ? colorScheme.primary : colorScheme.error,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -154,11 +205,15 @@ class _ChartsGrid extends StatelessWidget {
   final List<DashboardChartSlice> expenseSlices;
   final List<DashboardChartSlice> incomeSlices;
   final String currency;
+  final ValueChanged<DashboardChartSlice>? onCategoryTap;
+  final int maxVisibleCategoryRows;
 
   const _ChartsGrid({
     required this.expenseSlices,
     required this.incomeSlices,
     required this.currency,
+    required this.onCategoryTap,
+    required this.maxVisibleCategoryRows,
   });
 
   @override
@@ -170,11 +225,15 @@ class _ChartsGrid extends StatelessWidget {
           title: 'Expenses by Category',
           slices: expenseSlices,
           currency: currency,
+          onCategoryTap: onCategoryTap,
+          maxVisibleRows: maxVisibleCategoryRows,
         );
         final incomeCard = _PieChartCard(
           title: 'Income by Category',
           slices: incomeSlices,
           currency: currency,
+          onCategoryTap: onCategoryTap,
+          maxVisibleRows: maxVisibleCategoryRows,
         );
 
         if (isWide) {
@@ -199,11 +258,15 @@ class _PieChartCard extends StatelessWidget {
   final String title;
   final List<DashboardChartSlice> slices;
   final String currency;
+  final ValueChanged<DashboardChartSlice>? onCategoryTap;
+  final int maxVisibleRows;
 
   const _PieChartCard({
     required this.title,
     required this.slices,
     required this.currency,
+    required this.onCategoryTap,
+    required this.maxVisibleRows,
   });
 
   @override
@@ -218,78 +281,146 @@ class _PieChartCard extends StatelessWidget {
           children: [
             Text(title, style: theme.textTheme.titleSmall),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 130,
-              child:
-                  slices.isEmpty
-                      ? Center(
-                        child: Text(
-                          'No data',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      )
-                      : PieChart(
+            if (slices.isEmpty)
+              SizedBox(
+                height: 130,
+                child: Center(
+                  child: Text('No data', style: theme.textTheme.bodyMedium),
+                ),
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: SizedBox(
+                      height: 150,
+                      child: PieChart(
                         PieChartData(
                           sectionsSpace: 2,
-                          centerSpaceRadius: 30,
-                          sections: _buildSections(theme.colorScheme),
+                          centerSpaceRadius: 28,
+                          sections: _buildSections(),
                         ),
                       ),
-            ),
-            const SizedBox(height: 12),
-            ...slices
-                .take(3)
-                .map(
-                  (slice) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 5,
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: Text(
-                            slice.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall,
+                        for (
+                          var i = 0;
+                          i < slices.take(maxVisibleRows).length;
+                          i++
+                        )
+                          _CategoryBreakdownRow(
+                            color: _popPalette[i % _popPalette.length],
+                            slice: slices[i],
+                            currency: currency,
+                            onTap:
+                                onCategoryTap == null
+                                    ? null
+                                    : () => onCategoryTap!(slices[i]),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          CurrencyUtils.format(slice.amount, currency),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                ),
+                ],
+              ),
           ],
         ),
       ),
     );
   }
 
-  List<PieChartSectionData> _buildSections(ColorScheme colorScheme) {
-    final palette = [
-      colorScheme.primary,
-      colorScheme.secondary,
-      colorScheme.tertiary,
-      colorScheme.primaryContainer,
-      colorScheme.secondaryContainer,
-      colorScheme.tertiaryContainer,
-    ];
-
+  List<PieChartSectionData> _buildSections() {
     return [
       for (var index = 0; index < slices.length; index++)
         PieChartSectionData(
           value: slices[index].amount,
-          color: palette[index % palette.length],
+          color: _popPalette[index % _popPalette.length],
           radius: 42,
           showTitle: false,
         ),
     ];
   }
 }
+
+class _CategoryBreakdownRow extends StatelessWidget {
+  final Color color;
+  final DashboardChartSlice slice;
+  final String currency;
+  final VoidCallback? onTap;
+
+  const _CategoryBreakdownRow({
+    required this.color,
+    required this.slice,
+    required this.currency,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              margin: const EdgeInsets.only(top: 4),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                slice.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodySmall,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${slice.percentage.toStringAsFixed(1)}%',
+                  style: textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  CurrencyUtils.format(slice.amount, currency),
+                  style: textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+const _popPalette = <Color>[
+  Color(0xFFEF4444),
+  Color(0xFFF97316),
+  Color(0xFFFACC15),
+  Color(0xFF22C55E),
+  Color(0xFF06B6D4),
+  Color(0xFF3B82F6),
+  Color(0xFF6366F1),
+  Color(0xFFEC4899),
+];
 
 class _HighlightCard extends StatelessWidget {
   final String title;

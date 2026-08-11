@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/data/model/statistics.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
-import 'package:rocket_pocket/screens/dashboard/dashboard_screen.dart';
+import 'package:rocket_pocket/router/paths.dart';
+import 'package:rocket_pocket/screens/statistics/statistics_breakdown_screen.dart';
+import 'package:rocket_pocket/screens/statistics/statistics_category_transactions_screen.dart';
+import 'package:rocket_pocket/screens/statistics/statistics_screen.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
@@ -17,7 +21,7 @@ import '../helpers/test_data_builders.dart';
 
 void main() {
   testWidgets(
-    'keeps pockets slider on dashboard and does not render statistics section',
+    'show more and category drilldown navigate to transactions list',
     (tester) async {
       final container = ProviderContainer(
         overrides: [
@@ -27,13 +31,7 @@ void main() {
                 id: 10,
                 name: 'Wallet',
                 currency: 'USD',
-                icon: '\$',
-              ),
-              buildPocketModel(
-                id: 11,
-                name: 'Savings',
-                currency: 'USD',
-                icon: '\$',
+                balance: 1000,
               ),
             ]),
           ),
@@ -44,16 +42,27 @@ void main() {
                 senderPocketId: 10,
                 type: TransactionType.expense,
                 categoryId: 1,
-                amount: 150,
+                amount: 120,
+                description: 'Lunch',
                 date: DateTime(2026, 4, 5),
               ),
               buildTransactionModel(
                 id: 2,
-                senderPocketId: 11,
+                senderPocketId: 10,
+                type: TransactionType.expense,
+                categoryId: 1,
+                amount: 80,
+                description: 'Dinner',
+                date: DateTime(2026, 4, 8),
+              ),
+              buildTransactionModel(
+                id: 3,
+                senderPocketId: 10,
                 type: TransactionType.income,
                 categoryId: 2,
-                amount: 400,
-                date: DateTime(2026, 3, 8),
+                amount: 500,
+                description: 'Salary',
+                date: DateTime(2026, 4, 2),
               ),
             ]),
           ),
@@ -69,23 +78,54 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
+      addTearDown(() async {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+
+      final router = GoRouter(
+        initialLocation: Paths.statistics,
+        routes: [
+          GoRoute(
+            path: Paths.statistics,
+            builder: (context, state) => const StatisticsScreen(),
+          ),
+          GoRoute(
+            path: Paths.statisticsShowMore,
+            builder: (context, state) => const StatisticsBreakdownScreen(),
+          ),
+          GoRoute(
+            path: Paths.statisticsCategoryTransactions,
+            builder: (context, state) {
+              final drilldown = state.extra! as DashboardCategoryDrilldown;
+              return StatisticsCategoryTransactionsScreen(drilldown: drilldown);
+            },
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const MaterialApp(home: DashboardScreen()),
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Pockets'), findsOneWidget);
-      expect(find.text('Statistics'), findsNothing);
-
-      await tester.drag(find.byType(Swiper), const Offset(-350, 0));
+      await tester.tap(find.text('Show more'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Pockets'), findsOneWidget);
-      expect(find.text('Statistics'), findsNothing);
+      expect(find.text('Full Category Breakdown'), findsOneWidget);
+
+      await tester.tap(find.text('Food').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Food Transactions'), findsOneWidget);
+      expect(find.text('Lunch'), findsOneWidget);
+      expect(find.text('Dinner'), findsOneWidget);
     },
   );
 }

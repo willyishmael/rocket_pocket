@@ -1,22 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
+import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/data/model/statistics.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
+import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
-final dashboardSelectedMonthProvider =
-    NotifierProvider.family<DashboardSelectedMonthViewModel, DateTime?, int>(
-      DashboardSelectedMonthViewModel.new,
-    );
+final dashboardSelectedMonthProvider = NotifierProvider.family<
+  DashboardSelectedMonthViewModel,
+  DateTime?,
+  DashboardStatisticsScope
+>(DashboardSelectedMonthViewModel.new);
 
 class DashboardSelectedMonthViewModel extends Notifier<DateTime?> {
-  DashboardSelectedMonthViewModel(this.pocketId);
+  DashboardSelectedMonthViewModel(this.scope);
 
-  final int pocketId;
+  final DashboardStatisticsScope scope;
 
   @override
   DateTime? build() => null;
@@ -26,47 +30,134 @@ class DashboardSelectedMonthViewModel extends Notifier<DateTime?> {
   }
 }
 
-final dashboardStatisticsProvider =
-    Provider.family<AsyncValue<DashboardStatisticsState>, int>((ref, pocketId) {
-      final transactionsAsync = ref.watch(transactionViewModelProvider);
-      final budgetsAsync = ref.watch(budgetViewModelProvider);
-      final loansAsync = ref.watch(loanViewModelProvider);
-      final categoryNamesAsync = ref.watch(categoryNamesProvider);
-      final requestedMonth = ref.watch(
-        dashboardSelectedMonthProvider(pocketId),
-      );
+final dashboardStatisticsProvider = Provider.family<
+  AsyncValue<DashboardStatisticsState>,
+  DashboardStatisticsScope
+>((ref, scope) {
+  final transactionsAsync = ref.watch(transactionViewModelProvider);
+  final budgetsAsync = ref.watch(budgetViewModelProvider);
+  final loansAsync = ref.watch(loanViewModelProvider);
+  final pocketsAsync = ref.watch(pocketViewModelProvider);
+  final categoryNamesAsync = ref.watch(categoryNamesProvider);
+  final requestedMonth = ref.watch(dashboardSelectedMonthProvider(scope));
 
-      final error =
-          transactionsAsync.asError ??
-          budgetsAsync.asError ??
-          loansAsync.asError ??
-          categoryNamesAsync.asError;
-      if (error != null) {
+  final error =
+      transactionsAsync.asError ??
+      budgetsAsync.asError ??
+      loansAsync.asError ??
+      pocketsAsync.asError ??
+      categoryNamesAsync.asError;
+  if (error != null) {
+    return AsyncError(error.error, error.stackTrace);
+  }
+
+  if (!transactionsAsync.hasValue ||
+      !budgetsAsync.hasValue ||
+      !loansAsync.hasValue ||
+      !pocketsAsync.hasValue ||
+      !categoryNamesAsync.hasValue) {
+    return const AsyncLoading();
+  }
+
+  return AsyncData(
+    _buildDashboardStatistics(
+      scope: scope,
+      transactions: transactionsAsync.requireValue,
+      budgets: budgetsAsync.requireValue,
+      loans: loansAsync.requireValue,
+      pockets: pocketsAsync.requireValue,
+      categoryNames: categoryNamesAsync.requireValue,
+      requestedMonth: requestedMonth,
+    ),
+  );
+});
+
+final dashboardCategoryTransactionsProvider =
+    Provider.family<AsyncValue<List<Transaction>>, DashboardCategoryDrilldown>((
+      ref,
+      drilldown,
+    ) {
+      final transactionsAsync = ref.watch(transactionViewModelProvider);
+      if (transactionsAsync.hasError) {
+        final error = transactionsAsync.asError!;
         return AsyncError(error.error, error.stackTrace);
       }
-
-      if (!transactionsAsync.hasValue ||
-          !budgetsAsync.hasValue ||
-          !loansAsync.hasValue ||
-          !categoryNamesAsync.hasValue) {
+      if (!transactionsAsync.hasValue) {
         return const AsyncLoading();
       }
 
-      return AsyncData(
-        _buildDashboardStatistics(
-          pocketId: pocketId,
-          transactions: transactionsAsync.requireValue,
-          budgets: budgetsAsync.requireValue,
-          loans: loansAsync.requireValue,
-          categoryNames: categoryNamesAsync.requireValue,
-          requestedMonth: requestedMonth,
-        ),
+      final scopedTransactions = _filterTransactionsByScope(
+        transactionsAsync.requireValue,
+        drilldown.scope,
       );
+      final filtered = _buildCategoryTransactions(scopedTransactions, drilldown)
+        ..sort(_compareByNewestDate);
+      return AsyncData(filtered);
     });
 
+final dashboardCategoryTransactionRowsProvider = Provider.family<
+  AsyncValue<List<DashboardCategoryTransactionRow>>,
+  DashboardCategoryDrilldown
+>((ref, drilldown) {
+  final transactionsAsync = ref.watch(
+    dashboardCategoryTransactionsProvider(drilldown),
+  );
+  final pocketsAsync = ref.watch(pocketViewModelProvider);
+  final categoryNamesAsync = ref.watch(categoryNamesProvider);
+
+  final error =
+      transactionsAsync.asError ??
+      pocketsAsync.asError ??
+      categoryNamesAsync.asError;
+  if (error != null) {
+    return AsyncError(error.error, error.stackTrace);
+  }
+
+  if (!transactionsAsync.hasValue ||
+      !pocketsAsync.hasValue ||
+      !categoryNamesAsync.hasValue) {
+    return const AsyncLoading();
+  }
+
+  final categoryNames = categoryNamesAsync.requireValue;
+  final pocketCurrency = {
+    for (final pocket in pocketsAsync.requireValue)
+      if (pocket.id != null) pocket.id!: pocket.currency,
+  };
+  final pocketName = {
+    for (final pocket in pocketsAsync.requireValue)
+      if (pocket.id != null) pocket.id!: pocket.name,
+  };
+
+  // Prepare display-ready drilldown rows so the widget only renders UI.
+  final rows =
+      transactionsAsync.requireValue
+          .map(
+            (transaction) => DashboardCategoryTransactionRow(
+              transaction: transaction,
+              currency:
+                  pocketCurrency[transaction.senderPocketId] ??
+                  pocketCurrency[transaction.receiverPocketId] ??
+                  'IDR',
+              pocketName: _resolveDrilldownPocketName(transaction, pocketName),
+              categoryName:
+                  transaction.categoryId != null
+                      ? categoryNames[transaction.categoryId]
+                      : null,
+            ),
+          )
+          .toList();
+  return AsyncData(rows);
+});
+
 class DashboardStatisticsState {
+  final DashboardStatisticsScope scope;
+  final String displayCurrency;
   final List<DateTime> availableMonths;
   final DateTime? selectedMonth;
+  final double totalBalance;
+  final double openingBalance;
+  final double endingBalance;
   final DashboardSummaryTotals totals;
   final List<DashboardChartSlice> expenseSlices;
   final List<DashboardChartSlice> incomeSlices;
@@ -74,8 +165,13 @@ class DashboardStatisticsState {
   final DashboardLoanHighlight loanHighlight;
 
   const DashboardStatisticsState({
+    required this.scope,
+    required this.displayCurrency,
     required this.availableMonths,
     required this.selectedMonth,
+    required this.totalBalance,
+    required this.openingBalance,
+    required this.endingBalance,
     required this.totals,
     required this.expenseSlices,
     required this.incomeSlices,
@@ -101,10 +197,19 @@ class DashboardSummaryTotals {
 }
 
 class DashboardChartSlice {
+  final DashboardChartType chartType;
+  final int? categoryId;
   final String label;
   final double amount;
+  final double percentage;
 
-  const DashboardChartSlice({required this.label, required this.amount});
+  const DashboardChartSlice({
+    required this.chartType,
+    required this.categoryId,
+    required this.label,
+    required this.amount,
+    required this.percentage,
+  });
 }
 
 class DashboardBudgetHighlight {
@@ -140,24 +245,24 @@ class DashboardLoanHighlight {
 }
 
 DashboardStatisticsState _buildDashboardStatistics({
-  required int pocketId,
+  required DashboardStatisticsScope scope,
   required List<Transaction> transactions,
   required List<BudgetWithSpent> budgets,
   required List<Loan> loans,
+  required List<Pocket> pockets,
   required Map<int, String> categoryNames,
   required DateTime? requestedMonth,
 }) {
-  // Build a month-scoped statistics snapshot for the selected pocket only.
-  final pocketTransactions =
-      transactions.where((tx) => _belongsToPocket(tx, pocketId)).toList()
-        ..sort(_compareByNewestDate);
+  // Build a month-scoped statistics snapshot for the selected scope.
+  final scopedTransactions = _filterTransactionsByScope(transactions, scope)
+    ..sort(_compareByNewestDate);
 
-  final availableMonths = _deriveAvailableMonths(pocketTransactions);
+  final availableMonths = _deriveAvailableMonths(scopedTransactions);
   final effectiveMonth = _resolveSelectedMonth(availableMonths, requestedMonth);
   final monthTransactions =
       effectiveMonth == null
           ? const <Transaction>[]
-          : pocketTransactions
+          : scopedTransactions
               .where((tx) => _isInMonth(tx, effectiveMonth))
               .toList();
 
@@ -168,9 +273,37 @@ DashboardStatisticsState _buildDashboardStatistics({
   final expenseTransactions =
       mainChartTransactions.where(_isExpenseChartTransaction).toList();
 
+  final monthStart =
+      effectiveMonth != null
+          ? DateTime(effectiveMonth.year, effectiveMonth.month)
+          : null;
+  final openingBalance =
+      monthStart == null
+          ? 0.0
+          : scopedTransactions
+              .where((tx) {
+                final date = tx.date ?? tx.createdAt;
+                return date != null && date.isBefore(monthStart);
+              })
+              .fold(
+                0.0,
+                (sum, tx) => sum + _signedContributionForScope(tx, scope),
+              );
+  final endingBalance =
+      openingBalance +
+      monthTransactions.fold(
+        0.0,
+        (sum, tx) => sum + _signedContributionForScope(tx, scope),
+      );
+
   return DashboardStatisticsState(
+    scope: scope,
+    displayCurrency: _resolveDisplayCurrency(scope, pockets),
     availableMonths: availableMonths,
     selectedMonth: effectiveMonth,
+    totalBalance: _resolveTotalBalance(scope, pockets),
+    openingBalance: openingBalance,
+    endingBalance: endingBalance,
     totals: DashboardSummaryTotals(
       income: _sumAmounts(incomeTransactions),
       expense: _sumAmounts(expenseTransactions),
@@ -179,16 +312,34 @@ DashboardStatisticsState _buildDashboardStatistics({
     incomeSlices: _buildSlices(
       incomeTransactions,
       categoryNames,
+      chartType: DashboardChartType.income,
       fallbackLabel: 'Income',
     ),
     expenseSlices: _buildSlices(
       expenseTransactions,
       categoryNames,
+      chartType: DashboardChartType.expense,
       fallbackLabel: 'Expense',
     ),
     budgetHighlight: _buildBudgetHighlight(monthTransactions, budgets),
     loanHighlight: _buildLoanHighlight(monthTransactions, loans),
   );
+}
+
+List<Transaction> _filterTransactionsByScope(
+  List<Transaction> transactions,
+  DashboardStatisticsScope scope,
+) {
+  if (scope.type == DashboardStatisticsScopeType.allPockets) {
+    return [...transactions];
+  }
+
+  final pocketId = scope.pocketId;
+  if (pocketId == null) {
+    return const [];
+  }
+
+  return transactions.where((tx) => _belongsToPocket(tx, pocketId)).toList();
 }
 
 List<DateTime> _deriveAvailableMonths(List<Transaction> transactions) {
@@ -248,32 +399,149 @@ bool _isExpenseChartTransaction(Transaction transaction) {
 List<DashboardChartSlice> _buildSlices(
   List<Transaction> transactions,
   Map<int, String> categoryNames, {
+  required DashboardChartType chartType,
   required String fallbackLabel,
 }) {
-  // Aggregate absolute amounts per category label for pie chart slices.
-  final totalsByLabel = <String, double>{};
+  // Aggregate absolute amounts per category for pie chart slices.
+  final totalsByCategory = <_SliceCategoryKey, double>{};
 
   for (final transaction in transactions) {
+    final categoryId = transaction.categoryId;
     final label =
-        transaction.categoryId != null
-            ? categoryNames[transaction.categoryId!] ?? fallbackLabel
+        categoryId != null
+            ? categoryNames[categoryId] ?? fallbackLabel
             : fallbackLabel;
-    totalsByLabel.update(
-      label,
+    final key = _SliceCategoryKey(categoryId, label);
+    totalsByCategory.update(
+      key,
       (current) => current + transaction.amount.abs(),
       ifAbsent: () => transaction.amount.abs(),
     );
   }
 
+  final grandTotal = totalsByCategory.values.fold(
+    0.0,
+    (sum, value) => sum + value,
+  );
+
   final slices =
-      totalsByLabel.entries
+      totalsByCategory.entries
           .map(
-            (entry) =>
-                DashboardChartSlice(label: entry.key, amount: entry.value),
+            (entry) => DashboardChartSlice(
+              chartType: chartType,
+              categoryId: entry.key.categoryId,
+              label: entry.key.label,
+              amount: entry.value,
+              percentage:
+                  grandTotal == 0.0 ? 0.0 : (entry.value / grandTotal) * 100,
+            ),
           )
           .toList();
   slices.sort((left, right) => right.amount.compareTo(left.amount));
   return slices;
+}
+
+List<Transaction> _buildCategoryTransactions(
+  List<Transaction> scopedTransactions,
+  DashboardCategoryDrilldown drilldown,
+) {
+  final monthTransactions =
+      scopedTransactions.where((tx) => _isInMonth(tx, drilldown.month)).where((
+        tx,
+      ) {
+        switch (drilldown.chartType) {
+          case DashboardChartType.expense:
+            return _isExpenseChartTransaction(tx);
+          case DashboardChartType.income:
+            return _isIncomeChartTransaction(tx);
+        }
+      }).toList();
+
+  return monthTransactions.where((tx) {
+    if (drilldown.categoryId != null) {
+      return tx.categoryId == drilldown.categoryId;
+    }
+    return tx.categoryId == null;
+  }).toList();
+}
+
+String? _resolveDrilldownPocketName(
+  Transaction transaction,
+  Map<int, String> pocketName,
+) {
+  if (transaction.isTransfer) {
+    final sender = pocketName[transaction.senderPocketId] ?? '?';
+    final receiver = pocketName[transaction.receiverPocketId] ?? '?';
+    return '$sender -> $receiver';
+  }
+  return pocketName[transaction.senderPocketId] ??
+      pocketName[transaction.receiverPocketId];
+}
+
+double _resolveTotalBalance(
+  DashboardStatisticsScope scope,
+  List<Pocket> pockets,
+) {
+  if (scope.type == DashboardStatisticsScopeType.allPockets) {
+    return pockets.fold(0.0, (sum, pocket) => sum + pocket.balance);
+  }
+
+  final pocketId = scope.pocketId;
+  if (pocketId == null) {
+    return 0.0;
+  }
+  return pockets
+      .where((pocket) => pocket.id == pocketId)
+      .fold(0.0, (sum, pocket) => sum + pocket.balance);
+}
+
+String _resolveDisplayCurrency(
+  DashboardStatisticsScope scope,
+  List<Pocket> pockets,
+) {
+  if (scope.type == DashboardStatisticsScopeType.allPockets) {
+    // Assumption: first pocket currency represents the default app display currency.
+    return pockets.isNotEmpty ? pockets.first.currency : 'IDR';
+  }
+
+  final pocketId = scope.pocketId;
+  if (pocketId == null) {
+    return 'IDR';
+  }
+
+  final scopedPocket = pockets.where((pocket) => pocket.id == pocketId);
+  return scopedPocket.isNotEmpty ? scopedPocket.first.currency : 'IDR';
+}
+
+double _signedContributionForScope(
+  Transaction transaction,
+  DashboardStatisticsScope scope,
+) {
+  if (transaction.type == TransactionType.transfer) {
+    if (scope.type == DashboardStatisticsScopeType.allPockets) {
+      return 0.0;
+    }
+
+    final pocketId = scope.pocketId;
+    if (pocketId == null) {
+      return 0.0;
+    }
+    if (transaction.senderPocketId == pocketId) {
+      return -transaction.amount.abs();
+    }
+    if (transaction.receiverPocketId == pocketId) {
+      return transaction.amount.abs();
+    }
+    return 0.0;
+  }
+
+  if (transaction.type == TransactionType.adjustment) {
+    return transaction.amount;
+  }
+
+  return transaction.type.isPositive
+      ? transaction.amount.abs()
+      : -transaction.amount.abs();
 }
 
 DashboardBudgetHighlight _buildBudgetHighlight(
@@ -397,6 +665,23 @@ int _compareByNewestDate(Transaction left, Transaction right) {
   final leftDate = left.date ?? left.createdAt ?? DateTime(0);
   final rightDate = right.date ?? right.createdAt ?? DateTime(0);
   return rightDate.compareTo(leftDate);
+}
+
+class _SliceCategoryKey {
+  final int? categoryId;
+  final String label;
+
+  const _SliceCategoryKey(this.categoryId, this.label);
+
+  @override
+  bool operator ==(Object other) {
+    return other is _SliceCategoryKey &&
+        other.categoryId == categoryId &&
+        other.label == label;
+  }
+
+  @override
+  int get hashCode => Object.hash(categoryId, label);
 }
 
 const _loanTransactionTypes = {

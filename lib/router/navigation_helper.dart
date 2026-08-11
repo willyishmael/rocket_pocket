@@ -3,13 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/budget.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
+import 'package:rocket_pocket/data/model/statistics.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/router/get_page.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/screens.dart';
 
-/// NavigationHelper is a singleton class that manages the navigation for the app.
-/// This class is responsible for managing the navigation in the app.
+// NavigationHelper is a singleton class that manages app navigation.
+// This class configures and exposes the application's route tree.
 class NavigationHelper {
   static final NavigationHelper _instance = NavigationHelper._internal();
   static NavigationHelper get instance => _instance;
@@ -30,6 +31,8 @@ class NavigationHelper {
   final GlobalKey<NavigatorState> loanNavigationKey = GlobalKey<NavigatorState>(
     debugLabel: 'loanNavigationKey',
   );
+  final GlobalKey<NavigatorState> statisticsNavigationKey =
+      GlobalKey<NavigatorState>(debugLabel: 'statisticsNavigationKey');
 
   factory NavigationHelper() {
     return _instance;
@@ -332,6 +335,44 @@ class NavigationHelper {
                   }
 
                   return getPage(child: LoanScreen(), state: state);
+                },
+              ),
+            ],
+          ),
+
+          // Statistics Branch
+          StatefulShellBranch(
+            navigatorKey: statisticsNavigationKey,
+            routes: [
+              GoRoute(
+                path: Paths.statistics,
+                pageBuilder: (context, state) {
+                  return getPage(child: StatisticsScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.statisticsShowMore,
+                pageBuilder: (context, state) {
+                  return getPage(
+                    child: StatisticsBreakdownScreen(),
+                    state: state,
+                  );
+                },
+              ),
+              GoRoute(
+                path: Paths.statisticsCategoryTransactions,
+                pageBuilder: (context, state) {
+                  final extra = state.extra;
+                  if (extra is DashboardCategoryDrilldown) {
+                    return getPage(
+                      child: StatisticsCategoryTransactionsScreen(
+                        drilldown: extra,
+                      ),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: StatisticsScreen(), state: state);
                 },
               ),
             ],
