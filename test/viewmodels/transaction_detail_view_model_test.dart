@@ -9,6 +9,7 @@ import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
+import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
 import 'package:rocket_pocket/viewmodels/transaction_detail_view_model.dart';
 
@@ -18,18 +19,23 @@ class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 class MockPocketRepository extends Mock implements PocketRepository {}
 
-/// Creates an isolated container with repository overrides.
-/// Pass [database] to also override [appDatabaseProvider] (e.g. with an
-/// in-memory instance) when the viewmodel calls [database.transaction()].
+class MockTransactionCategoriesRepository extends Mock
+    implements TransactionCategoriesRepository {}
+
+// Creates an isolated container with repository overrides.
+// Pass database to also override appDatabaseProvider (for example, with an
+// in-memory instance) when the viewmodel calls database.transaction().
 ProviderContainer _makeContainer({
   required MockTransactionRepository txRepo,
   required MockPocketRepository pocketRepo,
+  required MockTransactionCategoriesRepository categoryRepo,
   localDb.AppDatabase? database,
 }) {
   return ProviderContainer(
     overrides: [
       transactionRepositoryProvider.overrideWithValue(txRepo),
       pocketRepositoryProvider.overrideWithValue(pocketRepo),
+      transactionCategoryRepositoryProvider.overrideWithValue(categoryRepo),
       if (database != null)
         localDb.appDatabaseProvider.overrideWithValue(database),
     ],
@@ -39,10 +45,12 @@ ProviderContainer _makeContainer({
 void main() {
   late MockTransactionRepository mockTxRepo;
   late MockPocketRepository mockPocketRepo;
+  late MockTransactionCategoriesRepository mockCategoryRepo;
 
   setUp(() {
     mockTxRepo = MockTransactionRepository();
     mockPocketRepo = MockPocketRepository();
+    mockCategoryRepo = MockTransactionCategoriesRepository();
   });
 
   setUpAll(() {
@@ -56,6 +64,9 @@ void main() {
     when(
       () => mockPocketRepo.getAllPockets(),
     ).thenAnswer((_) async => pockets ?? [buildPocketModel(id: 1)]);
+    when(
+      () => mockCategoryRepo.getAllTransactionCategories(),
+    ).thenAnswer((_) async => [buildCategoryRow()]);
   }
 
   group('build()', () {
@@ -65,6 +76,7 @@ void main() {
       final container = _makeContainer(
         txRepo: mockTxRepo,
         pocketRepo: mockPocketRepo,
+        categoryRepo: mockCategoryRepo,
       );
       addTearDown(container.dispose);
 
@@ -88,10 +100,14 @@ void main() {
       when(
         () => mockPocketRepo.getAllPockets(),
       ).thenAnswer((_) async => [pocket1]);
+      when(
+        () => mockCategoryRepo.getAllTransactionCategories(),
+      ).thenAnswer((_) async => [buildCategoryRow()]);
 
       final container = _makeContainer(
         txRepo: mockTxRepo,
         pocketRepo: mockPocketRepo,
+        categoryRepo: mockCategoryRepo,
       );
       addTearDown(container.dispose);
 
@@ -117,6 +133,7 @@ void main() {
       final container = _makeContainer(
         txRepo: mockTxRepo,
         pocketRepo: mockPocketRepo,
+        categoryRepo: mockCategoryRepo,
       );
       addTearDown(container.dispose);
 
@@ -159,6 +176,7 @@ void main() {
       final container = _makeContainer(
         txRepo: mockTxRepo,
         pocketRepo: mockPocketRepo,
+        categoryRepo: mockCategoryRepo,
         database: inMemoryDb,
       );
       addTearDown(container.dispose);
@@ -194,10 +212,14 @@ void main() {
         () => mockTxRepo.getTransactionById(any()),
       ).thenAnswer((_) => Completer<Transaction?>().future);
       when(() => mockPocketRepo.getAllPockets()).thenAnswer((_) async => []);
+      when(
+        () => mockCategoryRepo.getAllTransactionCategories(),
+      ).thenAnswer((_) async => [buildCategoryRow()]);
 
       final container = _makeContainer(
         txRepo: mockTxRepo,
         pocketRepo: mockPocketRepo,
+        categoryRepo: mockCategoryRepo,
       );
       addTearDown(container.dispose);
 

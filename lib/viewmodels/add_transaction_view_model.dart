@@ -133,6 +133,13 @@ class AddTransactionState {
   bool get isValid {
     if (amount <= 0) return false;
     if (selectedType == TransactionType.transfer) {
+      final senderId = senderPocket?.id;
+      final receiverId = receiverPocket?.id;
+
+      if (senderId != null && receiverId != null && senderId == receiverId) {
+        return false;
+      }
+
       return senderPocket != null && receiverPocket != null;
     }
     if (selectedType == TransactionType.refund) {
