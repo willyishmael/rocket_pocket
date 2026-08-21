@@ -11,14 +11,14 @@ import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 
-final dashboardSelectedMonthProvider = NotifierProvider.family<
-  DashboardSelectedMonthViewModel,
+final statisticsSelectedMonthProvider = NotifierProvider.family<
+  StatisticsSelectedMonthViewModel,
   DateTime?,
   StatisticsScope
->(DashboardSelectedMonthViewModel.new);
+>(StatisticsSelectedMonthViewModel.new);
 
-class DashboardSelectedMonthViewModel extends Notifier<DateTime?> {
-  DashboardSelectedMonthViewModel(this.scope);
+class StatisticsSelectedMonthViewModel extends Notifier<DateTime?> {
+  StatisticsSelectedMonthViewModel(this.scope);
 
   final StatisticsScope scope;
 
@@ -30,17 +30,14 @@ class DashboardSelectedMonthViewModel extends Notifier<DateTime?> {
   }
 }
 
-final dashboardStatisticsProvider =
-    Provider.family<AsyncValue<DashboardStatisticsState>, StatisticsScope>((
-      ref,
-      scope,
-    ) {
+final statisticsProvider =
+    Provider.family<AsyncValue<StatisticsState>, StatisticsScope>((ref, scope) {
       final transactionsAsync = ref.watch(transactionViewModelProvider);
       final budgetsAsync = ref.watch(budgetViewModelProvider);
       final loansAsync = ref.watch(loanViewModelProvider);
       final pocketsAsync = ref.watch(pocketViewModelProvider);
       final categoryNamesAsync = ref.watch(categoryNamesProvider);
-      final requestedMonth = ref.watch(dashboardSelectedMonthProvider(scope));
+      final requestedMonth = ref.watch(statisticsSelectedMonthProvider(scope));
 
       final error =
           transactionsAsync.asError ??
@@ -61,7 +58,7 @@ final dashboardStatisticsProvider =
       }
 
       return AsyncData(
-        _buildDashboardStatistics(
+        _buildStatistics(
           scope: scope,
           transactions: transactionsAsync.requireValue,
           budgets: budgetsAsync.requireValue,
@@ -73,7 +70,7 @@ final dashboardStatisticsProvider =
       );
     });
 
-final dashboardCategoryTransactionsProvider = Provider.family<
+final categoryTransactionsProvider = Provider.family<
   AsyncValue<List<Transaction>>,
   StatisticsCategoryDrilldown
 >((ref, drilldown) {
@@ -95,13 +92,11 @@ final dashboardCategoryTransactionsProvider = Provider.family<
   return AsyncData(filtered);
 });
 
-final dashboardCategoryTransactionRowsProvider = Provider.family<
+final categoryTransactionRowsProvider = Provider.family<
   AsyncValue<List<StatisticsCategoryTransactionRow>>,
   StatisticsCategoryDrilldown
 >((ref, drilldown) {
-  final transactionsAsync = ref.watch(
-    dashboardCategoryTransactionsProvider(drilldown),
-  );
+  final transactionsAsync = ref.watch(categoryTransactionsProvider(drilldown));
   final pocketsAsync = ref.watch(pocketViewModelProvider);
   final categoryNamesAsync = ref.watch(categoryNamesProvider);
 
@@ -150,7 +145,7 @@ final dashboardCategoryTransactionRowsProvider = Provider.family<
   return AsyncData(rows);
 });
 
-class DashboardStatisticsState {
+class StatisticsState {
   final StatisticsScope scope;
   final String displayCurrency;
   final List<DateTime> availableMonths;
@@ -158,13 +153,13 @@ class DashboardStatisticsState {
   final double totalBalance;
   final double openingBalance;
   final double endingBalance;
-  final DashboardSummaryTotals totals;
-  final List<DashboardChartSlice> expenseSlices;
-  final List<DashboardChartSlice> incomeSlices;
-  final DashboardBudgetHighlight budgetHighlight;
-  final DashboardLoanHighlight loanHighlight;
+  final StatisticsSummaryTotals totals;
+  final List<StatisticsChartSlice> expenseSlices;
+  final List<StatisticsChartSlice> incomeSlices;
+  final StatisticsBudgetHighlight budgetHighlight;
+  final StatisticsLoanHighlight loanHighlight;
 
-  const DashboardStatisticsState({
+  const StatisticsState({
     required this.scope,
     required this.displayCurrency,
     required this.availableMonths,
@@ -182,12 +177,12 @@ class DashboardStatisticsState {
   bool get hasCharts => expenseSlices.isNotEmpty || incomeSlices.isNotEmpty;
 }
 
-class DashboardSummaryTotals {
+class StatisticsSummaryTotals {
   final double income;
   final double expense;
   final int transactionCount;
 
-  const DashboardSummaryTotals({
+  const StatisticsSummaryTotals({
     required this.income,
     required this.expense,
     required this.transactionCount,
@@ -196,14 +191,14 @@ class DashboardSummaryTotals {
   double get net => income - expense;
 }
 
-class DashboardChartSlice {
+class StatisticsChartSlice {
   final StatisticsChartType chartType;
   final int? categoryId;
   final String label;
   final double amount;
   final double percentage;
 
-  const DashboardChartSlice({
+  const StatisticsChartSlice({
     required this.chartType,
     required this.categoryId,
     required this.label,
@@ -212,13 +207,13 @@ class DashboardChartSlice {
   });
 }
 
-class DashboardBudgetHighlight {
+class StatisticsBudgetHighlight {
   final int activeBudgetCount;
   final int overBudgetCount;
   final double spentTotal;
   final double budgetedTotal;
 
-  const DashboardBudgetHighlight({
+  const StatisticsBudgetHighlight({
     required this.activeBudgetCount,
     required this.overBudgetCount,
     required this.spentTotal,
@@ -226,7 +221,7 @@ class DashboardBudgetHighlight {
   });
 }
 
-class DashboardLoanHighlight {
+class StatisticsLoanHighlight {
   final int relatedLoanCount;
   final int ongoingCount;
   final int overdueCount;
@@ -234,7 +229,7 @@ class DashboardLoanHighlight {
   final double outflow;
   final double outstandingTotal;
 
-  const DashboardLoanHighlight({
+  const StatisticsLoanHighlight({
     required this.relatedLoanCount,
     required this.ongoingCount,
     required this.overdueCount,
@@ -244,7 +239,7 @@ class DashboardLoanHighlight {
   });
 }
 
-DashboardStatisticsState _buildDashboardStatistics({
+StatisticsState _buildStatistics({
   required StatisticsScope scope,
   required List<Transaction> transactions,
   required List<BudgetWithSpent> budgets,
@@ -296,7 +291,7 @@ DashboardStatisticsState _buildDashboardStatistics({
         (sum, tx) => sum + _signedContributionForScope(tx, scope),
       );
 
-  return DashboardStatisticsState(
+  return StatisticsState(
     scope: scope,
     displayCurrency: _resolveDisplayCurrency(scope, pockets),
     availableMonths: availableMonths,
@@ -304,7 +299,7 @@ DashboardStatisticsState _buildDashboardStatistics({
     totalBalance: _resolveTotalBalance(scope, pockets),
     openingBalance: openingBalance,
     endingBalance: endingBalance,
-    totals: DashboardSummaryTotals(
+    totals: StatisticsSummaryTotals(
       income: _sumAmounts(incomeTransactions),
       expense: _sumAmounts(expenseTransactions),
       transactionCount: mainChartTransactions.length,
@@ -396,7 +391,7 @@ bool _isExpenseChartTransaction(Transaction transaction) {
   return transaction.type == TransactionType.expense;
 }
 
-List<DashboardChartSlice> _buildSlices(
+List<StatisticsChartSlice> _buildSlices(
   List<Transaction> transactions,
   Map<int, String> categoryNames, {
   required StatisticsChartType chartType,
@@ -427,7 +422,7 @@ List<DashboardChartSlice> _buildSlices(
   final slices =
       totalsByCategory.entries
           .map(
-            (entry) => DashboardChartSlice(
+            (entry) => StatisticsChartSlice(
               chartType: chartType,
               categoryId: entry.key.categoryId,
               label: entry.key.label,
@@ -538,7 +533,7 @@ double _signedContributionForScope(
       : -transaction.amount.abs();
 }
 
-DashboardBudgetHighlight _buildBudgetHighlight(
+StatisticsBudgetHighlight _buildBudgetHighlight(
   List<Transaction> monthTransactions,
   List<BudgetWithSpent> budgets,
 ) {
@@ -557,7 +552,7 @@ DashboardBudgetHighlight _buildBudgetHighlight(
   }
 
   if (budgetTotals.isEmpty) {
-    return const DashboardBudgetHighlight(
+    return const StatisticsBudgetHighlight(
       activeBudgetCount: 0,
       overBudgetCount: 0,
       spentTotal: 0,
@@ -582,7 +577,7 @@ DashboardBudgetHighlight _buildBudgetHighlight(
     }
   }
 
-  return DashboardBudgetHighlight(
+  return StatisticsBudgetHighlight(
     activeBudgetCount: budgetTotals.length,
     overBudgetCount: overBudgetCount,
     spentTotal: budgetTotals.values.fold(0.0, (sum, value) => sum + value),
@@ -590,7 +585,7 @@ DashboardBudgetHighlight _buildBudgetHighlight(
   );
 }
 
-DashboardLoanHighlight _buildLoanHighlight(
+StatisticsLoanHighlight _buildLoanHighlight(
   List<Transaction> monthTransactions,
   List<Loan> loans,
 ) {
@@ -625,7 +620,7 @@ DashboardLoanHighlight _buildLoanHighlight(
     }
   }
 
-  return DashboardLoanHighlight(
+  return StatisticsLoanHighlight(
     relatedLoanCount: relatedLoans.length,
     ongoingCount:
         relatedLoans.where((loan) => loan.status == LoanStatus.ongoing).length,

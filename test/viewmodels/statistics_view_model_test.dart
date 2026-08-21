@@ -8,7 +8,7 @@ import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
 import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/viewmodels/budget_view_model.dart';
-import 'package:rocket_pocket/viewmodels/dashboard_statistics_view_model.dart';
+import 'package:rocket_pocket/viewmodels/statistics_view_model.dart';
 import 'package:rocket_pocket/viewmodels/loan_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
@@ -16,7 +16,7 @@ import 'package:rocket_pocket/viewmodels/transaction_view_model.dart';
 import '../helpers/test_data_builders.dart';
 
 void main() {
-  Future<DashboardStatisticsState> readStats(
+  Future<StatisticsState> readStats(
     ProviderContainer container,
     StatisticsScope scope,
   ) async {
@@ -28,7 +28,7 @@ void main() {
       container.read(categoryNamesProvider.future),
     ]);
 
-    final statsAsync = container.read(dashboardStatisticsProvider(scope));
+    final statsAsync = container.read(statisticsProvider(scope));
     expect(statsAsync.hasValue, isTrue);
     return statsAsync.requireValue;
   }
@@ -179,7 +179,7 @@ void main() {
 
     container
         .read(
-          dashboardSelectedMonthProvider(
+          statisticsSelectedMonthProvider(
             const StatisticsScope.pocket(10),
           ).notifier,
         )
@@ -204,7 +204,7 @@ void main() {
 
       container
           .read(
-            dashboardSelectedMonthProvider(
+            statisticsSelectedMonthProvider(
               const StatisticsScope.pocket(10),
             ).notifier,
           )

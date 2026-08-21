@@ -4,17 +4,18 @@ import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/statistics.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/0_widgets/month_selector_delegate.dart';
-import 'package:rocket_pocket/screens/dashboard/dashboard_statistics_section.dart';
-import 'package:rocket_pocket/viewmodels/dashboard_statistics_view_model.dart';
+import 'package:rocket_pocket/screens/statistics/statistics_navigation.dart';
+import 'package:rocket_pocket/screens/statistics/statistics_section.dart';
+import 'package:rocket_pocket/viewmodels/statistics_view_model.dart';
 
 class StatisticsScreen extends ConsumerWidget {
   const StatisticsScreen({super.key});
 
-  static const _scope = DashboardStatisticsScope.allPockets();
+  static const _scope = StatisticsScope.defaultScope;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statisticsAsync = ref.watch(dashboardStatisticsProvider(_scope));
+    final statisticsAsync = ref.watch(statisticsProvider(_scope));
 
     return Scaffold(
       body: CustomScrollView(
@@ -57,7 +58,7 @@ class StatisticsScreen extends ConsumerWidget {
                       onMonthSelected: (month) {
                         ref
                             .read(
-                              dashboardSelectedMonthProvider(_scope).notifier,
+                              statisticsSelectedMonthProvider(_scope).notifier,
                             )
                             .setMonth(month);
                       },
@@ -68,23 +69,23 @@ class StatisticsScreen extends ConsumerWidget {
 
               slivers.add(
                 SliverToBoxAdapter(
-                  child: DashboardStatisticsSection(
+                  child: StatisticsSection(
                     state: statistics,
                     currency: statistics.displayCurrency,
-                    onShowMore: () => context.push(Paths.statisticsShowMore),
+                    onShowMoreForType:
+                        (chartType) => context.push(
+                          Paths.statisticsShowMore,
+                          extra: chartType,
+                        ),
                     onCategoryTap: (slice) {
                       final selectedMonth = statistics.selectedMonth;
                       if (selectedMonth == null) return;
 
-                      context.push(
-                        Paths.statisticsCategoryTransactions,
-                        extra: DashboardCategoryDrilldown(
-                          scope: _scope,
-                          month: selectedMonth,
-                          chartType: slice.chartType,
-                          categoryId: slice.categoryId,
-                          label: slice.label,
-                        ),
+                      openCategoryTransactions(
+                        context,
+                        scope: _scope,
+                        month: selectedMonth,
+                        slice: slice,
                       );
                     },
                   ),

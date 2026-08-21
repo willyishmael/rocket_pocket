@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/statistics.dart';
-import 'package:rocket_pocket/router/paths.dart';
+import 'package:rocket_pocket/screens/statistics/statistics_navigation.dart';
 import 'package:rocket_pocket/utils/currency_utils.dart';
-import 'package:rocket_pocket/viewmodels/dashboard_statistics_view_model.dart';
+import 'package:rocket_pocket/viewmodels/statistics_view_model.dart';
 
 class StatisticsBreakdownScreen extends ConsumerWidget {
-  const StatisticsBreakdownScreen({super.key});
+  final StatisticsChartType? initialChartType;
 
-  static const _scope = DashboardStatisticsScope.allPockets();
+  const StatisticsBreakdownScreen({super.key, this.initialChartType});
+
+  static const _scope = StatisticsScope.defaultScope;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statisticsAsync = ref.watch(dashboardStatisticsProvider(_scope));
+    final statisticsAsync = ref.watch(statisticsProvider(_scope));
+    final showExpenses = initialChartType != StatisticsChartType.income;
+    final showIncome = initialChartType != StatisticsChartType.expense;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Full Category Breakdown')),
@@ -32,81 +35,93 @@ class StatisticsBreakdownScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                'Expenses',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              if (statistics.expenseSlices.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Text('No expense categories for this month.'),
-                  ),
-                )
-              else
-                ...statistics.expenseSlices.map(
-                  (slice) => _CategoryBreakdownTile(
-                    label: slice.label,
-                    percentage: slice.percentage,
-                    amount: slice.amount,
-                    currency: statistics.displayCurrency,
-                    onTap: () {
-                      context.push(
-                        Paths.statisticsCategoryTransactions,
-                        extra: DashboardCategoryDrilldown(
-                          scope: _scope,
-                          month: selectedMonth,
-                          chartType: slice.chartType,
-                          categoryId: slice.categoryId,
-                          label: slice.label,
-                        ),
-                      );
-                    },
-                  ),
+              if (showExpenses)
+                _CategorySectionList(
+                  title: 'Expenses',
+                  slices: statistics.expenseSlices,
+                  emptyMessage: 'No expense categories for this month.',
+                  currency: statistics.displayCurrency,
+                  trailingSpace: showIncome,
+                  onTileTap:
+                      (slice) => openCategoryTransactions(
+                        context,
+                        scope: _scope,
+                        month: selectedMonth,
+                        slice: slice,
+                      ),
                 ),
-              const SizedBox(height: 16),
-              Text(
-                'Income',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              if (statistics.incomeSlices.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Text('No income categories for this month.'),
-                  ),
-                )
-              else
-                ...statistics.incomeSlices.map(
-                  (slice) => _CategoryBreakdownTile(
-                    label: slice.label,
-                    percentage: slice.percentage,
-                    amount: slice.amount,
-                    currency: statistics.displayCurrency,
-                    onTap: () {
-                      context.push(
-                        Paths.statisticsCategoryTransactions,
-                        extra: DashboardCategoryDrilldown(
-                          scope: _scope,
-                          month: selectedMonth,
-                          chartType: slice.chartType,
-                          categoryId: slice.categoryId,
-                          label: slice.label,
-                        ),
-                      );
-                    },
-                  ),
+              if (showIncome)
+                _CategorySectionList(
+                  title: 'Income',
+                  slices: statistics.incomeSlices,
+                  emptyMessage: 'No income categories for this month.',
+                  currency: statistics.displayCurrency,
+                  trailingSpace: false,
+                  onTileTap:
+                      (slice) => openCategoryTransactions(
+                        context,
+                        scope: _scope,
+                        month: selectedMonth,
+                        slice: slice,
+                      ),
                 ),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+// Local-only: groups a category title, empty state, and tile list for one chart type.
+class _CategorySectionList extends StatelessWidget {
+  final String title;
+  final List<StatisticsChartSlice> slices;
+  final String emptyMessage;
+  final String currency;
+  final bool trailingSpace;
+  final ValueChanged<StatisticsChartSlice> onTileTap;
+
+  const _CategorySectionList({
+    required this.title,
+    required this.slices,
+    required this.emptyMessage,
+    required this.currency,
+    required this.trailingSpace,
+    required this.onTileTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        if (slices.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(emptyMessage),
+            ),
+          )
+        else
+          ...slices.map(
+            (slice) => _CategoryBreakdownTile(
+              label: slice.label,
+              percentage: slice.percentage,
+              amount: slice.amount,
+              currency: currency,
+              onTap: () => onTileTap(slice),
+            ),
+          ),
+        if (trailingSpace) const SizedBox(height: 16),
+      ],
     );
   }
 }

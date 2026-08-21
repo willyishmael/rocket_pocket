@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/statistics.dart';
 import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/transaction/transaction_list_tile.dart';
-import 'package:rocket_pocket/viewmodels/dashboard_statistics_view_model.dart';
+import 'package:rocket_pocket/viewmodels/statistics_view_model.dart';
 
 class StatisticsCategoryTransactionsScreen extends ConsumerWidget {
-  final DashboardCategoryDrilldown drilldown;
+  final StatisticsCategoryDrilldown drilldown;
 
   const StatisticsCategoryTransactionsScreen({
     super.key,
@@ -16,9 +16,7 @@ class StatisticsCategoryTransactionsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rowsAsync = ref.watch(
-      dashboardCategoryTransactionRowsProvider(drilldown),
-    );
+    final rowsAsync = ref.watch(categoryTransactionRowsProvider(drilldown));
 
     return Scaffold(
       appBar: AppBar(title: Text('${drilldown.label} Transactions')),

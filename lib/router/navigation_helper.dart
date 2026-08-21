@@ -353,8 +353,12 @@ class NavigationHelper {
               GoRoute(
                 path: Paths.statisticsShowMore,
                 pageBuilder: (context, state) {
+                  final extra = state.extra;
                   return getPage(
-                    child: StatisticsBreakdownScreen(),
+                    child: StatisticsBreakdownScreen(
+                      initialChartType:
+                          extra is StatisticsChartType ? extra : null,
+                    ),
                     state: state,
                   );
                 },
@@ -363,7 +367,7 @@ class NavigationHelper {
                 path: Paths.statisticsCategoryTransactions,
                 pageBuilder: (context, state) {
                   final extra = state.extra;
-                  if (extra is DashboardCategoryDrilldown) {
+                  if (extra is StatisticsCategoryDrilldown) {
                     return getPage(
                       child: StatisticsCategoryTransactionsScreen(
                         drilldown: extra,

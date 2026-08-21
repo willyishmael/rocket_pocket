@@ -1,21 +1,24 @@
 import 'package:rocket_pocket/data/model/transaction.dart';
 
-enum DashboardStatisticsScopeType { allPockets, pocket }
+enum StatisticsScopeType { allPockets, pocket }
 
-class DashboardStatisticsScope {
-  final DashboardStatisticsScopeType type;
+class StatisticsScope {
+  final StatisticsScopeType type;
   final int? pocketId;
 
-  const DashboardStatisticsScope.allPockets()
-    : type = DashboardStatisticsScopeType.allPockets,
+  // Shared scope constant so statistics screens don't each redeclare it.
+  static const StatisticsScope defaultScope = StatisticsScope.allPockets();
+
+  const StatisticsScope.allPockets()
+    : type = StatisticsScopeType.allPockets,
       pocketId = null;
 
-  const DashboardStatisticsScope.pocket(this.pocketId)
-    : type = DashboardStatisticsScopeType.pocket;
+  const StatisticsScope.pocket(this.pocketId)
+    : type = StatisticsScopeType.pocket;
 
   @override
   bool operator ==(Object other) {
-    return other is DashboardStatisticsScope &&
+    return other is StatisticsScope &&
         other.type == type &&
         other.pocketId == pocketId;
   }
@@ -24,16 +27,16 @@ class DashboardStatisticsScope {
   int get hashCode => Object.hash(type, pocketId);
 }
 
-enum DashboardChartType { expense, income }
+enum StatisticsChartType { expense, income }
 
-class DashboardCategoryDrilldown {
-  final DashboardStatisticsScope scope;
+class StatisticsCategoryDrilldown {
+  final StatisticsScope scope;
   final DateTime month;
-  final DashboardChartType chartType;
+  final StatisticsChartType chartType;
   final int? categoryId;
   final String label;
 
-  const DashboardCategoryDrilldown({
+  const StatisticsCategoryDrilldown({
     required this.scope,
     required this.month,
     required this.chartType,
@@ -43,7 +46,7 @@ class DashboardCategoryDrilldown {
 
   @override
   bool operator ==(Object other) {
-    return other is DashboardCategoryDrilldown &&
+    return other is StatisticsCategoryDrilldown &&
         other.scope == scope &&
         other.month == month &&
         other.chartType == chartType &&
@@ -55,13 +58,13 @@ class DashboardCategoryDrilldown {
   int get hashCode => Object.hash(scope, month, chartType, categoryId, label);
 }
 
-class DashboardCategoryTransactionRow {
+class StatisticsCategoryTransactionRow {
   final Transaction transaction;
   final String currency;
   final String? pocketName;
   final String? categoryName;
 
-  const DashboardCategoryTransactionRow({
+  const StatisticsCategoryTransactionRow({
     required this.transaction,
     required this.currency,
     required this.pocketName,

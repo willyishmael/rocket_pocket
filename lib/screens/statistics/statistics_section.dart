@@ -2,16 +2,16 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/data/model/statistics.dart';
 import 'package:rocket_pocket/utils/currency_utils.dart';
-import 'package:rocket_pocket/viewmodels/dashboard_statistics_view_model.dart';
+import 'package:rocket_pocket/viewmodels/statistics_view_model.dart';
 
-class DashboardStatisticsSection extends StatelessWidget {
-  final DashboardStatisticsState state;
+class StatisticsSection extends StatelessWidget {
+  final StatisticsState state;
   final String currency;
   final ValueChanged<StatisticsChartType>? onShowMoreForType;
-  final ValueChanged<DashboardChartSlice>? onCategoryTap;
+  final ValueChanged<StatisticsChartSlice>? onCategoryTap;
   final int maxVisibleCategoryRows;
 
-  const DashboardStatisticsSection({
+  const StatisticsSection({
     super.key,
     required this.state,
     required this.currency,
@@ -84,7 +84,7 @@ class DashboardStatisticsSection extends StatelessWidget {
 // These private widgets are scoped to this section because they compose one
 // screen-specific statistics layout and are not reused across other screens.
 class _SummaryCard extends StatelessWidget {
-  final DashboardStatisticsState state;
+  final StatisticsState state;
   final String currency;
 
   const _SummaryCard({required this.state, required this.currency});
@@ -194,10 +194,10 @@ class _AmountColumn extends StatelessWidget {
 }
 
 class _ChartsGrid extends StatelessWidget {
-  final List<DashboardChartSlice> expenseSlices;
-  final List<DashboardChartSlice> incomeSlices;
+  final List<StatisticsChartSlice> expenseSlices;
+  final List<StatisticsChartSlice> incomeSlices;
   final String currency;
-  final ValueChanged<DashboardChartSlice>? onCategoryTap;
+  final ValueChanged<StatisticsChartSlice>? onCategoryTap;
   final ValueChanged<StatisticsChartType>? onOpenDetails;
   final int maxVisibleCategoryRows;
 
@@ -258,9 +258,9 @@ class _ChartsGrid extends StatelessWidget {
 
 class _PieChartCard extends StatelessWidget {
   final String title;
-  final List<DashboardChartSlice> slices;
+  final List<StatisticsChartSlice> slices;
   final String currency;
-  final ValueChanged<DashboardChartSlice>? onCategoryTap;
+  final ValueChanged<StatisticsChartSlice>? onCategoryTap;
   final VoidCallback? onOpenDetails;
   final int maxVisibleRows;
 
@@ -356,7 +356,7 @@ class _PieChartCard extends StatelessWidget {
 
 class _CategoryBreakdownRow extends StatelessWidget {
   final Color color;
-  final DashboardChartSlice slice;
+  final StatisticsChartSlice slice;
   final VoidCallback? onTap;
 
   const _CategoryBreakdownRow({

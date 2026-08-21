@@ -95,12 +95,17 @@ void main() {
           ),
           GoRoute(
             path: Paths.statisticsShowMore,
-            builder: (context, state) => const StatisticsBreakdownScreen(),
+            builder: (context, state) {
+              final extra = state.extra;
+              return StatisticsBreakdownScreen(
+                initialChartType: extra is StatisticsChartType ? extra : null,
+              );
+            },
           ),
           GoRoute(
             path: Paths.statisticsCategoryTransactions,
             builder: (context, state) {
-              final drilldown = state.extra! as DashboardCategoryDrilldown;
+              final drilldown = state.extra! as StatisticsCategoryDrilldown;
               return StatisticsCategoryTransactionsScreen(drilldown: drilldown);
             },
           ),
@@ -115,7 +120,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Show more'));
+      await tester.tap(find.text('Expenses by Category'));
       await tester.pumpAndSettle();
 
       expect(find.text('Full Category Breakdown'), findsOneWidget);
