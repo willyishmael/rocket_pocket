@@ -17,7 +17,7 @@ class StatisticsSection extends StatelessWidget {
     required this.currency,
     this.onShowMoreForType,
     this.onCategoryTap,
-    this.maxVisibleCategoryRows = 3,
+    this.maxVisibleCategoryRows = 5,
   });
 
   @override
@@ -273,9 +273,35 @@ class _PieChartCard extends StatelessWidget {
     required this.maxVisibleRows,
   });
 
+  // Bucket categories beyond maxVisibleRows into a single synthetic "Other" slice.
+  List<StatisticsChartSlice> _buildDisplaySlices() {
+    if (slices.length <= maxVisibleRows) return slices;
+
+    final visible = slices.take(maxVisibleRows).toList();
+    final rest = slices.skip(maxVisibleRows);
+    final otherAmount = rest.fold(0.0, (sum, s) => sum + s.amount);
+    final otherPercentage = rest.fold(0.0, (sum, s) => sum + s.percentage);
+
+    return [
+      ...visible,
+      StatisticsChartSlice(
+        chartType: slices.first.chartType,
+        categoryId: null,
+        label: 'Other',
+        amount: otherAmount,
+        percentage: otherPercentage,
+      ),
+    ];
+  }
+
+  // The Other row, when present, is always appended right after the visible rows.
+  bool _isOtherRow(int index) =>
+      slices.length > maxVisibleRows && index == maxVisibleRows;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final displaySlices = _buildDisplaySlices();
 
     return Card(
       child: InkWell(
@@ -306,7 +332,7 @@ class _PieChartCard extends StatelessWidget {
                           PieChartData(
                             sectionsSpace: 2,
                             centerSpaceRadius: 28,
-                            sections: _buildSections(),
+                            sections: _buildSections(displaySlices),
                           ),
                         ),
                       ),
@@ -316,18 +342,14 @@ class _PieChartCard extends StatelessWidget {
                       flex: 5,
                       child: Column(
                         children: [
-                          for (
-                            var i = 0;
-                            i < slices.take(maxVisibleRows).length;
-                            i++
-                          )
+                          for (var i = 0; i < displaySlices.length; i++)
                             _CategoryBreakdownRow(
                               color: _popPalette[i % _popPalette.length],
-                              slice: slices[i],
+                              slice: displaySlices[i],
                               onTap:
-                                  onCategoryTap == null
+                                  (onCategoryTap == null || _isOtherRow(i))
                                       ? null
-                                      : () => onCategoryTap!(slices[i]),
+                                      : () => onCategoryTap!(displaySlices[i]),
                             ),
                         ],
                       ),
@@ -341,11 +363,13 @@ class _PieChartCard extends StatelessWidget {
     );
   }
 
-  List<PieChartSectionData> _buildSections() {
+  List<PieChartSectionData> _buildSections(
+    List<StatisticsChartSlice> displaySlices,
+  ) {
     return [
-      for (var index = 0; index < slices.length; index++)
+      for (var index = 0; index < displaySlices.length; index++)
         PieChartSectionData(
-          value: slices[index].amount,
+          value: displaySlices[index].amount,
           color: _popPalette[index % _popPalette.length],
           radius: 42,
           showTitle: false,
