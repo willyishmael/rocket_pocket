@@ -28,7 +28,7 @@ void main() {
 
       await notifier.submit();
 
-      final pockets = container.read(pocketViewModelProvider).requireValue;
+      final pockets = await container.read(pocketViewModelProvider.future);
       expect(pockets, hasLength(1));
       expect(pockets.first.balance, 500);
     },

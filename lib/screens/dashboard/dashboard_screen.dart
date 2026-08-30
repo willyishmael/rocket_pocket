@@ -6,11 +6,18 @@ import 'package:rocket_pocket/router/paths.dart';
 import 'package:rocket_pocket/screens/0_widgets/pocket_card/pocket_card.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  int _activePocketIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final pocketsAsync = ref.watch(pocketViewModelProvider);
 
     return Scaffold(
@@ -40,7 +47,9 @@ class DashboardScreen extends ConsumerWidget {
                     onPressed: () async {
                       await context.push(Paths.createPocket);
                       if (!context.mounted) return;
-                      await ref.read(pocketViewModelProvider.notifier).refreshPockets();
+                      await ref
+                          .read(pocketViewModelProvider.notifier)
+                          .refreshPockets();
                     },
                     icon: const Icon(Icons.add),
                   ),
@@ -60,22 +69,40 @@ class DashboardScreen extends ConsumerWidget {
                       child: Text('No pockets yet. Tap + to create one.'),
                     );
                   }
+
+                  final maxIndex = pockets.length - 1;
+                  final safeIndex =
+                      _activePocketIndex > maxIndex
+                          ? maxIndex
+                          : _activePocketIndex;
+                  if (safeIndex != _activePocketIndex) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      setState(() => _activePocketIndex = safeIndex);
+                    });
+                  }
+
                   return Swiper(
                     itemCount: pockets.length,
+                    index: safeIndex,
                     viewportFraction: 0.8,
                     scale: 1.1,
                     fade: 0.6,
                     curve: Curves.bounceInOut,
-                    itemBuilder:
-                        (context, index) {
-                          final pocket = pockets[index];
-                          return GestureDetector(
-                            onTap: () => context.push(
+                    onIndexChanged: (index) {
+                      if (_activePocketIndex == index) return;
+                      setState(() => _activePocketIndex = index);
+                    },
+                    itemBuilder: (context, index) {
+                      final pocket = pockets[index];
+                      return GestureDetector(
+                        onTap:
+                            () => context.push(
                               Paths.pocketDetailsRoute(pocket.id!),
                             ),
-                            child: PocketCard(pocket: pocket),
-                          );
-                        },
+                        child: PocketCard(pocket: pocket),
+                      );
+                    },
                   );
                 },
               ),

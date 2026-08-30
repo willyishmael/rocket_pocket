@@ -50,6 +50,12 @@ abstract final class Paths {
   static String loanInstallmentsRoute(int loanId) =>
       '$loan/$loanId/installments';
 
+  // ── Statistics ─────────────────────────────────────────────────────────────
+  static const String statistics = '/statistics';
+  static const String statisticsShowMore = '$statistics/show-more';
+  static const String statisticsCategoryTransactions =
+      '$statistics/category-transactions';
+
   // ── Settings ────────────────────────────────────────────────────────────────
   static const String settings = '/settings';
   static const String manageCategories = '$settings/categories';
