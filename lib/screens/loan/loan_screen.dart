@@ -117,6 +117,7 @@ class _LoanListTab extends StatelessWidget {
           itemBuilder:
               (context, index) => LoanCard(
                 loan: filtered[index],
+                isOverdue: isLoanOverdue(filtered[index]),
                 onTap:
                     () => context.push(
                       Paths.loanDetailsRoute(filtered[index].id!),

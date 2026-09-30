@@ -5,9 +5,17 @@ import 'package:rocket_pocket/utils/currency_utils.dart';
 
 class LoanCard extends StatelessWidget {
   final Loan loan;
+  final DateTime? nextDueDate;
+  final bool isOverdue;
   final VoidCallback? onTap;
 
-  const LoanCard({super.key, required this.loan, this.onTap});
+  const LoanCard({
+    super.key,
+    required this.loan,
+    this.nextDueDate,
+    required this.isOverdue,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,14 +27,12 @@ class LoanCard extends StatelessWidget {
         loan.amount > 0
             ? (loan.repaidAmount / loan.amount).clamp(0.0, 1.0)
             : 0.0;
-    final isOverdue =
-        loan.status == LoanStatus.ongoing &&
-        loan.dueDate.isBefore(DateTime.now());
-    final nextDueDate = loan.firstInstallmentDate ?? loan.dueDate;
+    final displayDueDate =
+        nextDueDate ?? loan.firstInstallmentDate ?? loan.dueDate;
     final nextDueLabel =
         loan.status == LoanStatus.completed
             ? 'Schedule completed'
-            : 'Next due ${_formatDate(nextDueDate)}';
+            : 'Next due ${_formatDate(displayDueDate)}';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

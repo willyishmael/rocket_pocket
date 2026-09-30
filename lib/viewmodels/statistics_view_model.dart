@@ -210,14 +210,10 @@ class StatisticsChartSlice {
 class StatisticsBudgetHighlight {
   final int activeBudgetCount;
   final int overBudgetCount;
-  final double spentTotal;
-  final double budgetedTotal;
 
   const StatisticsBudgetHighlight({
     required this.activeBudgetCount,
     required this.overBudgetCount,
-    required this.spentTotal,
-    required this.budgetedTotal,
   });
 }
 
@@ -555,8 +551,6 @@ StatisticsBudgetHighlight _buildBudgetHighlight(
     return const StatisticsBudgetHighlight(
       activeBudgetCount: 0,
       overBudgetCount: 0,
-      spentTotal: 0,
-      budgetedTotal: 0,
     );
   }
 
@@ -565,13 +559,11 @@ StatisticsBudgetHighlight _buildBudgetHighlight(
       if (item.budget.id != null) item.budget.id!: item.budget,
   };
 
-  var budgetedTotal = 0.0;
   var overBudgetCount = 0;
 
   for (final entry in budgetTotals.entries) {
     final budget = budgetLookup[entry.key];
     if (budget == null) continue;
-    budgetedTotal += budget.amount;
     if (entry.value > budget.amount) {
       overBudgetCount++;
     }
@@ -580,8 +572,6 @@ StatisticsBudgetHighlight _buildBudgetHighlight(
   return StatisticsBudgetHighlight(
     activeBudgetCount: budgetTotals.length,
     overBudgetCount: overBudgetCount,
-    spentTotal: budgetTotals.values.fold(0.0, (sum, value) => sum + value),
-    budgetedTotal: budgetedTotal,
   );
 }
 

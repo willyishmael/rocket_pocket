@@ -26,15 +26,16 @@ class GradientCircle extends StatelessWidget {
             width: outerSize,
             height: outerSize,
             alignment: Alignment.center,
-            decoration: isSelected
-                ? BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 3,
-                    ),
-                  )
-                : null,
+            decoration:
+                isSelected
+                    ? BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 3,
+                      ),
+                    )
+                    : null,
             child: Container(
               width: middleSize,
               height: middleSize,

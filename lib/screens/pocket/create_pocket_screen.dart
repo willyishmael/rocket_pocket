@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
-import 'package:rocket_pocket/screens/0_widgets/pocket_form_fields.dart';
-import 'package:rocket_pocket/screens/0_widgets/pocket_header.dart';
+import 'package:rocket_pocket/screens/pocket/widgets/gradient_picker/gradient_picker.dart';
+import 'package:rocket_pocket/screens/pocket/widgets/pocket_form_fields.dart';
+import 'package:rocket_pocket/screens/pocket/widgets/pocket_header.dart';
 import 'package:rocket_pocket/viewmodels/create_pocket_view_model.dart';
 
 class CreatePocketScreen extends ConsumerStatefulWidget {

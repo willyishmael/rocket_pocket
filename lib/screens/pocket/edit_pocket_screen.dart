@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
-import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
-import 'package:rocket_pocket/screens/0_widgets/pocket_form_fields.dart';
-import 'package:rocket_pocket/screens/0_widgets/pocket_header.dart';
+import 'package:rocket_pocket/screens/pocket/widgets/gradient_picker/gradient_picker.dart';
+import 'package:rocket_pocket/screens/pocket/widgets/pocket_form_fields.dart';
+import 'package:rocket_pocket/screens/pocket/widgets/pocket_header.dart';
 import 'package:rocket_pocket/viewmodels/edit_pocket_view_model.dart';
 import 'package:rocket_pocket/viewmodels/pocket_view_model.dart';
 
@@ -16,6 +16,35 @@ class EditPocketScreen extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<EditPocketScreen> createState() => _EditPocketScreenState();
+}
+
+// Resolves edit routes when navigation does not include a Pocket extra.
+class PocketEditRouteScreen extends ConsumerWidget {
+  final int pocketId;
+
+  const PocketEditRouteScreen({super.key, required this.pocketId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref
+        .watch(pocketViewModelProvider)
+        .when(
+          loading:
+              () => const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              ),
+          error:
+              (error, _) =>
+                  Scaffold(body: Center(child: Text('Error: $error'))),
+          data: (pockets) {
+            final pocket =
+                pockets.where((item) => item.id == pocketId).firstOrNull;
+            return pocket == null
+                ? const Scaffold(body: Center(child: Text('Pocket not found')))
+                : EditPocketScreen(pocket: pocket);
+          },
+        );
+  }
 }
 
 class _EditPocketScreenState extends ConsumerState<EditPocketScreen> {

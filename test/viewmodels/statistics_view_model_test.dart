@@ -164,8 +164,7 @@ void main() {
       expect(stats.incomeSlices.single.amount, 200);
       expect(stats.incomeSlices.single.percentage, 100);
       expect(stats.budgetHighlight.activeBudgetCount, 1);
-      expect(stats.budgetHighlight.spentTotal, 120);
-      expect(stats.budgetHighlight.budgetedTotal, 500);
+      expect(stats.budgetHighlight.overBudgetCount, 0);
       expect(stats.loanHighlight.relatedLoanCount, 1);
       expect(stats.loanHighlight.inflow, 300);
       expect(stats.loanHighlight.outflow, 40);

@@ -24,6 +24,26 @@ class BudgetWithSpent {
   }
 }
 
+// Orders higher-risk budgets first, then sorts by utilization within each status.
+List<BudgetWithSpent> prioritizeBudgetPreviews(
+  Iterable<BudgetWithSpent> budgets, {
+  int limit = 3,
+}) {
+  final prioritized =
+      budgets.toList()..sort((a, b) {
+        final statusOrder = b.status.index.compareTo(a.status.index);
+        if (statusOrder != 0) return statusOrder;
+
+        final aUtilization =
+            a.budget.amount > 0 ? a.spent / a.budget.amount : 0.0;
+        final bUtilization =
+            b.budget.amount > 0 ? b.spent / b.budget.amount : 0.0;
+        return bUtilization.compareTo(aUtilization);
+      });
+
+  return prioritized.take(limit).toList(growable: false);
+}
+
 final budgetViewModelProvider =
     AsyncNotifierProvider<BudgetViewModel, List<BudgetWithSpent>>(
       BudgetViewModel.new,

@@ -20,17 +20,12 @@ class NavigationHelper {
   final GlobalKey<NavigatorState> rootNavigationKey = GlobalKey<NavigatorState>(
     debugLabel: 'rootNavigationKey',
   );
-  final GlobalKey<NavigatorState> dashboardNavigationKey =
-      GlobalKey<NavigatorState>(debugLabel: 'dashboardNavigationKey');
   final GlobalKey<NavigatorState> transactionNavigationKey =
       GlobalKey<NavigatorState>(debugLabel: 'transactionNavigationKey');
-  final GlobalKey<NavigatorState> budgetNavigationKey =
-      GlobalKey<NavigatorState>(debugLabel: 'budgetNavigationKey');
   final GlobalKey<NavigatorState> settingsNavigationKey =
       GlobalKey<NavigatorState>(debugLabel: 'settingsNavigationKey');
-  final GlobalKey<NavigatorState> loanNavigationKey = GlobalKey<NavigatorState>(
-    debugLabel: 'loanNavigationKey',
-  );
+  final GlobalKey<NavigatorState> ledgerNavigationKey =
+      GlobalKey<NavigatorState>(debugLabel: 'ledgerNavigationKey');
   final GlobalKey<NavigatorState> statisticsNavigationKey =
       GlobalKey<NavigatorState>(debugLabel: 'statisticsNavigationKey');
 
@@ -40,6 +35,38 @@ class NavigationHelper {
 
   NavigationHelper._internal() {
     final routes = <RouteBase>[
+      GoRoute(path: Paths.dashboard, redirect: (_, _) => Paths.ledger),
+      GoRoute(
+        path: '${Paths.dashboard}/create-pocket',
+        redirect: (_, _) => Paths.createPocket,
+      ),
+      GoRoute(
+        path: '${Paths.dashboard}/pocket/:pocketId/edit',
+        redirect: (_, state) {
+          final pocketId = int.tryParse(state.pathParameters['pocketId'] ?? '');
+          return pocketId == null
+              ? Paths.ledger
+              : Paths.editPocketRoute(pocketId);
+        },
+      ),
+      GoRoute(
+        path: '${Paths.dashboard}/pocket/:pocketId/pocket-transactions',
+        redirect: (_, state) {
+          final pocketId = int.tryParse(state.pathParameters['pocketId'] ?? '');
+          return pocketId == null
+              ? Paths.ledger
+              : Paths.pocketTransactionsRoute(pocketId);
+        },
+      ),
+      GoRoute(
+        path: '${Paths.dashboard}/pocket/:pocketId',
+        redirect: (_, state) {
+          final pocketId = int.tryParse(state.pathParameters['pocketId'] ?? '');
+          return pocketId == null
+              ? Paths.ledger
+              : Paths.pocketDetailsRoute(pocketId);
+        },
+      ),
       StatefulShellRoute.indexedStack(
         pageBuilder: (context, state, navigationShell) {
           return getPage(
@@ -48,64 +75,6 @@ class NavigationHelper {
           );
         },
         branches: [
-          // Dashboard Branch
-          StatefulShellBranch(
-            navigatorKey: dashboardNavigationKey,
-            routes: [
-              GoRoute(
-                path: Paths.dashboard,
-                pageBuilder: (context, state) {
-                  return getPage(child: DashboardScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.createPocket,
-                pageBuilder: (context, state) {
-                  return getPage(child: CreatePocketScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.pocketDetails,
-                pageBuilder: (context, state) {
-                  final pocketId = int.parse(state.pathParameters['pocketId']!);
-                  return getPage(
-                    child: PocketDetailScreen(pocketId: pocketId),
-                    state: state,
-                  );
-                },
-              ),
-              GoRoute(
-                path: Paths.editPocket,
-                pageBuilder: (context, state) {
-                  final extra = state.extra;
-                  if (extra is Pocket) {
-                    return getPage(
-                      child: EditPocketScreen(pocket: extra),
-                      state: state,
-                    );
-                  }
-
-                  // Fallback: try to get pocketId from the path and show details instead.
-                  final pocketIdParam = state.pathParameters['pocketId'];
-                  final pocketId =
-                      pocketIdParam != null
-                          ? int.tryParse(pocketIdParam)
-                          : null;
-                  if (pocketId != null) {
-                    return getPage(
-                      child: PocketDetailScreen(pocketId: pocketId),
-                      state: state,
-                    );
-                  }
-
-                  // Final fallback: navigate to dashboard if we cannot determine the pocket.
-                  return getPage(child: DashboardScreen(), state: state);
-                },
-              ),
-            ],
-          ),
-
-          // Transaction Branch
           StatefulShellBranch(
             navigatorKey: transactionNavigationKey,
             routes: [
@@ -172,175 +141,75 @@ class NavigationHelper {
             ],
           ),
 
-          // Budget Branch
           StatefulShellBranch(
-            navigatorKey: budgetNavigationKey,
+            navigatorKey: ledgerNavigationKey,
             routes: [
               GoRoute(
-                path: Paths.budget,
+                path: Paths.ledger,
                 pageBuilder: (context, state) {
-                  return getPage(child: BudgetScreen(), state: state);
+                  return getPage(child: LedgerScreen(), state: state);
                 },
-              ),
-              GoRoute(
-                path: Paths.addBudget,
-                pageBuilder: (context, state) {
-                  return getPage(child: AddBudgetScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.budgetDetails,
-                pageBuilder: (context, state) {
-                  final budgetId = int.parse(state.pathParameters['budgetId']!);
-                  return getPage(
-                    child: BudgetDetailScreen(budgetId: budgetId),
-                    state: state,
-                  );
-                },
-              ),
-              GoRoute(
-                path: Paths.editBudget,
-                pageBuilder: (context, state) {
-                  final budget = state.extra;
-                  if (budget is Budget) {
-                    return getPage(
-                      child: EditBudgetScreen(budget: budget),
-                      state: state,
-                    );
-                  }
-
-                  final budgetIdParam = state.pathParameters['budgetId'];
-                  final budgetId =
-                      budgetIdParam != null
-                          ? int.tryParse(budgetIdParam)
-                          : null;
-                  if (budgetId != null) {
-                    return getPage(
-                      child: BudgetDetailScreen(budgetId: budgetId),
-                      state: state,
-                    );
-                  }
-
-                  return getPage(child: BudgetScreen(), state: state);
-                },
+                routes: [
+                  GoRoute(
+                    path: 'pockets',
+                    pageBuilder:
+                        (context, state) =>
+                            getPage(child: PocketListScreen(), state: state),
+                    routes: [
+                      GoRoute(
+                        path: 'create',
+                        pageBuilder:
+                            (context, state) => getPage(
+                              child: CreatePocketScreen(),
+                              state: state,
+                            ),
+                      ),
+                      GoRoute(
+                        path: ':pocketId',
+                        pageBuilder: (context, state) {
+                          final pocketId = int.parse(
+                            state.pathParameters['pocketId']!,
+                          );
+                          return getPage(
+                            child: PocketDetailScreen(pocketId: pocketId),
+                            state: state,
+                          );
+                        },
+                        routes: [
+                          GoRoute(
+                            path: 'edit',
+                            pageBuilder: (context, state) {
+                              final pocketId = int.parse(
+                                state.pathParameters['pocketId']!,
+                              );
+                              final pocket = state.extra;
+                              return getPage(
+                                child:
+                                    pocket is Pocket
+                                        ? EditPocketScreen(pocket: pocket)
+                                        : PocketEditRouteScreen(
+                                          pocketId: pocketId,
+                                        ),
+                                state: state,
+                              );
+                            },
+                          ),
+                          GoRoute(
+                            path: 'pocket-transactions',
+                            redirect:
+                                (_, state) => Paths.pocketDetailsRoute(
+                                  int.parse(state.pathParameters['pocketId']!),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
 
-          // Loan Branch
-          StatefulShellBranch(
-            navigatorKey: loanNavigationKey,
-            routes: [
-              GoRoute(
-                path: Paths.loan,
-                pageBuilder: (context, state) {
-                  return getPage(child: LoanScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.addLoan,
-                pageBuilder: (context, state) {
-                  return getPage(child: AddLoanScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.loanDetails,
-                pageBuilder: (context, state) {
-                  final extra = state.extra;
-                  if (extra is Loan) {
-                    return getPage(
-                      child: LoanDetailScreen(loan: extra),
-                      state: state,
-                    );
-                  }
-
-                  // Fallback: parse loanId from path and let LoanDetailScreen
-                  // fetch the loan, mirroring the pocket routes pattern.
-                  final loanIdParam = state.pathParameters['loanId'];
-                  final loanId =
-                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
-                  if (loanId != null) {
-                    return getPage(
-                      child: LoanDetailScreen(loanId: loanId),
-                      state: state,
-                    );
-                  }
-
-                  return getPage(child: LoanScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.addRepayment,
-                pageBuilder: (context, state) {
-                  final loan = state.extra;
-                  if (loan is Loan) {
-                    return getPage(
-                      child: AddRepaymentScreen(loan: loan),
-                      state: state,
-                    );
-                  }
-
-                  // Fallback: navigate to the loan detail screen where the
-                  // user can retry adding a repayment with the full context.
-                  final loanIdParam = state.pathParameters['loanId'];
-                  final loanId =
-                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
-                  if (loanId != null) {
-                    return getPage(
-                      child: LoanDetailScreen(loanId: loanId),
-                      state: state,
-                    );
-                  }
-
-                  return getPage(child: LoanScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.editLoan,
-                pageBuilder: (context, state) {
-                  final loan = state.extra;
-                  if (loan is Loan) {
-                    return getPage(
-                      child: EditLoanScreen(loan: loan),
-                      state: state,
-                    );
-                  }
-
-                  // Fallback: navigate to the loan detail screen where the
-                  // user can retry editing with the full context.
-                  final loanIdParam = state.pathParameters['loanId'];
-                  final loanId =
-                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
-                  if (loanId != null) {
-                    return getPage(
-                      child: LoanDetailScreen(loanId: loanId),
-                      state: state,
-                    );
-                  }
-
-                  return getPage(child: LoanScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.loanInstallments,
-                pageBuilder: (context, state) {
-                  final loanIdParam = state.pathParameters['loanId'];
-                  final loanId =
-                      loanIdParam != null ? int.tryParse(loanIdParam) : null;
-                  if (loanId != null) {
-                    return getPage(
-                      child: LoanInstallmentsScreen(loanId: loanId),
-                      state: state,
-                    );
-                  }
-
-                  return getPage(child: LoanScreen(), state: state);
-                },
-              ),
-            ],
-          ),
-
-          // Statistics Branch
           StatefulShellBranch(
             navigatorKey: statisticsNavigationKey,
             routes: [
@@ -382,7 +251,6 @@ class NavigationHelper {
             ],
           ),
 
-          // Settings Branch
           StatefulShellBranch(
             navigatorKey: settingsNavigationKey,
             routes: [
@@ -402,12 +270,118 @@ class NavigationHelper {
           ),
         ],
       ),
+      _budgetRoutes(),
+      _loanRoutes(),
     ];
 
     router = GoRouter(
       navigatorKey: rootNavigationKey,
-      initialLocation: Paths.dashboard,
+      initialLocation: Paths.ledger,
       routes: routes,
     );
   }
 }
+
+GoRoute _budgetRoutes() => GoRoute(
+  path: Paths.budget,
+  pageBuilder: (context, state) => getPage(child: BudgetScreen(), state: state),
+  routes: [
+    GoRoute(
+      path: 'add',
+      pageBuilder:
+          (context, state) => getPage(child: AddBudgetScreen(), state: state),
+    ),
+    GoRoute(
+      path: ':budgetId',
+      pageBuilder:
+          (context, state) => getPage(
+            child: BudgetDetailScreen(
+              budgetId: int.parse(state.pathParameters['budgetId']!),
+            ),
+            state: state,
+          ),
+      routes: [
+        GoRoute(
+          path: 'edit',
+          pageBuilder: (context, state) {
+            final budget = state.extra;
+            final budgetId = int.parse(state.pathParameters['budgetId']!);
+            return getPage(
+              child:
+                  budget is Budget
+                      ? EditBudgetScreen(budget: budget)
+                      : BudgetDetailScreen(budgetId: budgetId),
+              state: state,
+            );
+          },
+        ),
+      ],
+    ),
+  ],
+);
+
+GoRoute _loanRoutes() => GoRoute(
+  path: Paths.loan,
+  pageBuilder: (context, state) => getPage(child: LoanScreen(), state: state),
+  routes: [
+    GoRoute(
+      path: 'add',
+      pageBuilder:
+          (context, state) => getPage(child: AddLoanScreen(), state: state),
+    ),
+    GoRoute(
+      path: ':loanId',
+      pageBuilder: (context, state) {
+        final extra = state.extra;
+        final loanId = int.parse(state.pathParameters['loanId']!);
+        return getPage(
+          child:
+              extra is Loan
+                  ? LoanDetailScreen(loan: extra)
+                  : LoanDetailScreen(loanId: loanId),
+          state: state,
+        );
+      },
+      routes: [
+        GoRoute(
+          path: 'edit',
+          pageBuilder: (context, state) {
+            final loan = state.extra;
+            final loanId = int.parse(state.pathParameters['loanId']!);
+            return getPage(
+              child:
+                  loan is Loan
+                      ? EditLoanScreen(loan: loan)
+                      : LoanDetailScreen(loanId: loanId),
+              state: state,
+            );
+          },
+        ),
+        GoRoute(
+          path: 'repayment',
+          pageBuilder: (context, state) {
+            final loan = state.extra;
+            final loanId = int.parse(state.pathParameters['loanId']!);
+            return getPage(
+              child:
+                  loan is Loan
+                      ? AddRepaymentScreen(loan: loan)
+                      : LoanDetailScreen(loanId: loanId),
+              state: state,
+            );
+          },
+        ),
+        GoRoute(
+          path: 'installments',
+          pageBuilder:
+              (context, state) => getPage(
+                child: LoanInstallmentsScreen(
+                  loanId: int.parse(state.pathParameters['loanId']!),
+                ),
+                state: state,
+              ),
+        ),
+      ],
+    ),
+  ],
+);

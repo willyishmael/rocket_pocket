@@ -61,7 +61,6 @@ class StatisticsSection extends StatelessWidget {
                 lines: [
                   '${state.budgetHighlight.activeBudgetCount} active budgets',
                   '${state.budgetHighlight.overBudgetCount} over budget',
-                  '${CurrencyUtils.format(state.budgetHighlight.spentTotal, currency)} spent',
                 ],
               ),
               _HighlightCard(

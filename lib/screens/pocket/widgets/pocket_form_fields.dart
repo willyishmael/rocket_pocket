@@ -5,7 +5,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
-import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_picker.dart';
+import 'package:rocket_pocket/screens/pocket/widgets/gradient_picker/gradient_picker.dart';
 
 /// Shared form fields for create and edit pocket screens.
 /// Covers: name, icon, gradient picker, currency picker.

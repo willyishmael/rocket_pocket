@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rocket_pocket/data/model/color_gradient.dart';
-import 'package:rocket_pocket/screens/0_widgets/gradient_picker/gradient_circle.dart';
+import 'package:rocket_pocket/screens/pocket/widgets/gradient_picker/gradient_circle.dart';
 
 class GradientPicker extends StatelessWidget {
   final List<ColorGradient> gradients;

@@ -2,19 +2,19 @@ abstract final class Paths {
   // ── Root ────────────────────────────────────────────────────────────────────
   static const String root = '/';
 
-  // ── Dashboard ───────────────────────────────────────────────────────────────
+  // ── Ledger and pockets ─────────────────────────────────────────────────────
   static const String dashboard = '/dashboard';
-  static const String createPocket = '$dashboard/create-pocket';
-  static const String pocketDetails = '$dashboard/pocket/:pocketId';
+  static const String ledger = '/ledger';
+  static const String pockets = '$ledger/pockets';
+  static const String createPocket = '$pockets/create';
+  static const String pocketDetails = '$pockets/:pocketId';
   static const String pocketTransactions = '$pocketDetails/pocket-transactions';
   static const String editPocket = '$pocketDetails/edit';
 
-  static String pocketDetailsRoute(int pocketId) =>
-      '$dashboard/pocket/$pocketId';
+  static String pocketDetailsRoute(int pocketId) => '$pockets/$pocketId';
   static String pocketTransactionsRoute(int pocketId) =>
-      '$dashboard/pocket/$pocketId/pocket-transactions';
-  static String editPocketRoute(int pocketId) =>
-      '$dashboard/pocket/$pocketId/edit';
+      '$pockets/$pocketId/pocket-transactions';
+  static String editPocketRoute(int pocketId) => '$pockets/$pocketId/edit';
 
   // ── Transaction ─────────────────────────────────────────────────────────────
   static const String transaction = '/transaction';
