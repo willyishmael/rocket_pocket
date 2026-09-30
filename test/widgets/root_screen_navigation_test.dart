@@ -39,6 +39,10 @@ void main() {
         ),
         budgetViewModelProvider.overrideWith(() => _FakeBudgetViewModel()),
         loanViewModelProvider.overrideWith(() => _FakeLoanViewModel()),
+        transactionViewModelProvider.overrideWith(
+          () => _FakeTransactionViewModel(),
+        ),
+        categoryNamesProvider.overrideWith((ref) async => {}),
         ledgerLoanPreviewsProvider.overrideWith((ref) async => const []),
       ],
     );
@@ -67,8 +71,8 @@ void main() {
             .map((d) => (d as NavigationDestination).label)
             .toList();
 
-    expect(labels, ['Transaction', 'Ledger', 'Statistics', 'Settings']);
-    expect(navBar.selectedIndex, 1);
+    expect(labels, ['Ledger', 'Transaction', 'Statistics', 'Settings']);
+    expect(navBar.selectedIndex, 0);
     expect(
       NavigationHelper.router.routeInformationProvider.value.uri.path,
       Paths.ledger,
@@ -92,6 +96,32 @@ void main() {
     NavigationHelper.router.go(Paths.loan);
     await tester.pumpAndSettle();
     expect(find.byType(LoanScreen), findsOneWidget);
+
+    NavigationHelper.router.go(Paths.ledger);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Transaction'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      NavigationHelper.router.routeInformationProvider.value.uri.path,
+      Paths.transaction,
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Ledger'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      NavigationHelper.router.routeInformationProvider.value.uri.path,
+      Paths.ledger,
+    );
   });
 
   testWidgets('current and legacy pocket routes reach canonical destinations', (

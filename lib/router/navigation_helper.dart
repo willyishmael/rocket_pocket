@@ -76,72 +76,6 @@ class NavigationHelper {
         },
         branches: [
           StatefulShellBranch(
-            navigatorKey: transactionNavigationKey,
-            routes: [
-              GoRoute(
-                path: Paths.transaction,
-                pageBuilder: (context, state) {
-                  return getPage(child: TransactionScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.addTransaction,
-                pageBuilder: (context, state) {
-                  return getPage(child: AddTransactionScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.transactionDetails,
-                pageBuilder: (context, state) {
-                  final extra = state.extra;
-                  if (extra is Transaction) {
-                    return getPage(
-                      child: TransactionDetailScreen(transaction: extra),
-                      state: state,
-                    );
-                  }
-
-                  final txIdParam = state.pathParameters['transactionId'];
-                  final txId =
-                      txIdParam != null ? int.tryParse(txIdParam) : null;
-                  if (txId != null) {
-                    return getPage(
-                      child: TransactionDetailScreen(transactionId: txId),
-                      state: state,
-                    );
-                  }
-
-                  return getPage(child: TransactionScreen(), state: state);
-                },
-              ),
-              GoRoute(
-                path: Paths.editTransaction,
-                pageBuilder: (context, state) {
-                  final extra = state.extra;
-                  if (extra is Transaction) {
-                    return getPage(
-                      child: EditTransactionScreen(transaction: extra),
-                      state: state,
-                    );
-                  }
-
-                  final txIdParam = state.pathParameters['transactionId'];
-                  final txId =
-                      txIdParam != null ? int.tryParse(txIdParam) : null;
-                  if (txId != null) {
-                    return getPage(
-                      child: EditTransactionScreen(transactionId: txId),
-                      state: state,
-                    );
-                  }
-
-                  return getPage(child: TransactionScreen(), state: state);
-                },
-              ),
-            ],
-          ),
-
-          StatefulShellBranch(
             navigatorKey: ledgerNavigationKey,
             routes: [
               GoRoute(
@@ -206,6 +140,72 @@ class NavigationHelper {
                     ],
                   ),
                 ],
+              ),
+            ],
+          ),
+
+          StatefulShellBranch(
+            navigatorKey: transactionNavigationKey,
+            routes: [
+              GoRoute(
+                path: Paths.transaction,
+                pageBuilder: (context, state) {
+                  return getPage(child: TransactionScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.addTransaction,
+                pageBuilder: (context, state) {
+                  return getPage(child: AddTransactionScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.transactionDetails,
+                pageBuilder: (context, state) {
+                  final extra = state.extra;
+                  if (extra is Transaction) {
+                    return getPage(
+                      child: TransactionDetailScreen(transaction: extra),
+                      state: state,
+                    );
+                  }
+
+                  final txIdParam = state.pathParameters['transactionId'];
+                  final txId =
+                      txIdParam != null ? int.tryParse(txIdParam) : null;
+                  if (txId != null) {
+                    return getPage(
+                      child: TransactionDetailScreen(transactionId: txId),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: TransactionScreen(), state: state);
+                },
+              ),
+              GoRoute(
+                path: Paths.editTransaction,
+                pageBuilder: (context, state) {
+                  final extra = state.extra;
+                  if (extra is Transaction) {
+                    return getPage(
+                      child: EditTransactionScreen(transaction: extra),
+                      state: state,
+                    );
+                  }
+
+                  final txIdParam = state.pathParameters['transactionId'];
+                  final txId =
+                      txIdParam != null ? int.tryParse(txIdParam) : null;
+                  if (txId != null) {
+                    return getPage(
+                      child: EditTransactionScreen(transactionId: txId),
+                      state: state,
+                    );
+                  }
+
+                  return getPage(child: TransactionScreen(), state: state);
+                },
               ),
             ],
           ),

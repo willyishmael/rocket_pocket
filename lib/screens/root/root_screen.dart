@@ -14,8 +14,8 @@ class RootScreen extends StatefulWidget {
 class _RootScreenState extends State<RootScreen> {
   // List of destinations for the bottom navigation bar and navigation rail
   final destinations = const [
-    NavigationDestination(icon: Icon(Icons.swap_horiz), label: 'Transaction'),
     NavigationDestination(icon: Icon(Icons.menu_book), label: 'Ledger'),
+    NavigationDestination(icon: Icon(Icons.swap_horiz), label: 'Transaction'),
     NavigationDestination(icon: Icon(Icons.pie_chart), label: 'Statistics'),
     NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
   ];
