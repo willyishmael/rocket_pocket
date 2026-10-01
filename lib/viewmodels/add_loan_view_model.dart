@@ -6,7 +6,6 @@ import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/data/model/pocket.dart';
 import 'package:rocket_pocket/data/model/transaction.dart';
 import 'package:rocket_pocket/data/model/transaction_type.dart';
-import 'package:rocket_pocket/repositories/loan_repository.dart';
 import 'package:rocket_pocket/repositories/pocket_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_categories_repository.dart';
 import 'package:rocket_pocket/repositories/transaction_repository.dart';
@@ -138,12 +137,10 @@ final addLoanViewModelProvider =
     AsyncNotifierProvider<AddLoanViewModel, AddLoanState>(AddLoanViewModel.new);
 
 class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
-  late LoanRepository _loanRepository;
   late PocketRepository _pocketRepository;
 
   @override
   FutureOr<AddLoanState> build() async {
-    _loanRepository = ref.watch(loanRepositoryProvider);
     _pocketRepository = ref.watch(pocketRepositoryProvider);
     final reminderDefaults = ref.read(loanReminderDefaultsProvider);
     final pockets = await _pocketRepository.getAllPockets();
@@ -298,16 +295,16 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
     return current.previewPlan!;
   }
 
-  Future<void> submit() async {
+  Future<bool> submit() async {
     final current = state.value;
-    if (current == null || !current.isValid) return;
+    if (current == null || !current.isValid) return false;
 
     state = const AsyncLoading();
     try {
       if (current.selectedPocket != null &&
           current.selectedPocket!.id == null) {
         state = AsyncData(current);
-        return;
+        return false;
       }
 
       final selectedPocketId = current.selectedPocket?.id;
@@ -318,20 +315,20 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
 
       if (selectedPocketId != null && latestSelectedPocket == null) {
         state = AsyncData(current);
-        return;
+        return false;
       }
 
       if (latestSelectedPocket != null &&
           latestSelectedPocket.currency != current.currency) {
         state = AsyncData(current);
-        return;
+        return false;
       }
 
       if (current.isPurchaseInstallment &&
           latestSelectedPocket != null &&
           current.downPaymentAmount > latestSelectedPocket.balance) {
         state = AsyncData(current);
-        return;
+        return false;
       }
 
       // Loan given moves money out; require enough balance when a pocket is selected.
@@ -339,7 +336,7 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
           latestSelectedPocket != null &&
           current.financedPrincipal > latestSelectedPocket.balance) {
         state = AsyncData(current);
-        return;
+        return false;
       }
 
       final plan = _buildInstallmentPlan(current);
@@ -367,10 +364,12 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
         createdAt: DateTime.now(),
       );
 
-      final loanId = await _loanRepository.createLoanWithSchedule(
-        loan: loan.toInsertCompanion(),
-        scheduleLines: plan.lines,
-      );
+      final loanId = await ref
+          .read(loanViewModelProvider.notifier)
+          .createLoanWithSchedule(
+            loan: loan.toInsertCompanion(),
+            scheduleLines: plan.lines,
+          );
 
       await ref.read(loanReminderServiceProvider).scheduleForLoan(loanId);
 
@@ -437,9 +436,9 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
             .refreshTransactions();
       }
 
-      ref.invalidate(loanViewModelProvider);
-      ref.invalidate(pocketViewModelProvider);
-      // Reload pockets after transaction is recorded
+      if (latestSelectedPocket != null) {
+        await ref.read(pocketViewModelProvider.notifier).refreshPockets();
+      }
       final pockets = await _pocketRepository.getAllPockets();
       final reminderDefaults = ref.read(loanReminderDefaultsProvider);
       state = AsyncData(
@@ -449,6 +448,7 @@ class AddLoanViewModel extends AsyncNotifier<AddLoanState> {
           reminderDaysBefore: reminderDefaults.daysBefore,
         ),
       );
+      return true;
     } catch (e, stack) {
       state = AsyncError(e, stack);
       rethrow;

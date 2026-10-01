@@ -36,6 +36,8 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
   bool _isCollapsed = false;
   bool _fabVisible = true;
   double _lastScrollOffset = 0;
+  String? _installmentsFutureKey;
+  Future<List<db.LoanInstallment>>? _installmentsFuture;
 
   static const double _expandedHeight = 280.0;
 
@@ -63,6 +65,17 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<List<db.LoanInstallment>> _loadInstallments(Loan loan) {
+    final key = '${loan.id}-${loan.repaidAmount}';
+    if (_installmentsFutureKey != key) {
+      _installmentsFutureKey = key;
+      _installmentsFuture = ref
+          .read(loanRepositoryProvider)
+          .getInstallmentsByLoanId(loan.id!);
+    }
+    return _installmentsFuture!;
   }
 
   @override
@@ -104,7 +117,6 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
         loan.dueDate.isBefore(DateTime.now());
 
     final transactionsAsync = ref.watch(transactionViewModelProvider);
-    final loanRepository = ref.watch(loanRepositoryProvider);
     final pockets = ref.watch(pocketViewModelProvider).value ?? [];
     final pocketCurrency = {
       for (final p in pockets)
@@ -206,7 +218,7 @@ class _LoanDetailScreenState extends ConsumerState<LoanDetailScreen> {
           SliverToBoxAdapter(
             child: FutureBuilder<List<db.LoanInstallment>>(
               key: ValueKey('${loan.id}-${loan.repaidAmount}'),
-              future: loanRepository.getInstallmentsByLoanId(loan.id!),
+              future: _loadInstallments(loan),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Padding(

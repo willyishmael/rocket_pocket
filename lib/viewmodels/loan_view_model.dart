@@ -4,6 +4,7 @@ import 'package:rocket_pocket/data/model/enums.dart';
 import 'package:rocket_pocket/data/model/loan.dart';
 import 'package:rocket_pocket/repositories/loan_repository.dart';
 import 'package:rocket_pocket/utils/error_handler/app_error.dart';
+import 'package:rocket_pocket/utils/loan_installment_schedule.dart';
 
 class LoanPreview {
   final Loan loan;
@@ -127,6 +128,23 @@ class LoanViewModel extends AsyncNotifier<List<Loan>> {
     try {
       await _loanRepository.insertLoan(loan);
       await refreshLoans();
+    } on AppError catch (e) {
+      state = AsyncError(e, e.stackTrace);
+      e.throwError();
+    }
+  }
+
+  Future<int> createLoanWithSchedule({
+    required LoansCompanion loan,
+    required List<LoanInstallmentLine> scheduleLines,
+  }) async {
+    try {
+      final loanId = await _loanRepository.createLoanWithSchedule(
+        loan: loan,
+        scheduleLines: scheduleLines,
+      );
+      await refreshLoans();
+      return loanId;
     } on AppError catch (e) {
       state = AsyncError(e, e.stackTrace);
       e.throwError();

@@ -20,7 +20,13 @@ class AddLoanScreen extends ConsumerWidget {
       body: viewModelAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (state) => _AddLoanForm(state: state),
+        data:
+            (state) => _AddLoanForm(
+              state: state,
+              onSaved: () {
+                if (context.mounted) context.pop();
+              },
+            ),
       ),
     );
   }
@@ -28,8 +34,9 @@ class AddLoanScreen extends ConsumerWidget {
 
 class _AddLoanForm extends ConsumerWidget {
   final AddLoanState state;
+  final VoidCallback onSaved;
 
-  const _AddLoanForm({required this.state});
+  const _AddLoanForm({required this.state, required this.onSaved});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -70,7 +77,8 @@ class _AddLoanForm extends ConsumerWidget {
           ),
           flexibleSpace: const FlexibleSpaceBar(
             title: Text('Add Loan'),
-            titlePadding: EdgeInsets.only(left: 16, bottom: 16),
+            centerTitle: true,
+            titlePadding: EdgeInsets.only(bottom: 16),
           ),
         ),
         SliverToBoxAdapter(
@@ -453,10 +461,11 @@ class _AddLoanForm extends ConsumerWidget {
                               !hasInsufficientDownPaymentBalance &&
                               !hasInsufficientPocketBalance
                           ? () async {
-                            await ref
-                                .read(addLoanViewModelProvider.notifier)
-                                .submit();
-                            if (context.mounted) context.pop();
+                            final saved =
+                                await ref
+                                    .read(addLoanViewModelProvider.notifier)
+                                    .submit();
+                            if (saved) onSaved();
                           }
                           : null,
                 ),

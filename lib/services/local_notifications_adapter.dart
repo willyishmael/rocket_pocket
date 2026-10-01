@@ -74,11 +74,32 @@ class LocalNotificationsAdapter {
       body,
       tz.TZDateTime.from(scheduledAt, tz.local),
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: await _resolveAndroidScheduleMode(),
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload,
     );
+  }
+
+  // Exact alarms need SCHEDULE_EXACT_ALARM granted (Android 12+); fall back
+  // to inexact delivery instead of throwing when it isn't available.
+  Future<AndroidScheduleMode> _resolveAndroidScheduleMode() async {
+    final androidPlugin =
+        _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+    if (androidPlugin == null) return AndroidScheduleMode.exactAllowWhileIdle;
+
+    try {
+      final canScheduleExact =
+          await androidPlugin.canScheduleExactNotifications() ?? false;
+      return canScheduleExact
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle;
+    } catch (_) {
+      return AndroidScheduleMode.inexactAllowWhileIdle;
+    }
   }
 
   Future<void> cancel(int id) async {

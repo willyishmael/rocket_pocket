@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Lets loan reminders fire at their exact due time on Android 12+;
+         falls back to inexact scheduling at runtime if not granted. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <application
         android:label="rocket_pocket"
         android:name="${applicationName}"
